@@ -8,6 +8,7 @@ Created on Wed Nov 14 19:14:19 2018
 
 import numpy as np
 import kernels as ker
+from pykeops.numpy import Genred
 
 def my_VsToV(Par, z, j): # generic vector field (tested)
     """ This is the main function to compute the derivative of order 0 to 2 
@@ -27,16 +28,33 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
     sig = Par['sig']
     lsize = ((Nz,2),(Nz,2,2),(Nz,2,2,2))
     djv = np.zeros(lsize[j])
+    djv2 = np.zeros(lsize[j])
     
     if '0' in Par:
+        if j==0 :
+            formula = 'Exp(- SqNorm2(z - x) / s ) * p'
+            aliases = ['z = Vx(2)', 'x = Vy(2)', 'p = Vy(2)', 's = Pm(1)']
+            my_conv = Genred(formula, aliases, reduction_op='Sum', cuda_type='float32', axis=1)
+        
+        elif j==1:
+            formula = 'Grad(Exp(- SqNorm2(z - x) / s ) * p, z,b)'
+            aliases = ['z = Vx(2)', 'x = Vy(2)', 'p = Vy(2)', 's = Pm(1)', 'b = Vx(2)']
+            my_conv = Genred(formula, aliases, reduction_op='Sum', cuda_type='float32', axis=1)
+        
+        
         for (x,p) in Par['0']:
-            N = x.shape[0]
+            
+            djv2 += my_conv(z, x, np.array(p, dtype='float32'), 2*np.array([sig], dtype='float32')**2)
+
             for i in range(Nz):
                 C = (-1)**j
                 cz = z[i].reshape(1,2)
                 ker_vec = C*np.asarray([ker.my_nker(s,j,sig) for s in x-cz])
                 djv[i] += np.tensordot(np.tensordot(np.eye(2),ker_vec, axes=0),
                     p, axes = ([1,2],[1,0]))
+            print('djv', djv)
+            print('djv2', djv2)
+                
         
     if 'p' in Par:
         for (x,P) in Par['p']:

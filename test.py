@@ -30,7 +30,7 @@ import visualisation as visu
 #%% import data
 
 import pickle
-with open('basi1.pkl', 'rb') as f:
+with open('data/basi1.pkl', 'rb') as f:
     img, lx = pickle.load(f)
     
     
@@ -146,6 +146,7 @@ Cot1 = fields.my_CotToVs(Cot,sig1)
 # Creates S so that ??
 dv = fields.my_VsToV(Cot1,x1,1)
 S  = np.tensordot((dv + np.swapaxes(dv,1,2))/2, fun_eta.my_eta())
+
 # Computes ??
 tlam = solve(Mod1['coeff']*Mod1['SKS'], S.flatten(), sym_pos = True)
 (Am, AmKiAm) = con_fun.my_new_AmKiAm(Mod1)

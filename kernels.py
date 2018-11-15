@@ -32,6 +32,7 @@ def my_K(x,y,sig,k,l):
         K = fun_eta.my_etaKeta(np.swapaxes(t,1,2))
     return K
 
+
 def my_nker(x,k,sig) : # tested
     """ Gaussian radial function and its derivatives. 
     x in a matrix of positions
