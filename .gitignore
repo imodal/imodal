@@ -1,0 +1,46 @@
+*~
+*.swp
+# temporaries from editors
+*.vscode*
+*.idea*
+*~
+
+# Build junk
+*build*
+*output*
+/build/*
+*_auto_examples*
+*_auto_tutorials*
+*.png
+*.gif
+
+# Exclude mex files
+*mexa64
+
+# Exclude "private" experimental research folders
+*private*
+
+# Exclude the graphs pdf
+*.pdf
+
+# Jupyter notebooks checkpoints
+*.ipynb_checkpoints*
+
+# MacOS hidden files
+.DS_Store
+
+# Compiled python modules.
+*__pycache__*
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+/*.egg
+
+keopslab/generic/pathtocmake
+
+keopslab/common/pathtocmake
+
