@@ -8,11 +8,10 @@ Created on Wed Nov 14 19:11:47 2018
 
 import numpy as np
 from scipy.linalg import solve
-import functions_eta as fun_eta
-import useful_functions as fun
-import constraints_functions as con_fun
+from implicitmodules.src import constraints_functions as con_fun, useful_functions as fun, functions_eta as fun_eta
 
-def my_mod_update(Mod): 
+
+def my_mod_update(Mod):
     if not 'SKS' in Mod:
         Mod['SKS'] = fun.my_new_SKS(Mod)
         

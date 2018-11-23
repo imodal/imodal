@@ -5,32 +5,23 @@ Created on Thu Nov  8 17:19:10 2018
 
 @author: barbaragris
 """
+import sys, os.path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..')*2)
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from random import random,randint
-import numpy.random as rd
-from numpy.linalg import eigh,inv
 from scipy.linalg import solve
 plt.show()
 plt.ion()
 
 #%%
-import useful_functions as fun
-import rotation as rot
-import field_structures as fields
-import modules_operations as modop
-import functions_eta as fun_eta
-import constraints_functions as con_fun
-import shooting as shoot
-import visualisation as visu
+from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot, \
+    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
 #%% import data
 
 import pickle
-with open('basi1.pkl', 'rb') as f:
+with open('../data/basi1.pkl', 'rb') as f:
     img, lx = pickle.load(f)
     
     
@@ -41,7 +32,7 @@ scale = 38./(lmax-lmin)
 nlx[:,1]  = 38.0 - scale*(nlx[:,1]-lmin)
 nlx[:,0]  = scale*(nlx[:,0]-np.mean(nlx[:,0]))            
 
-(name, dt, coeffs, nu) = ('basi_expf_', 0.1, [5., 0.05], 0.001)
+(name, dt, coeffs, nu) = ('../results/basi_expf_', 0.1, [5., 0.05], 0.001)
 
 x0 = nlx[nlx[:,2]==0,0:2] # points of order 0
 x1 = nlx[nlx[:,2]==1,0:2] # points of order 1

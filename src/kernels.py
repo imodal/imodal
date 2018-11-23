@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:07:37 2018
 """
 
 import numpy as np
-import functions_eta as fun_eta
+from implicitmodules.src import functions_eta as fun_eta
 
 
 def my_K(x,y,sig,k,l):

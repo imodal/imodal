@@ -8,7 +8,7 @@ Created on Wed Nov 14 19:12:42 2018
 
 import numpy as np
 from scipy.linalg import solve
-import functions_eta as fun_eta
+from implicitmodules.src import functions_eta as fun_eta
 
 
 def my_Amh(Mod1,h):

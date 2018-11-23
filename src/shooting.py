@@ -8,12 +8,9 @@ Created on Wed Nov 14 19:06:44 2018
 
 import numpy as np
 from scipy.linalg import solve
-import hamiltonian_derivatives as ham
-import modules_operations as modop
-import useful_functions as fun
-import field_structures as fields
-import functions_eta as fun_eta
-import constraints_functions as con_fun
+from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, hamiltonian_derivatives as ham, \
+    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta
+
 
 def my_fd_shoot(Mod0,Mod1,Cot,N):
     h = 1./N

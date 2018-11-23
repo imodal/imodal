@@ -7,7 +7,8 @@ Created on Wed Nov 14 19:15:18 2018
 """
 
 import numpy as np
-import field_structures as fields
+from implicitmodules.src import field_structures as fields
+
 
 def my_dCotDotV(Cot,Vs):
     """  This function computes the derivative with respect to the parameter

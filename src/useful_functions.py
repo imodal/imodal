@@ -6,7 +6,8 @@ Created on Fri Nov  9 14:10:59 2018
 @author: barbaragris
 """
 import numpy as np
-import kernels as ker
+from implicitmodules.src import kernels as ker
+
 
 def my_new_SKS(Mod):
     """ my_SKS(Mod) compute induce metric on the bundle of 
