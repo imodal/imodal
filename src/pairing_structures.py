@@ -70,6 +70,8 @@ def my_pSmV(Vsl,Vsr,j):
     the the linear form in V^* v->(p|Sm(v)) as dictionary Vsl (l for left)
     having only '0' and 'p' types and the fixed v in the formula m->(p|Sm(v)) 
     as Vsr (r for right).
+    
+    attention: Vs does not necessary come from a cot_to_vs
     """
     
     if j == 1:

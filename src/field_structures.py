@@ -22,15 +22,11 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
     z is the location where the values are computed
     
     The output is a list ordered according the the input '0', 'p' and 'm'
-    """
-    Nz = z.shape[0]
-    sig = Par['sig']
-    lsize = ((Nz,2),(Nz,2,2),(Nz,2,2,2))
-    djv = np.zeros(lsize[j])
-    djv2 = np.zeros(lsize[j])
     
-    if '0' in Par:
-        if j==0 :
+    
+    
+    
+            if j==0 :
             formula = 'Exp(- SqNorm2(z - x) / s ) * p'
             aliases = ['z = Vx(2)', 'x = Vy(2)', 'p = Vy(2)', 's = Pm(1)']
             my_conv = Genred(formula, aliases, reduction_op='Sum', cuda_type='float32', axis=1)
@@ -39,7 +35,18 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
             formula = 'Grad(Exp(- SqNorm2(z - x) / s ) * p, z,b)'
             aliases = ['z = Vx(2)', 'x = Vy(2)', 'p = Vy(2)', 's = Pm(1)', 'b = Vx(2)']
             my_conv = Genred(formula, aliases, reduction_op='Sum', cuda_type='float32', axis=1)
+       
         
+        
+        
+    """
+    Nz = z.shape[0]
+    sig = Par['sig']
+    lsize = ((Nz,2),(Nz,2,2),(Nz,2,2,2))
+    djv = np.zeros(lsize[j])
+    #djv2 = np.zeros(lsize[j])
+    
+    if '0' in Par: 
         
         for (x,p) in Par['0']:
             ker_vec = ker.my_vker(ker.my_xmy(z,x),j,sig)
