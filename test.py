@@ -118,13 +118,13 @@ Cot ={ '0':[(x0,p0), (xs,ps)], 'x,R':[((x1,R),(p1,PR))]}
 # creates kernel matrix for points in Mod0
 Mod0['SKS'] = fun.my_new_SKS(Mod0)
 
-# Computes \xi_m ^\ast (\eta) as an element of V0
-# with m the whole GD
-Cot0 = fields.my_CotToVs(Cot,sig0)
+# Computes K_0 \xi_m ^\ast (\eta) as an element of V0
+# with m the whole GD (paramétré par ordre 0, et ordre 1 (p ou m))
+vs_0 = fields.my_CotToVs(Cot,sig0)
 
-# returns the element of H_0^\ast equal to 
-# \zeta^0_x0 (Cot0)
-v0 = fields.my_VsToV(Cot0, x0,0)
+# returns the values of K_0 vs_0 applied to x0 
+v0 = fields.my_VsToV(vs_0, x0,0)
+
 
 #Computes the geodesic control associated to Cot for Mod0
 Mod0['mom'] = solve(Mod0['coeff']*Mod0['SKS'],
@@ -134,23 +134,43 @@ Mod0['mom'] = solve(Mod0['coeff']*Mod0['SKS'],
 modop.my_mod_update(Mod0) 
 
 
-# define the operator that takes lagrangian momentum and returns "constraints"
+
+# defines a map  from dual of values of constraints (F1^\ast) to the space of values of
+# constraints (F_1) using the possible values of constraints of V1 on m
 Mod1['SKS'] = fun.my_new_SKS(Mod1)
 
-# Computes \xi_m ^\ast (\eta) as an element of V1
+# Computes K_1 \xi_m ^\ast (\eta) as an element of V1
 # with m the whole GD
-Cot1 = fields.my_CotToVs(Cot,sig1)
+vs_1 = fields.my_CotToVs(Cot,sig1)
 
 
-# Computes geodesic controls
-# Creates S so that ??
-dv = fields.my_VsToV(Cot1,x1,1)
-S  = np.tensordot((dv + np.swapaxes(dv,1,2))/2, fun_eta.my_eta())
 
-# Computes ??
+# Computes geodesic controls for module 1 
+
+
+# computes Sm  vs_1 : values of constraints of vs_1 on x1
+## computes derivtives of vs_1 at points x1 (useful for constraints computation at x1)
+dv = fields.my_VsToV(vs_1,x1,1)
+## symmetric part of dv
+dv_sym = (dv + np.swapaxes(dv,1,2))/2
+## representation of dv_symas an element of R^3 so that inner products are coherent
+S  = np.tensordot(dv_sym, fun_eta.my_eta())
+
+
+# compute (S_1 K_1 S_1^\ast) ^{-1} S
 tlam = solve(Mod1['coeff']*Mod1['SKS'], S.flatten(), sym_pos = True)
+
+
+# Am is a matrix of shape dim F_1 x dim H_1, where
+### Am[:,i] = constraints for control h = 0 everywhere but in i where =1
+# AmKiAm is a matrix so that geodesic cost is (h, AmKiAm h)
 (Am, AmKiAm) = con_fun.my_new_AmKiAm(Mod1)
-Mod1['h'] = solve(AmKiAm, np.dot(tlam,Am), sym_pos = True)
+
+# Computes  Am^\ast tlam
+Am_s_tlam = np.dot(tlam,Am)
+
+# geodesic control for mod 1 (inversion by metric)
+Mod1['h'] = solve(AmKiAm, Am_s_tlam, sym_pos = True)
 
 
 # Computes cost and other variables to store them
