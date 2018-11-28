@@ -12,7 +12,7 @@ import pairing_structures as pair
 class GeometricalDescriptors(object):
     
     """
-    Abstract class for geometrica descriptors, needs to have the 
+    Abstract class for geometrical descriptors, needs to have the 
       following methods:
           
           -- Cot_to_Vs (m, p, s) with m value of GD, p a cotangent element and
