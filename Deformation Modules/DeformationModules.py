@@ -41,12 +41,20 @@ class ElasticOrderO(DeformationModule):
     """
     
     
-    def __init__(self, sigma):
+    def __init__(self, sigma, N_pts, dim):
+        """
+        sigma is the scale of the rkhs of generated vector fields
+        N_pts is the number of landmarks
+        dim is the dimension of the ambient space
+        """
         self.sigma = sigma
+        self.N_pts = N_pts
+        self.dim =dim
         self.GD = GeoDescr.GD_landmark()
-        self.SKS = np.empty([0])
+        self.SKS = np.empty([self.N_pts*self.dim,self.N_pts*self.dim])
         
     
     
     def GeodesicControls(vs, m):
+        
         
