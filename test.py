@@ -131,7 +131,7 @@ Mod0['mom'] = solve(Mod0['coeff']*Mod0['SKS'],
         v0.flatten(),sym_pos = True).reshape(x0.shape)
 
 # computes cost0
-modop.my_mod_update(Mod0) 
+modop.my_mod_update(Mod0)
 
 
 
@@ -153,7 +153,7 @@ vs_1 = fields.my_CotToVs(Cot,sig1)
 dv = fields.my_VsToV(vs_1,x1,1)
 ## symmetric part of dv
 dv_sym = (dv + np.swapaxes(dv,1,2))/2
-## representation of dv_symas an element of R^3 so that inner products are coherent
+## representation of dv_sym as an element of R^3 so that inner products are coherent
 S  = np.tensordot(dv_sym, fun_eta.my_eta())
 
 
