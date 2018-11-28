@@ -31,35 +31,29 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
     
     if '0' in Par:
         for (x,p) in Par['0']:
-            N = x.shape[0]
-            for i in range(Nz):
-                C = (-1)**j
-                cz = z[i].reshape(1,2)
-                ker_vec = C*np.asarray([ker.my_nker(s,j,sig) for s in x-cz])
-                djv[i] += np.tensordot(np.tensordot(np.eye(2),ker_vec, axes=0),
-                    p, axes = ([1,2],[1,0]))
+            ker_vec = ker.my_vker(ker.my_xmy(z,x),j,sig)
+            my_shape = (Nz, x.shape[0]) + tuple(ker_vec.shape[1:])
+            ker_vec = ker_vec.reshape(my_shape)
+            djv += np.tensordot(np.swapaxes(np.tensordot(np.eye(2),ker_vec, axes=0),0,2),
+                p, axes = ([2,3],[1,0]))
         
     if 'p' in Par:
         for (x,P) in Par['p']:
             P = (P + np.swapaxes(P,1,2))/2
-            C = (-1)**j
-            for i in range(Nz):
-                cz = z[i].reshape(1,2)
-                ker_vec = C*np.asarray([ker.my_nker(s,j+1,sig) for s in x-cz]) #(N,2)
-                djv[i] += np.tensordot(np.tensordot(np.eye(2),ker_vec,axes=0),
-                    P, axes = ([1,2,3],[1,0,2])) # (2,2,N,2)  (2,N)
+            ker_vec = -ker.my_vker(ker.my_xmy(z,x),j+1,sig)
+            my_shape = (Nz, x.shape[0]) + tuple(ker_vec.shape[1:])
+            ker_vec = ker_vec.reshape(my_shape)
+            djv += np.tensordot(np.swapaxes(np.tensordot(np.eye(2),ker_vec, axes=0),0,2),
+                P, axes = ([2,3,4],[1,0,2]))
     
     if 'm' in Par:
         for (x,P) in Par['m']:
             P = (P - np.swapaxes(P,1,2))/2
-            C = (-1)**j
-            for i in range(Nz):
-                cz = z[i].reshape(1,2)
-                ker_vec = C*np.asarray([ker.my_nker(s,j+1,sig) for s in x-cz]) #(N,2)
-                djv[i] += np.tensordot(
-                    np.tensordot(np.eye(2),ker_vec,axes=0),
-                    P, axes =([1,2,3],[1, 0, 2])) # (2,2,N,2)  (2,N)
-            
+            ker_vec = -ker.my_vker(ker.my_xmy(z,x),j+1,sig)
+            my_shape = (Nz, x.shape[0]) + tuple(ker_vec.shape[1:])
+            ker_vec = ker_vec.reshape(my_shape)
+            djv += np.tensordot(np.swapaxes(np.tensordot(np.eye(2),ker_vec, axes=0),0,2),
+                P, axes = ([2,3,4],[1,0,2]))
     return djv
 
 
