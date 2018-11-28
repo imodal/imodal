@@ -52,12 +52,12 @@ def my_fun_Traj(P0, *args):
     """
     
     (X, nX, sig0, sig1, coeff0, coeff1, C, nu, xst, lam_var, sig_var, N) = args
-    (x0, xs, (x1, R)) = my_splitX(X, nX)
+    (x0, xs, (x1, R)) = utils.my_splitX(X, nX)
     Mod0 = {'0': x0, 'sig': sig0, 'coeff': coeff0}
     Mod1 = {'x,R': (x1, R), 'sig': sig1, 'C': C, 'coeff': coeff1, 'nu': nu}
     Cot = utils.my_CotFromXP(X, P0, nX)
-    Mod0 = utils.my_mod_init_from_Cot(Mod0, Cot)
-    Mod1 = utils.my_mod_init_from_Cot(Mod1, Cot)
+    Mod0 = modop.my_mod_init_from_Cot(Mod0, Cot)
+    Mod1 = modop.my_mod_init_from_Cot(Mod1, Cot)
     Step = (Mod0, Mod1, Cot)
     h = 1. / N
     Traj = [Step]
@@ -294,9 +294,9 @@ def my_jac(P0, *args):
     cCot = Traj[-1][2]
     xsf = cCot['0'][1][0]
     (varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
-    # varcost = lam_var * varcost
+    # varcost = lam_var * varcost
     dxvarcost = lam_var * dxvarcost
-    # hamval = ham.my_new_ham(Step[0], Step[1], Step[2])
+    # hamval = ham.my_new_ham(Step[0], Step[1], Step[2])
     # print("hamval     = {0:10.3e}".format(hamval))
     # print("varcost = {0:10.3e}".format(varcost))
     # print("totener = {0:10.3e}".format(hamval+varcost))
