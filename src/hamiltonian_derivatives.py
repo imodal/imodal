@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:05:41 2018
 """
 import numpy as np
 from scipy.linalg import solve
-from implicitmodules.src import field_structures as fields, pairing_structures as pair, functions_eta as fun_eta
+from implicitmodules.src import field_structures as fields, pairing_structures as pair, functions_eta as fun_eta, modules_operations as mod
 
 
 def my_add_der(der0, der1):
@@ -26,6 +26,16 @@ def my_add_der(der0, der1):
                 = der0['x,R'][i], der1['x,R'][i]
             der['x,R'].append(((x,R),(dxe0+dxe1,dRe0+dRe1)))
     return der
+
+
+def my_new_ham(Mod0,Mod1,Cot):
+    ham = 0.
+    mod.my_mod_update(Mod0), mod.my_mod_update(Mod1)
+    Vs0 = {'0':[(Mod0['0'],Mod0['mom'])], 'sig':Mod0['sig']}
+    (x,R) = Mod1['x,R']
+    Vs1 = {'p':[(x,Mod1['mom'])], 'sig':Mod1['sig']}
+    ham = pair.my_CotDotV(Cot,Vs0) + pair.my_CotDotV(Cot,Vs1) - Mod0['cost'] - Mod1['cost']
+    return ham
 
   
 def my_dxH(Mod0, Mod1, Cot):
@@ -62,10 +72,13 @@ def my_dxH(Mod0, Mod1, Cot):
     der = pair.my_pSmV(Vs1,tVs,1)
     dx1H += - der['p'][0][1]
     
-    Amh = np.tensordot(Mod1['Amh'].reshape(S.shape),fun_eta.my_eta().transpose(), axes = 1)
+    # C'était ici !!!!!
+    h, C = Mod1['h'], Mod1['C']
+    # Amh = np.tensordot(Mod1['Amh'].reshape(S.shape),my_eta().transpose(), axes = 1)
+    
     Ptmp = (tP - Mod1['coeff']*P) # takes into acc. the cost variation in x1
-    dRH = 2*np.asarray([np.dot(np.dot(Ptmp[i], Amh[i]),R[i])
-              for i in range(x.shape[0])])
+    dRH = 2*np.asarray([np.dot(np.dot(Ptmp[i],R[i]),np.diag(np.dot(C[i],h)))
+        for i in range(x.shape[0])])
     
     der =pair. my_pSmV(Vs1,Vs1,1)
     dx1H += Mod1['coeff']*der['p'][0][1]

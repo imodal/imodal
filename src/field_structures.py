@@ -60,17 +60,17 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
 # Takes Cot (couples of GD=m and momenta=\eta) and returns
 # an element of the dual of V_sig corresponding
     # to \xi^\ast_m (\eta)
-def my_CotToVs(Cot,sig):
-    Vs = {'0':[], 'p':[], 'm':[]}
+def my_CotToVs(Cot, sig):
+    Vs = {'0': [], 'p': [], 'm': []}
     [Vs['0'].append(s) for s in Cot['0']]
     
     if 'x,R' in Cot:
-        [Vs['0'].append((s[0][0],s[1][0])) for s in Cot['x,R']]
-        for ((x,R),(p,P)) in Cot['x,R']:
-            Vs['m'].append((x,np.asarray([np.dot(P[i],R[i].transpose()) 
-                for i in range(x.shape[0])])))
-        #[Vs['m'].append((s[0][0],[np.dot(s[0][1].transpose(),s[1][1]))) 
-       
+        [Vs['0'].append((s[0][0], s[1][0])) for s in Cot['x,R']]
+        for ((x, R), (p, P)) in Cot['x,R']:
+            Vs['m'].append((x, np.asarray([np.dot(P[i], R[i].transpose())
+                                           for i in range(x.shape[0])])))
+        # [Vs['m'].append((s[0][0],[np.dot(s[0][1].transpose(),s[1][1])))
+    
     Vs['sig'] = sig
     return Vs
  

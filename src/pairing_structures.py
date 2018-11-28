@@ -10,38 +10,60 @@ import numpy as np
 from implicitmodules.src import field_structures as fields
 
 
-def my_dCotDotV(Cot,Vs):
+def my_CotDotV(Cot, Vs):
+    """  This function computes product betwwen a covector h  of the and a v
+    field  such as (h|v.x) or (h[v.(x,R))
+    """
+    out = 0.
+    
+    if '0' in Cot:
+        for (x, p) in Cot['0']:  # Landmark point
+            v = fields.my_VsToV(Vs, x, 0)
+            out += np.sum([np.dot(p[i], v[i]) for i in range(x.shape[0])])
+    
+    if 'x,R' in Cot:
+        for ((x, R), (p, P)) in Cot['x,R']:
+            v, dv = fields.my_VsToV(Vs, x, 0), fields.my_VsToV(Vs, x, 1)
+            skew_dv = (dv - np.swapaxes(dv, 1, 2)) / 2
+            out += np.sum([np.dot(p[i], v[i]) +
+                           np.tensordot(P[i], np.dot(skew_dv[i], R[i]))
+                           for i in range(x.shape[0])])
+    return out
+
+
+def my_dCotDotV(Cot, Vs):
     """  This function computes the derivative with respect to the parameter
-    of product between a covector h a v field  such as (h|v.x) or 
+    of product between a covector h a v field  such as (h|v.x) or
     (h|v.(x,R))
     """
     der = dict()
-
+    
     if '0' in Cot:
         der['0'] = []
-        for (x,p) in Cot['0']: # Landmark point
-            dv = fields.my_VsToV(Vs,x,1)
-            der['0'].append((x,np.asarray([np.dot(p[i],dv[i]) 
-                for i in range(x.shape[0])])))
+        for (x, p) in Cot['0']:  # Landmark point
+            dv = fields.my_VsToV(Vs, x, 1)
+            der['0'].append((x, np.asarray([np.dot(p[i], dv[i])
+                                            for i in range(x.shape[0])])))
     
     if 'x,R' in Cot:
-        der['x,R']=[]
-        for ((x,R),(p,P)) in Cot['x,R']:
-            dv, ddv = fields.my_VsToV(Vs,x,1), fields.my_VsToV(Vs,x,2)
+        der['x,R'] = []
+        for ((x, R), (p, P)) in Cot['x,R']:
+            dv, ddv = fields.my_VsToV(Vs, x, 1), fields.my_VsToV(Vs, x, 2)
             
-            skew_dv = (dv - np.swapaxes(dv, 1, 2))/2
-            skew_ddv = (ddv - np.swapaxes(ddv, 1, 2))/2
+            skew_dv = (dv - np.swapaxes(dv, 1, 2)) / 2
+            skew_ddv = (ddv - np.swapaxes(ddv, 1, 2)) / 2
             
-            dedx = np.asarray([np.dot(p[i],dv[i])+ np.tensordot(P[i],
-            np.swapaxes(np.tensordot(R[i],skew_ddv[i], axes =([0],[1])),0,1)) 
-            for i in range(x.shape[0])])
+            dedx = np.asarray([np.dot(p[i], dv[i]) + np.tensordot(P[i],
+                                                                  np.swapaxes(
+                                                                      np.tensordot(R[i], skew_ddv[i], axes=([0], [1])),
+                                                                      0, 1))
+                               for i in range(x.shape[0])])
             
-            dedR = np.asarray([np.dot(-skew_dv[i], P[i]) 
-                for i in range(x.shape[0])])
+            dedR = np.asarray([np.dot(-skew_dv[i], P[i])
+                               for i in range(x.shape[0])])
             
-            der['x,R'].append(((x,R),(dedx,dedR)))
+            der['x,R'].append(((x, R), (dedx, dedR)))
     return der
-
     
 def my_pSmV(Vsl,Vsr,j):
     """ Compute product (p|Sm(v)) (j=0) and the gradient in m (j=1) coding
