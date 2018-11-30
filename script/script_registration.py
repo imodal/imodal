@@ -90,7 +90,7 @@ nlxt = np.asarray(lxt).astype(np.float64)
 scale = 100./(lmaxt-lmint)
 
 nlxt[:,1]  = 100.0 - scale*(nlxt[:,1] - lmint) - 30.
-# nlxt[:,1]  = 100.0 - scale*(nlxt[:,1]-lmint)-10.
+# nlxt[:,1]  = 100.0 - scale*(nlxt[:,1]-lmint)-10.
 nlxt[:,0]  = scale*(nlxt[:,0]-np.mean(nlxt[:,0]))
 
 (name, coeffs, nu, sig0, sig1, lam_var, sig_var) = ('basi_expf_', [5., 0.05], 0.001, 10., 30., 10., 10.)
@@ -99,7 +99,7 @@ nlxt[:,0]  = scale*(nlxt[:,0]-np.mean(nlxt[:,0]))
 # 10., 30.,  1., 10.)
 # (name, coeffs, nu, sig0, sig1, lam_var, sig_var) = ('basi_expe_', [5., 0.05], 0.001, 10., 30., 1., 10.)
 # (name, coeffs, nu, sin0, sig1, lam_var, sig_var) = ('basi_expd_', [5., 0.05],0.001, 30., 30., 1., 10.)
-# (name, coeffs, nu, sin0, sig1, lam_var, sig_var) = ('basi_expc_', [1., 0.05],0.001, 300., 30., 10., 30.)
+# (name, coeffs, nu, sin0, sig1, lam_var, sig_var) = ('basi_expc_', [1., 0.05],0.001, 300., 30., 10., 30.)
 # (name, coeffs, nu, sig0, sig1, lam_var, sig_var) = ('basi_expf_', [500., 0.05], 0.001, 10., 30., 10., 10.)
 
 x0 = nlx[nlx[:,2]==0,0:2]

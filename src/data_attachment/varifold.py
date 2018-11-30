@@ -1,6 +1,7 @@
 import numpy as np
 from implicitmodules.src.visualisation import my_close
 
+
 def my_dot_varifold(x, y, sig):
     cx, cy = my_close(x), my_close(y)
     nx, ny = x.shape[0], y.shape[0]
