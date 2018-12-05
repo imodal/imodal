@@ -134,7 +134,8 @@ class ElasticOrderO(DeformationModule):
         """
         vs = GDCot.Cot_to_Vs(self.sig)
         vm = vs.Apply(GD.get_points(), 0)
-        return solve(self.coeff * self.SKS,
+        SKS = self.Compute_SKS(GD)
+        return solve(self.coeff * SKS,
                      vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
         
         
@@ -408,11 +409,6 @@ class ElasticOrder1(DeformationModule):
         v.fill_fieldparam(param)
         return v
     
-    def field_generator(GD, Cont):
-        v = stru.StructuredField_p(self.sig, self.dim)
-        param = (self.GD.get_points(), self.Mom)
-        v.fill_fieldparam(param)
-        return v
         
     def Cost_curr(self):
         self.cost = self.coeff * np.dot(self.Amh, self.lam)/2
@@ -425,10 +421,10 @@ class ElasticOrder1(DeformationModule):
         v = self.field_generator_curr()
         
         der = pair.my_pSmV(v.dic,v.dic,1)
-        dx = self.coeff * der['p'][0][1]
+        dx = -self.coeff * der['p'][0][1]
         
         
-        tP = -self.coeff * self.Mom
+        tP = self.coeff * self.Mom
         dR = 2*np.asarray([np.dot(np.dot(tP[i],R[i]),np.diag(np.dot(self.GD.C[i],self.Cont)))
                              for i in range(x.shape[0])])
         
@@ -466,7 +462,7 @@ class ElasticOrder1(DeformationModule):
             dx = der['p'][0][1]            
             
             
-            dvx = v.Apply(x, 1)
+            dvx = fields.my_VsToV(Vsr1,x,1)
             dvx_sym = (dvx + np.swapaxes(dvx,1,2))/2
             S = np.tensordot(dvx_sym,fun_eta.my_eta())
             

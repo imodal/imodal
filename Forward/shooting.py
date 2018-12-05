@@ -24,6 +24,9 @@ def forward_step_rk2(Mod, step):
     Mod1 = Mod.copy_full()
     forward_step(Mod1, 0.5*step)
     
+    Mod1.update()
+    Mod1.GeodesicControls_curr(Mod1.GD)
+    
     dxH = HamDer.dxH(Mod1)
     dpH = HamDer.dpH(Mod1)
     

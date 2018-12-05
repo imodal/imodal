@@ -133,6 +133,11 @@ class GD_landmark(GeometricalDescriptors):
         return npair.CotToVs_class(self, sig)
     
     def Ximv(self, v): #tested
+        
+        """
+        xi_m ()
+        
+        """
         pts = self.get_points()
         appli = v.Apply(pts, 0) 
         out = self.copy()

@@ -16,8 +16,11 @@ plt.show()
 plt.ion()
 
 #%%
-from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot, \
+from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
     useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
+
+from implicitmodules.src import hamiltonian_derivatives as ham, modules_operations as modop, useful_functions as utils
+import implicitmodules.src.data_attachment.varifold as var
 #%% import data
 
 import pickle
@@ -174,10 +177,14 @@ fig = plt.figure(5)
 plt.clf()
 
 visu.my_plot4(Mod0,Mod1,Cot, fig,nx,ny, name, i)
+#%%
+
+der = ham.my_dxH(Mod0, Mod1, Cot)
+
 
 #%% Shoot
-N =3
-Traj = shoot.my_fd_shoot(Mod0, Mod1, Cot,N)
+N =1
+Traj = shoot_old.my_fd_shoot(Mod0, Mod1, Cot,N)
 
 #%% Plot
 

@@ -24,7 +24,8 @@ Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 
 #%% 
 
-Mod_el = comb_mod.CompoundModules([Sil, Model0, Model1])
+Mod_el_init = comb_mod.CompoundModules([Sil, Model0, Model1])
+
 #%%
 
 param_sil = (xs, ps)
@@ -33,28 +34,82 @@ param_1 = ((x1, R), (p1, PR))
 
 #%%
 param = [param_sil, param_0, param_1]
-GD = Mod_el.GD.copy()
-Mod_el.GD.fill_cot_from_param(param)
+GD = Mod_el_init.GD.copy()
+Mod_el_init.GD.fill_cot_from_param(param)
+
+##%%
+#
+#Mod_el.update()
+#
+##%%
+#Mod_el.GeodesicControls_curr(Mod_el.GD)
+##%%
+#Mod_el.Cont[1] - Mod0['mom']
+
+##%%
+#v = Mod_el.field_generator_curr()
+##%%
+#dxH = HamDer.dxH(Mod_el)
+#dpH = HamDer.dpH(Mod_el)
+#
+##%%
+#Mod_el.add_cot(dxH)
 
 #%%
-
-Mod_el.update()
-
-#%%
-Mod_el.GeodesicControls_curr(Mod_el.GD)
-#%%
-Mod_el.Cont[2] - Mod1['h']
-
-#%%
-v = Mod_el.field_generator_curr()
-#%%
-dxH = HamDer.dxH(Mod_el)
-dpH = HamDer.dpH(Mod_el)
-
-#%%
-Mod_el.add_cot(dxH)
-
-#%%
-
-N = 3
+Mod_el = Mod_el_init.copy_full()
+N = 5
 traj, contlist = shoot.shooting_traj(Mod_el, N)
+
+#%%
+t_old= -1
+t = -1
+
+(tMod0, tMod1, tCot) = Traj[t_old]
+print(sum(np.abs(tMod0['0'] - traj[t].Cot['0'][1][0])))
+print(sum(np.abs(tMod1['x,R'][0] - traj[t].Cot['x,R'][0][0][0])))
+print(sum(np.abs(tMod1['x,R'][1] - traj[t].Cot['x,R'][0][0][1])))
+print(sum(np.abs(tMod0['0'] - traj[t].Cot['0'][1][0])))
+print(sum(np.abs(tCot['0'][1][0] - traj[t].Cot['0'][0][0])))
+
+
+
+
+#%%
+
+Cot['0'][0][1] -Mod_el.GD.Cot['0'][1][1]
+
+Cot['x,R'][0][0][1] -Mod_el.GD.Cot['x,R'][0][0][1]
+
+#%%
+Mod_el.update()
+Mod_el.GeodesicControls_curr(Mod_el.GD)
+#dGD = HamDer.dpH(Mod_el) #tested
+dGD = HamDer.dxH(Mod_el) # tested
+#%%
+
+
+der['0'][1][1] +dGD.Cot['0'][0][1]
+
+der['x,R'][0][1][1] + dGD.Cot['x,R'][0][1][1]
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

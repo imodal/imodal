@@ -23,6 +23,7 @@ def dxH(Mod):
     
     ## derivation of the cost
     der_cost = Mod.DerCost_curr()
+    der_cost.mult_Cot_scal(-1.)
     der.add_cot(der_cost.Cot)
     
     out = der.copy()

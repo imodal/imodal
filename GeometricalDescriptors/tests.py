@@ -496,7 +496,7 @@ GD1 = GD.copy()
 
 #%%
 x = np.array([[0.,0.]])
-R = np.array([[[0.,-1.],[-1., 0.]]])
+R = np.array([[[0.,-1.],[1., 0.]]])
 px = np.random.rand(*x.shape)
 pR = np.random.rand(x.shape[0], 2, 2)
 
@@ -586,11 +586,21 @@ print(dGD.Cot)
 
 #%%
 sig = 1
-N_pts = 1
+N_pts = 2
 dim = 2
 coeff =1
+C = np.array([[[1],[1]]])
+C = np.ones([N_pts, dim, 1])
+Mod1 = defmod.ElasticOrder1(sig, N_pts, dim, coeff, C, 0.001)
+#%%
+x = np.array([[0.,0.], [1.5,1.]])
+R = np.array([[[0.,-1.],[1., 0.]], [[0.,-1.],[1., 0.]]])
+px = np.random.rand(*x.shape)
+pR = np.random.rand(x.shape[0], 2, 2)
 
-Mod1 = defmod.ElasticOrder1(sig, N_pts, dim, coeff, C)
+param = ((x,R), (px, pR))
+Mod1.GD.fill_cot_from_param(param)
+
 #%%
 
 Mod11 = Mod1.copy()
@@ -619,6 +629,9 @@ Mod1.GeodesicControls_curr(Modc.GD)
 v = Mod1.field_generator_curr()
 #%%
 Mod1.Cost_curr()
+#%%
+(Am, AmKiAm) = Mod1.AmKiAm_curr()
+
 
 #%%
 Mod1.update()
@@ -628,41 +641,77 @@ Mod1.Cost_curr()
 co = Mod1.cost
 
 import copy
-param = GD.Cot['x,R'][0]
+#param = GD.Cot['x,R'][0]
 eps = 1e-6
-xz = np.array([[0.,0.]])
-Rz = np.array([[[0.,0.],[0., 0.]]])
-pxz = np.zeros(x.shape)
-pRz = np.zeros([x.shape[0], 2, 2])
 
-paramz = ((xz,Rz), (pxz, pRz))
-
-der = (np.array([[0.,0.]]), np.array([[[0.,0.],[0., 0.]]]))
-
+#der = (np.array([[0.,0.]]), np.array([[[0.,0.],[0., 0.]]]))
+der = (np.zeros([Mod1.N_pts, dim]), np.zeros([Mod1.N_pts, dim, dim]))
 Mod11 = Mod1.copy_full()
 Mod11.Cont = Mod1.Cont.copy()
 for i in range(dim):
-    parameps = copy.deepcopy(param)
-    parameps[0][0][0,i] += eps
-    Mod11.GD.fill_cot_from_param(parameps)
-    Mod11.update()
-    Mod11.compute_mom_from_cont_curr()
-    Mod11.Cost_curr()
-    d_co = Mod11.cost
-    
-    der[0][0,i] = (d_co - co)/eps
-
-for i in range(dim):
-    for j in range(dim):
+    for j in range(Mod1.N_pts):
         parameps = copy.deepcopy(param)
-        parameps[0][1][0][i,j] += eps
+        parameps[0][0][j,i] += eps
         Mod11.GD.fill_cot_from_param(parameps)
         Mod11.update()
         Mod11.compute_mom_from_cont_curr()
         Mod11.Cost_curr()
         d_co = Mod11.cost
         
-        der[1][0][i,j] = (d_co - co)/eps
+        der[0][j,i] = (d_co - co)/eps
+
+for i in range(dim):
+    for j in range(dim):
+        for k in range(Mod1.N_pts):
+            parameps = copy.deepcopy(param)
+            parameps[0][1][k][i,j] += eps
+            Mod11.GD.fill_cot_from_param(parameps)
+            Mod11.update()
+            Mod11.compute_mom_from_cont_curr()
+            Mod11.Cost_curr()
+            d_co = Mod11.cost
+            
+            der[1][k][i,j] = (d_co - co)/eps
+        
+print(der)
+print(dGD.Cot)
+#%%
+Mod1.update()
+Mod1.GeodesicControls_curr(Modc.GD)
+dGD = Mod1.cot_to_innerprod_curr(Modc.GD, 1) 
+co = Mod1.cot_to_innerprod_curr(Modc.GD, 0)
+
+import copy
+eps = 1e-6
+
+der = (np.zeros([Mod1.N_pts, dim]), np.zeros([Mod1.N_pts, dim, dim]))
+
+Mod11 = Mod1.copy_full()
+Mod11.Cont = Mod1.Cont.copy()
+for i in range(dim):
+    for j in range(Mod1.N_pts):
+        parameps = copy.deepcopy(param)
+        parameps[0][0][j,i] += eps
+        Mod11.GD.fill_cot_from_param(parameps)
+        Mod11.update()
+        Mod11.compute_mom_from_cont_curr()
+        #Mod11.Cost_curr()
+        d_co = Mod11.cot_to_innerprod_curr(Modc.GD, 0)
+        
+        der[0][j,i] = (d_co - co)/eps
+
+for i in range(dim):
+    for j in range(dim):
+        for k in range(Mod1.N_pts):
+            parameps = copy.deepcopy(param)
+            parameps[0][1][k][i,j] += eps
+            Mod11.GD.fill_cot_from_param(parameps)
+            Mod11.update()
+            Mod11.compute_mom_from_cont_curr()
+            #Mod11.Cost_curr()
+            d_co = Mod11.cot_to_innerprod_curr(Modc.GD, 0)
+            
+            der[1][k][i,j] = (d_co - co)/eps
         
 print(der)
 print(dGD.Cot)
