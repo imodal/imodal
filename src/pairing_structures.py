@@ -66,12 +66,15 @@ def my_dCotDotV(Cot, Vs):
     return der
     
 def my_pSmV(Vsl,Vsr,j):
-    """ Compute product (p|Sm(v)) (j=0) and the gradient in m (j=1) coding
+    """ 
+    Compute product (p|Sm(v)) (j=0) (= inner product of Vsl and Vsr) and 
+    the gradient in m (j=1) (Geometrical suport of Vsl) coding
     the the linear form in V^* v->(p|Sm(v)) as dictionary Vsl (l for left)
     having only '0' and 'p' types and the fixed v in the formula m->(p|Sm(v)) 
     as Vsr (r for right).
     
     attention: Vs does not necessary come from a cot_to_vs
+    Supposes that they are in the same rkhs and that vsl has only '0' and 'p'
     """
     
     if j == 1:

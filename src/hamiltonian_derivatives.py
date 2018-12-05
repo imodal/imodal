@@ -53,6 +53,8 @@ def my_dxH(Mod0, Mod1, Cot):
     der = pair.my_pSmV(Vs1,Vsr1,1)
     dx1H = der['p'][0][1]
     # 
+    
+    # derivation of the \zeta_x0 part
     Vsr0 = fields.my_CotToVs(Cot, sig0)
     der = pair.my_pSmV(Vs0,Vsr0,1)
     dx0H = der['0'][0][1]

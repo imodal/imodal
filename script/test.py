@@ -5,8 +5,8 @@ Created on Thu Nov  8 17:19:10 2018
 
 @author: barbaragris
 """
-import sys, os.path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..')*2)
+#import sys, os.path
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..')*2)
 
 import os
 import numpy as np
@@ -54,6 +54,8 @@ x1 = nlx[nlx[:,2]==1,0:2]
 xs = nlx[nlx[:,2]==2,0:2]
 xst = nlxt[nlxt[:,2]==2,0:2]
 
+
+
 #%% Define Modules
 nx, ny = (5,11)
 (a,b,c,d) = (-10., 10., -3., 40.)
@@ -91,7 +93,7 @@ C[:,1,0] = K*(b*(38. - x1[:,1])**2/2 + a*(38. - x1[:,1]))
 L = 38.
 a, b = -2/L**3, 3/L**2
 C[:,1,0] = K*(a*(38. - x1[:,1])**3 + b*(38. - x1[:,1])**2)
-C[:,0,0] = 0.9*C[:,1,0]
+C[:,0,0] = 1*C[:,1,0]
 
 Mod1['C'] = C
 
@@ -167,6 +169,11 @@ Mod1['h'] = solve(AmKiAm, Am_s_tlam, sym_pos = True)
 # Computes cost and other variables to store them
 modop.my_mod_update(Mod1) # will compute the new lam, mom and cost
 
+#%%
+fig = plt.figure(5)
+plt.clf()
+
+visu.my_plot4(Mod0,Mod1,Cot, fig,nx,ny, name, i)
 
 #%% Shoot
 N =3

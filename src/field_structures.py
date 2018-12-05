@@ -80,7 +80,8 @@ def my_VsToV(Par, z, j): # generic vector field (tested)
     # to \xi^\ast_m (\eta)
 def my_CotToVs(Cot, sig):
     Vs = {'0': [], 'p': [], 'm': []}
-    [Vs['0'].append(s) for s in Cot['0']]
+    if '0' in Cot:
+        [Vs['0'].append(s) for s in Cot['0']]
     
     if 'x,R' in Cot:
         [Vs['0'].append((s[0][0], s[1][0])) for s in Cot['x,R']]
