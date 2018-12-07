@@ -14,13 +14,22 @@ import Forward.Hamiltonianderivatives as HamDer
 
 def fill_Vector_from_GD(GD): #tested
     Cot = GD.Cot
-    PX = np.concatenate([Cot['0'][0][0].flatten(),Cot['0'][1][0].flatten(),
-                            Cot['x,R'][0][0][0].flatten(),
-                           Cot['x,R'][0][0][1].flatten()])
-    PMom = np.concatenate([Cot['0'][0][1].flatten(),Cot['0'][1][1].flatten(),
-                            Cot['x,R'][0][1][0].flatten(),
-                           Cot['x,R'][0][1][1].flatten()])
-    
+    PX = []
+    PMom = []
+    if '0' in Cot:
+        for (x,p) in Cot['0']:
+            PX.append(x.flatten())
+            PMom.append(p.flatten())
+            
+    if 'x,R' in Cot:
+        for ((x,R), (px, pR)) in Cot['x,R']:
+            PX.append(x.flatten())
+            PX.append(R.flatten())
+            PMom.append(px.flatten())
+            PMom.append(pR.flatten())
+
+    PX = np.concatenate(PX)
+    PMom = np.concatenate(PMom)
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
