@@ -81,7 +81,9 @@ def jac(P0, *args):
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
     
     dP = fill_Vector_from_GD(cgrad)
-    
+    n = dP.shape[0]
+    n = int(0.5*n)
+    dP[:n] = 0.
     return dP
     
     

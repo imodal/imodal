@@ -18,9 +18,11 @@ import implicitmodules.src.data_attachment.varifold as var
 import implicitmodules.Backward.Backward as bckwd
 import implicitmodules.Backward.ScipyOptimise as opti
 #%%
+sig0 = 30
 dim = 2
 Sil = defmod.SilentLandmark(xs.shape[0], dim)
 Model1 = defmod.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 Model00 = defmod.ElasticOrderO(100, 1, dim, 0.1)
 #%% 
@@ -29,7 +31,7 @@ Mod_el_init = comb_mod.CompoundModules([Sil, Model0, Model1])
 
 #%%
 
-param_sil = (xs, ps)
+param_sil = (xs, 0.5*ps)
 param_0 = (x0, p0)
 param_00 = (np.zeros([1, 2]), np.zeros([1, 2]))
 param_1 = ((x1, R), (p1, PR))
@@ -56,6 +58,7 @@ xst += 20.
 
 param_sil = (xs, np.zeros(xs.shape))
 param_0 = (x0, np.zeros(x0.shape))
+param_01 = (xs, np.zeros(xs.shape))
 param_1 = ((x1, R), (np.zeros(x1.shape), np.zeros(R.shape)))
 
 #%%
@@ -67,6 +70,8 @@ param = [param_sil, param_1]
 
 Mod_el_init_opti = comb_mod.CompoundModules([Sil, Model00, Model1])
 param = [param_sil, param_00, param_1]
+#Mod_el_init_opti = comb_mod.CompoundModules([Sil, Model0])
+#param = [param_sil, param_0]
 
 GD = Mod_el_init.GD.copy()
 Mod_el_init_opti.GD.fill_cot_from_param(param)
@@ -74,7 +79,7 @@ Mod_el_opti = Mod_el_init_opti.copy_full()
 P0 = opti.fill_Vector_from_GD(Mod_el_opti.GD)
 #%%
 lam_var = 1.
-sig_var = 40.
+sig_var = 20.
 N=5
 args = (Mod_el_opti, xst, lam_var, sig_var, N, 0.001)
 
@@ -82,10 +87,9 @@ res = scipy.optimize.minimize(opti.fun, P0,
     args = args,
     method='L-BFGS-B', jac=opti.jac, bounds=None, tol=None, callback=None,
     options={'disp': True, 'maxcor': 10, 'ftol': 1.e-09, 'gtol': 1e-03,
-    'eps': 1e-08, 'maxfun': 100, 'maxiter': 15, 'iprint': -1, 'maxls': 20})
+    'eps': 1e-08, 'maxfun': 100, 'maxiter': 10, 'iprint': -1, 'maxls': 20})
 #%%
 P1 = res['x']
-
 
 #%%
 opti.fill_Mod_from_Vector(P1, Mod_el_opti)
@@ -132,7 +136,7 @@ Mod_tot = comb_mod.CompoundModules([Sil_grid, Mod_el_opti])
 Modlist_opti_tot = shoot.shooting_traj(Mod_tot, N)
 
 #%%
-i=5
+i=0
 xgrid = Modlist_opti_tot[2*i].GD.Cot['0'][0][0]
 xs_i = Modlist_opti_tot[2*i].GD.Cot['0'][1][0]
 xsx = xgrid[:,0].reshape((nx,ny))

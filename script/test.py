@@ -73,6 +73,7 @@ sig = (10., 30.) # sigma's for K0 and K1
 
 th = 0*np.pi
 p0 = np.zeros(x0.shape)
+#p0 = np.random.rand(*p0.shape)
 Mod0 ={ '0': x0, 'sig':sig[0], 'coeff':coeffs[0]}
 
 
@@ -96,7 +97,7 @@ C[:,1,0] = K*(b*(38. - x1[:,1])**2/2 + a*(38. - x1[:,1]))
 L = 38.
 a, b = -2/L**3, 3/L**2
 C[:,1,0] = K*(a*(38. - x1[:,1])**3 + b*(38. - x1[:,1])**2)
-C[:,0,0] = 1*C[:,1,0]
+C[:,0,0] = 0.5*C[:,1,0]
 
 Mod1['C'] = C
 
@@ -104,9 +105,12 @@ Mod1['C'] = C
 ps = np.zeros(xs.shape)
 ps[0:4,1] = 2.
 ps[22:26,1] = 2.
-    
-(p1,PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0],2,2)))
 
+#ps = np.random.rand(*ps.shape) 
+   
+(p1,PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0],2,2)))
+#p1 = np.random.rand(*x1.shape)
+#pR = np.random.rand(x1.shape[0],2,2)
 #xs, ps = x0, p0
 
 Cot ={ '0':[(x0,p0), (xs,ps)], 'x,R':[((x1,R),(p1,PR))]}
