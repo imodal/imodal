@@ -95,11 +95,14 @@ class GD_landmark(GeometricalDescriptors):
             x,p = self.Cot['0'][0]
             GD.Cot['0'] = [(x.copy(), p.copy())]
         return GD
-    
+
+    def fill_zero(self):
+        self.Cot['0'] = [(np.zeros([self.N_pts, self.dim]), np.zeros([self.N_pts, self.dim]))]
+        
     def updatefromCot(self):
         pass
     
-    def fill_GD(self, pts): # tested 
+    def fill_GDpts(self, pts): # tested 
         self.pts = pts.copy()
         self.Cot['0'] = [( pts.copy(), np.zeros([self.N_pts, self.dim]) )]
         
@@ -189,6 +192,11 @@ class GD_xR(GeometricalDescriptors):
             ((x,R), (px,pR)) = self.Cot['x,R'][0]
             GD.Cot['x,R'] = [((x.copy(), R.copy()), (px.copy(), pR.copy()))]
         return GD     
+
+    def fill_zero(self):
+        self.Cot['x,R'] = [((np.zeros([self.N_pts, self.dim]), np.zeros([self.N_pts, self.dim, self.dim])),
+                (np.zeros([self.N_pts, self.dim]), np.zeros(self.pRshape)))]
+        
     
     def updatefromCot(self):
         pass    
@@ -312,6 +320,12 @@ class Combine_GD(GeometricalDescriptors):
         GD_comb.indi_xR = self.indi_xR.copy()
         GD_comb.fill_cot_from_GD()
         return GD_comb
+
+    def fill_zero(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].fill_zero()
+        self.fill_cot_from_GD()
+
     
     def fill_coti_from_cot(self):
         for i in range(self.N_GDs):

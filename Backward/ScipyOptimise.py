@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Dec  7 08:07:16 2018
+
+@author: barbaragris
+"""
+import numpy as np
+import implicitmodules.src.data_attachment.varifold as var
+
+import Forward.shooting as shoot
+import implicitmodules.Backward.Backward as bckwd
+import Forward.Hamiltonianderivatives as HamDer
+
+def fill_Vector_from_GD(GD): #tested
+    Cot = GD.Cot
+    PX = np.concatenate([Cot['0'][0][0].flatten(),Cot['0'][1][0].flatten(),
+                            Cot['x,R'][0][0][0].flatten(),
+                           Cot['x,R'][0][0][1].flatten()])
+    PMom = np.concatenate([Cot['0'][0][1].flatten(),Cot['0'][1][1].flatten(),
+                            Cot['x,R'][0][1][0].flatten(),
+                           Cot['x,R'][0][1][1].flatten()])
+    
+    return np.concatenate([PX.copy(), PMom.copy()])
+
+
+def fill_Mod_from_Vector(P, Mod): #tested
+    """
+    Supposes that Mod has a Cot already filled (and that needs to be changed)
+    """
+    dimP = P.shape[0]
+    dimP = int(0.5*dimP)
+    PX = P[:dimP]
+    PMom = P[dimP:]
+    count = 0
+    GD = Mod.GD.copy()
+    if '0' in Mod.GD.Cot:
+        for (x, p) in Mod.GD.Cot['0']:
+            n, d = x.shape
+            nx = PX[count : count + n*d].reshape([n, d])
+            np = PMom[count : count + n*d].reshape([n, d])
+            GD.Cot['0'].append( (nx, np) )
+            count += n*d
+
+    if 'x,R' in Mod.GD.Cot:
+        for ((x, R), (px, pR)) in Mod.GD.Cot['x,R']:
+            n, d = x.shape
+            nx = PX[count : count + n*d].reshape([n, d])
+            npx = PMom[count : count + n*d].reshape([n, d])
+            count += n*d
+            nR = PX [count: count + n*d*d].reshape([n, d, d])
+            npR = PMom [count: count + n*d*d].reshape([n, d, d])
+            GD.Cot['x,R'].append( ((nx, nR), (npx, npR)) )
+            count += n*d*d
+
+    GD.updatefromCot()
+    Mod.fill_GD(GD)
+    
+def jac(P0, *args):
+    (Mod, xst, lam_var, sig_var, N, eps) = args
+    fill_Mod_from_Vector(P0, Mod)
+    ModTraj = shoot.shooting_traj(Mod, N)
+    xsf = ModTraj[-1].ModList[0].GD.Cot['0'][0][0]
+    (varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
+    dxvarcost = lam_var * dxvarcost
+    
+    grad_1 = Mod.GD.copy()
+    grad_1.fill_zero()
+    grad_1.GD_list[0].fill_GDpts(dxvarcost)
+    grad_1.fill_cot_from_GD()
+    
+    cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
+    
+    dP = fill_Vector_from_GD(cgrad)
+    
+    return dP
+    
+    
+def fun(P0, *args):
+    (Mod, xst, lam_var, sig_var, N, eps) = args
+    fill_Mod_from_Vector(P0, Mod)
+    ModTraj = shoot.shooting_traj(Mod, N)
+    xsf = ModTraj[-1].ModList[0].GD.Cot['0'][0][0]
+    (varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
+    varcost = lam_var * varcost
+    hamval = HamDer.Ham(ModTraj[0])
+    
+    print("ham     = {0:10.3e}".format(hamval))
+    print("varcost = {0:10.3e}".format(varcost))
+    print("totener = {0:10.3e}".format(hamval + varcost))
+    return hamval + varcost
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

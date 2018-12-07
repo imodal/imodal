@@ -58,6 +58,8 @@ def shooting_traj(Mod, N_int):
     """
     
     step = 1./N_int
+    Mod.update()
+    Mod.GeodesicControls_curr(Mod.GD)
     Mod_list = [Mod.copy_full()]
     #GD_list = [Mod.GD.copy_full()]
     #Cont_list = []
