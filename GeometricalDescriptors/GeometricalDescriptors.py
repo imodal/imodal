@@ -364,7 +364,7 @@ class Combine_GD(GeometricalDescriptors):
             if 'x,R' in Coti:
                 for (X,P) in Coti['x,R']:
                     self.Cot['x,R'].append( (X,P) )
-    
+        
     
     def fill_cot_from_param(self, param):#tested0
         for parami, GDi in zip(param, self.GD_list):
@@ -378,6 +378,7 @@ class Combine_GD(GeometricalDescriptors):
     
     def add_cot(self, Cot): #tested0
         self.Cot = add_cot(self.Cot, Cot)
+        self.updatefromCot()
         
     def add_GDCot(self, GD):#tested
         for i in range(self.N_GDs):

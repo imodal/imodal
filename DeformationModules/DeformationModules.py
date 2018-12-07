@@ -44,8 +44,6 @@ class DeformationModule(object):
     """
     
     
-    def fill_GD(self, GD):
-        self.GD.fill_GD(GD)
     
     def sum_GD(self, GD0, GD1):
         self.GD.sum_GD(GD0, GD1)
@@ -229,6 +227,9 @@ class SilentLandmark(DeformationModule):#tested
     def update(self):
         pass
     
+    def fill_GD(self, GD):
+        self.GD = GD.copy_full()
+        
     def GeodesicControls_curr(self, GDCot):
         pass
     
@@ -307,6 +308,7 @@ class ElasticOrder1(DeformationModule):
         self.SKS = np.zeros([self.N_pts*self.dimR,self.N_pts*self.dimR])
         self.Mom = np.zeros([self.N_pts, self.dim, self.dim])
         self.lam = np.zeros([self.N_pts*self.dimR])
+        self.Amh = []
         self.Cont = np.zeros([1])
         self.cost = 0.  
         
@@ -320,6 +322,8 @@ class ElasticOrder1(DeformationModule):
         Mod.Mom = self.Mom.copy()
         Mod.Cont = self.Cont.copy()
         Mod.cost = self.cost
+        Mod.Amh = self.Amh
+        Mod.lam = self.lam
         return Mod    
 
     def fill_GD(self, GD):

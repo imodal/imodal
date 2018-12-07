@@ -183,7 +183,7 @@ der = ham.my_dxH(Mod0, Mod1, Cot)
 
 
 #%% Shoot
-N =1
+N =5
 Traj = shoot_old.my_fd_shoot(Mod0, Mod1, Cot,N)
 
 #%% Plot

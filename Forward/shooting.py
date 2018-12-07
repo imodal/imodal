@@ -34,6 +34,7 @@ def forward_step_rk2(Mod, step):
     dpH.mult_Cot_scal(step)
     Mod.add_cot(dxH)
     Mod.add_cot(dpH)
+    return Mod1
 
 def shooting(Mod, N_int):
     """
@@ -46,7 +47,7 @@ def shooting(Mod, N_int):
     for i in range(N_int):
         Mod.update()
         Mod.GeodesicControls_curr(Mod.GD)
-        forward_step_rk2(Mod, step)
+        Modtmp = forward_step_rk2(Mod, step)
         
     return Mod
 
@@ -57,14 +58,19 @@ def shooting_traj(Mod, N_int):
     """
     
     step = 1./N_int
-    GD_list = [Mod.GD.copy_full()]
-    Cont_list = []
+    Mod_list = [Mod.copy_full()]
+    #GD_list = [Mod.GD.copy_full()]
+    #Cont_list = []
     for i in range(N_int):
         Mod.update()
         Mod.GeodesicControls_curr(Mod.GD)
-        forward_step_rk2(Mod, step)
-        GD_list.append(Mod.GD.copy_full())
-        Cont_list.append(Mod.Cont)
+        Modtmp = forward_step_rk2(Mod, step)
+        Mod_list.append(Modtmp.copy_full())
+        Mod_list.append(Mod.copy_full())
+        #GD_list.append(gd.copy_full())
+        #Cont_list.append(c)
+        #GD_list.append(Mod.GD.copy_full())
+        #Cont_list.append(Mod.Cont)
         
-    return GD_list, Cont_list
+    return Mod_list
 
