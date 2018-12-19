@@ -58,7 +58,7 @@ class ElasticOrderO(DeformationModule):
     """
     
     
-    def __init__(self, sigma, N_pts, dim, coeff):
+    def __init__(self, sigma, N_pts, dim, coeff, nu):
         """
         sigma is the scale of the rkhs of generated vector fields
         N_pts is the number of landmarks
@@ -68,6 +68,7 @@ class ElasticOrderO(DeformationModule):
         self.N_pts = N_pts
         self.dim =dim
         self.coeff = coeff
+        self.nu = nu
         self.GD = GeoDescr.GD_landmark(N_pts, dim)
         self.SKS = np.zeros([self.N_pts*self.dim,self.N_pts*self.dim])
         self.Mom = np.zeros([self.N_pts, self.dim])
@@ -75,10 +76,10 @@ class ElasticOrderO(DeformationModule):
         self.cost = 0.
         
     def copy(self):
-        return ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff)
+        return ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
     
     def copy_full(self):
-        Mod = ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff)
+        Mod = ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
         Mod.GD = self.GD.copy_full()
         Mod.SKS = self.SKS.copy()
         Mod.Mom = self.Mom.copy()
@@ -100,11 +101,12 @@ class ElasticOrderO(DeformationModule):
         try:
             x = self.GD.get_points()
             self.SKS = ker.my_K(x, x, self.sig, 0)
+            self.SKS += self.nu * np.eye(self.N_pts * self.dim)
         except:
             raise NameError('Need to fill landmark points before computing SKS')
     
     def Compute_SKS(self, x):
-        return ker.my_K(x, x, self.sig, 0)
+        return ker.my_K(x, x, self.sig, 0) + self.nu * np.eye(self.N_pts * self.dim)
     
     def update(self):
         """
@@ -127,15 +129,15 @@ class ElasticOrderO(DeformationModule):
                      vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
         self.Mom = self.Cont.copy()
     
-    def GeodesicControls(self, GD, GDCot):
-        """
-        Supposes that SKS has been computed and values of GD filled
-        """
-        vs = GDCot.Cot_to_Vs(self.sig)
-        vm = vs.Apply(GD.get_points(), 0)
-        SKS = self.Compute_SKS(GD)
-        return solve(self.coeff * SKS,
-                     vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
+    #def GeodesicControls(self, GD, GDCot):
+    #    """
+    #    Supposes that SKS has been computed and values of GD filled
+    #    """
+    #    vs = GDCot.Cot_to_Vs(self.sig)
+    #    vm = vs.Apply(GD.get_points(), 0)
+    #    SKS = self.Compute_SKS(GD)
+    #    return solve(self.coeff * SKS,
+    #                 vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
         
         
     def field_generator_curr(self):
