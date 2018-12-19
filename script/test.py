@@ -99,12 +99,26 @@ a, b = -2/L**3, 3/L**2
 C[:,1,0] = K*(a*(38. - x1[:,1])**3 + b*(38. - x1[:,1])**2)
 C[:,0,0] = 0.5*C[:,1,0]
 
+#C = np.zeros((x1.shape[0],2,1))
+#C[0:4, 1, 0] = 2.
+#C[22:26, 1, 0] = 2.
+#C[:,0,0] = 1.*C[:,1,0]
+#
+#C = np.ones((x1.shape[0],2,1))
+#C[:, 0, 0] *= (x1[:, 1] >30)
+#C[:, 1, 0] *= (x1[:, 1] >30)
+#
+#C = np.zeros((x1.shape[0],2,1))
+#C[0, :, 0] = 10
+
+
 Mod1['C'] = C
 
 # Definition of geodesic momenta (put in Cot)
 ps = np.zeros(xs.shape)
 ps[0:4,1] = 2.
 ps[22:26,1] = 2.
+#ps[0,1] = 2.
 
 #ps = np.random.rand(*ps.shape) 
    

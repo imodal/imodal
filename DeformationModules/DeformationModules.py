@@ -122,6 +122,7 @@ class ElasticOrderO(DeformationModule):
         """
         vs = GDCot.Cot_to_Vs(self.sig)
         vm = vs.Apply(self.GD.get_points(), 0)
+        #print(self.sig)
         self.Cont = solve(self.coeff * self.SKS,
                      vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
         self.Mom = self.Cont.copy()
