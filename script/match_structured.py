@@ -191,7 +191,7 @@ Z = define_C1(X, 30 + np.zeros(X.shape))
 plt.plot(X,Z, '-')
 #%%
 x00 = np.array([[0., 0.]])
-coeffs = [5., 0.01]
+coeffs = [1., 0.01]
 sig0 = 30
 sig00 = 500
 sig1 = 50
@@ -268,7 +268,7 @@ Mod_el_opti = Mod_el_init_opti.copy_full()
 P0 = opti.fill_Vector_from_GD(Mod_el_opti.GD)
 #%%
 lam_var = 15.
-sig_var = 30.
+sig_var = 10.
 N=5
 args = (Mod_el_opti, xst, lam_var, sig_var, N, 0.001)
 
@@ -307,6 +307,7 @@ opti.fill_Mod_from_Vector(P1, Mod_el_opti)
 
 #new grid
 nx, ny = (5,11) # create a grid for visualisation purpose
+nx, ny = (11,21) # create a grid for visualisation purpose
 u = height/38.
 (a,b,c,d) = (-10.*u + Dx, 10.*u + Dx, -3.*u + Dy, 40.*u + Dy)
 
@@ -515,3 +516,23 @@ plt.axis('equal')
 plt.axis([-40,30,-70,45])
 plt.axis('off')
 plt.savefig(path_res +name_ex+ '_GDorder1.pdf', format='pdf', bbox_inches = 'tight')
+
+
+#%% Source et target
+
+
+#%% initialisatio
+i=0
+xs_ = xs.copy()
+xs_c = my_close(xs)
+
+xt = xst.copy()
+xt_c = my_close(xt)
+#x00_i = Modlist_opti_tot[2*i].GD.Cot['0'][3][0]
+#plt.plot(x0[:,0], x0[:,1], '.r')
+plt.plot(xs_c[:,0], xs_c[:,1], '-b')
+plt.plot(xt_c[:,0], xt_c[:,1], '-k')
+plt.axis('equal')
+#plt.plot(xsf[:,0], xsf[:,1], '-g')
+plt.axis('off')
+plt.savefig('/home/barbaragris/Dropbox/Recherche/CNRS/2019/figures/leaf_source_target.pdf', format='pdf', bbox_inches = 'tight')
