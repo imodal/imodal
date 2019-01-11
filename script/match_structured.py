@@ -272,7 +272,7 @@ sig_var = 10.
 N=5
 args = (Mod_el_opti, xst, lam_var, sig_var, N, 0.001)
 
-res = scipy.optimize.minimize(opti.fun, P1,
+res = scipy.optimize.minimize(opti.fun, P0,
     args = args,
     method='L-BFGS-B', jac=opti.jac, bounds=None, tol=None, callback=None,
     options={'disp': True, 'maxcor': 10, 'ftol': 1.e-09, 'gtol': 1e-03,
