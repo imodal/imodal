@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:15:18 2018
 """
 
 import numpy as np
-from implicitmodules.src import field_structures as fields
+from src import field_structures as fields
 
 
 def my_CotDotV(Cot, Vs):

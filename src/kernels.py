@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:07:37 2018
 """
 
 import numpy as np
-from implicitmodules.src import functions_eta as fun_eta
+from src import functions_eta as fun_eta
 
 
 def my_tensordotaxes0(x, y):

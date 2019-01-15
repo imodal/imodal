@@ -7,9 +7,9 @@ Created on Wed Nov 14 19:06:44 2018
 """
 
 import numpy as np
-from implicitmodules.src import hamiltonian_derivatives as ham, modules_operations as modop, useful_functions as utils
+from src import hamiltonian_derivatives as ham, modules_operations as modop, useful_functions as utils
 
-import implicitmodules.src.data_attachment.varifold as var
+import src.data_attachment.varifold as var
 
 def my_fun(P0, *args):
     """ compute the shooting and return the total cost

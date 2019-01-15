@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:05:41 2018
 """
 import numpy as np
 from scipy.linalg import solve
-from implicitmodules.src import field_structures as fields, pairing_structures as pair, functions_eta as fun_eta, modules_operations as mod
+from src import field_structures as fields, pairing_structures as pair, functions_eta as fun_eta, modules_operations as mod
 
 
 def my_add_der(der0, der1):

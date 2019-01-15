@@ -8,7 +8,7 @@ Created on Wed Nov 14 19:11:47 2018
 
 import numpy as np
 from scipy.linalg import solve
-from implicitmodules.src import constraints_functions as con_fun, useful_functions as utils, functions_eta as fun_eta, field_structures as fields
+from src import constraints_functions as con_fun, useful_functions as utils, functions_eta as fun_eta, field_structures as fields
 
 
 def my_mod_update(Mod):

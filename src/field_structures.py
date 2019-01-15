@@ -7,7 +7,7 @@ Created on Wed Nov 14 19:14:19 2018
 """
 
 import numpy as np
-from implicitmodules.src import kernels as ker
+from src import kernels as ker
 
 def my_VsToV(Par, z, j): # generic vector field (tested)
     """ This is the main function to compute the derivative of order 0 to 2 
