@@ -10,4 +10,4 @@ test_ubuntu_gcc:
 
     tags:
     - python3
-    - ubuntu16.04
+    - ubuntu18.04
