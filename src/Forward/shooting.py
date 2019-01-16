@@ -12,18 +12,21 @@ def forward_step(Mod, step):
     """
     Supposes that Geodesic controls are computed
     """
+    # dxH derivtes wrt x, it is put in the cotan element
     dxH = HamDer.dxH(Mod)
+    
+    # dxH derivtes wrt p, it is a speed of GD, it is put in the tan element
     dpH = HamDer.dpH(Mod)
     
-    dxH.mult_Cot_scal(step)
-    dpH.mult_Cot_scal(step)
-    dxH.mult_GD_scal(step)
-    dpH.mult_GD_scal(step)
+    dxH.mult_cotan_scal(step)
+    #dxH.mult_GD_scal(step)
+    dpH.mult_tan_scal(step)
+    #dpH.mult_tan_scal(step)
     
-    Mod.add_cot(dxH)
-    Mod.add_cot(dpH)
-    Mod.add_GD(dxH)
-    Mod.add_GD(dpH)
+    Mod.add_cotan(dxH)
+    Mod.add_speedGD(dpH)
+    #Mod.add_GD(dxH)
+    #Mod.add_GD(dpH)
 
 
 def forward_step_rk2(Mod, step):
@@ -36,15 +39,13 @@ def forward_step_rk2(Mod, step):
     dxH = HamDer.dxH(Mod1)
     dpH = HamDer.dpH(Mod1)
     
-    dxH.mult_Cot_scal(step)
-    dpH.mult_Cot_scal(step)
-    dxH.mult_GD_scal(step)
-    dpH.mult_GD_scal(step)
+    dxH.mult_cotan_scal(step)
+    #dxH.mult_GD_scal(step)
+    dpH.mult_tan_scal(step)
+    #dpH.mult_tan_scal(step)
     
-    Mod.add_cot(dxH)
-    Mod.add_cot(dpH)
-    Mod.add_GD(dxH)
-    Mod.add_GD(dpH)    
+    Mod.add_cotan(dxH)
+    Mod.add_speedGD(dpH)
     
     return Mod1
 

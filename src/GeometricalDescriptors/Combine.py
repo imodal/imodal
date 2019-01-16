@@ -106,4 +106,7 @@ class Combine_GD(ab.GeometricalDescriptors):
             self.GD_list[i].mult_cotan_scal(s)
 
 
-
+    def add_speedGD(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_speedGD(GDCot.GD_list[i])
+            

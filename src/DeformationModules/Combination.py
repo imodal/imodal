@@ -84,16 +84,16 @@ class CompoundModules(ab.DeformationModule):#tested
         return GeoDescr_comb.Combine_GD(derlist)
     
     def cot_to_innerprod_curr(self, GDCot, j):#tested0
-        vsr = GDCot.Cot_to_Vs(self.sig)
-        out = self.p_Ximv_curr(vsr, j)
+        #vsr = GDCot.Cot_to_Vs(self.sig)
+        #out = self.p_Ximv_curr(vsr, j)
 
-        """
+        
         if j==0:
             out = sum ([self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)] )
         if j==1:
             derlist = [self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)]
             out = GeoDescr_comb.Combine_GD(derlist)
-        """
+        
         return out
         
 

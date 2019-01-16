@@ -212,18 +212,23 @@ Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 
 #%%
+p00 = np.zeros([1, 2])
+p00 = np.random.rand(*p00.shape)
+
 p0 = np.zeros(x0.shape)
+p0 = np.random.rand(*p0.shape)
 ps = np.zeros(xs.shape)
 ps[0:4,1] = 2.
 ps[22:26,1] = 2.
 (p1,PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0],2,2)))
 param_sil = (xs, 0.3*ps)
 param_0 = (x0, p0)
-param_00 = (np.zeros([1, 2]), np.zeros([1, 2]))
+param_00 = (np.zeros([1, 2]), p00)
 param_1 = ((x1, R), (p1, PR))
 
 #%%
-param = [param_sil, param_00, param_0, param_1]
+#param = [param_sil, param_00, param_0, param_1]
+param = [param_00, param_0]
 #param = [param_sil, param_1]
 GD = Mod_el_init.GD.copy()
 
@@ -237,12 +242,42 @@ Mod_el = Mod_el_init.copy_full()
 N=5
 
 #%%
-Modlist = shoot.shooting_traj(Mod_el, N)
+Modlist_save_new = shoot.shooting_traj(Mod_el, N)
 #xst = Modlist[-1].GD.Cot['0'][0][0].copy()
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 16:32:35 2019
 
-@author: gris
-"""
+#%%
+t = -1
+x00_f = Modlist[t].GD.Cot['0'][0][0]
+x00_f_n = Modlist_save_new[t].GD.GD_list[0].GD
+x00_f_nbis = Modlist_save_new[t].ModList[0].GD.GD
+print(x00_f_n -x00_f_nbis )
+print(x00_f -x00_f_nbis )
+print(x00_f)
+print(x00_f_nbis)
 
+#%%
+print(Modlist[2].GD.Cot['0'][0][1] - Modlist[0].GD.Cot['0'][0][1])
+print(Modlist_save_new[2].ModList[0].GD.cotan - Modlist_save_new[0].ModList[0].GD.cotan)
+#%%
+t = 0
+cont = Modlist[t].Cont
+cont_n = Modlist_save_new[t].Cont
+print(cont[1] - cont_n[1])
+#%%
+
+a = Modlist[0].cot_to_innerprod_curr(Modlist[0].GD, 1)
+b = Modlist_save_new[0].cot_to_innerprod_curr(Modlist[0].GD, 1)
+
+a = Modlist[0].DerCost_curr()
+b = Modlist_save_new[0].DerCost_curr()
+
+print(a - b)
+
+#%%
+v = Modlist[0].field_generator_curr()
+v_n = Modlist_save_new[0].field_generator_curr()
+der =  Modlist[0].ModList[0].GD.dCotDotV(v)
+der_n =  Modlist_save_new[0].ModList[0].GD.dCotDotV(v_n)
+#%%
+print(der_n.GD_list[0].cotan - der.GD_list[0].Cot['0'][0][0] )

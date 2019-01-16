@@ -19,12 +19,12 @@ def dxH(Mod):
     
     ## derivation wrt GD in Zeta_GD
     der_fieldgen = Mod.cot_to_innerprod_curr(Mod.GD, 1)    
-    der.add_cot(der_fieldgen)
-    der.mult_Cot_scal(-1.)
+    der.add_cotan(der_fieldgen)
+    der.mult_cotan_scal(-1.)
     
     ## derivation of the cost
     der_cost = Mod.DerCost_curr()
-    der.add_cot(der_cost)
+    der.add_cotan(der_cost)
 
     return der
 

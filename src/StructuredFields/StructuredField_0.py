@@ -67,4 +67,3 @@ class StructuredField_0(ab.StructuredField):
        
         return djv
         
-       

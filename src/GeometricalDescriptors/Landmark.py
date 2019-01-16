@@ -48,14 +48,14 @@ class GD_landmark(ab.GeometricalDescriptors):
 
     
     def get_mom(self):
-        return self.cotan()
+        return self.cotan.copy()
         
     
     def fill_cot_from_param(self, param):
         self.GD = param[0].copy()
         self.cotan = param[1].copy()
 
-    def Cot_to_VS(self, sig):
+    def Cot_to_Vs(self, sig):
         v = stru_fie.StructuredField_0(sig, self.N_pts, self.dim)
         v.fill_fieldparam((self.GD, self.cotan)) 
         return v
@@ -74,7 +74,7 @@ class GD_landmark(ab.GeometricalDescriptors):
     def dCotDotV(self, vs): #
         """
         Supposes that Cot has been filled
-        (p Ximv(m,v)) wrt m
+        derivates (p Ximv(m,v)) wrt m
         """
         x = self.get_points()
         p = self.get_mom()
@@ -83,7 +83,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         dx = np.asarray([np.dot(p[i], der[i]) for i in range(x.shape[0])])
         
         GD = self.copy_full()
-        GD.tan = dx.copy() 
+        GD.cotan = dx.copy() 
         return GD    
                 
 
@@ -102,7 +102,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         self.tan = self.tan + GDCot.tan
         
             
-    def add_cot(self, GDCot):
+    def add_cotan(self, GDCot):
         self.cotan = self.cotan + GDCot.cotan
         
     
@@ -112,9 +112,11 @@ class GD_landmark(ab.GeometricalDescriptors):
     def mult_tan_scal(self, s):
         self.tan = s * self.tan
 
-    def mult_Cot_scal(self, s):
+    def mult_cotan_scal(self, s):
         self.cotan = s * self.cotan
 
+    def add_speedGD(self, GDCot):
+        self.GD = self.GD + GDCot.tan
         
 
 
