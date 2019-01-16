@@ -6,29 +6,20 @@ Created on Mon Dec 10 11:29:08 2018
 @author: barbaragris
 """
 
-
-import scipy .optimize
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+# %%
+from src import rotation as rot
 
-import GeometricalDescriptors.GeometricalDescriptors as geo_descr
-import implicitmodules.field_structures as fields
-import StructerdFIelds.StructuredFields as stru_fie
-import DeformationModules.DeformationModules as defmod
 import DeformationModules.Combination as comb_mod
-import Forward.Hamiltonianderivatives as HamDer
+import DeformationModules.ElasticOrder1
+import DeformationModules.SilentLandmark
 import Forward.shooting as shoot
-#%%
-from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
-    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
-from implicitmodules.src.visualisation import my_close
-
-import implicitmodules.src.data_attachment.varifold as var
-import implicitmodules.Backward.Backward as bckwd
-import implicitmodules.Backward.ScipyOptimise as opti
 
 #%%
-path_res = "/home/barbaragris/Results/ImplicitModules/"
+import os.path
+path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
+os.makedirs(path_res, exist_ok=True)
 
 #%%
 
@@ -143,8 +134,8 @@ sig0 = 10
 sig1 = 5
 nu = 0.001
 dim = 2
-Sil = defmod.SilentLandmark(xs.shape[0], dim)
-Model1 = defmod.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
+Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 #Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 #Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 #Model00 = defmod.ElasticOrderO(100, 1, dim, 0.1)
@@ -181,7 +172,7 @@ Dy = 0.
 (nxgrid,nygrid) = xx.shape
 grid_points= np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-Sil_grid = defmod.SilentLandmark(grid_points.shape[0], dim)
+Sil_grid = DeformationModules.SilentLandmark.SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 

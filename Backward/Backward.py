@@ -1,57 +1,51 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec  5 14:51:43 2018
-
-@author: barbaragris
-"""
-
-
 import Forward.Hamiltonianderivatives as HamDer
+
 
 def exchange_value_in_cot(Cot):
     nCot = dict()
     nCot['0'] = []
-    nCot['x,R'] = [] 
+    nCot['x,R'] = []
     if '0' in Cot:
         N0 = len(Cot['0'])
         for i in range(N0):
-            (x0,p0 ) = Cot['0'][i]
+            (x0, p0) = Cot['0'][i]
             nCot['0'].append((p0, x0))
-
+    
     if 'x,R' in Cot:
         N0 = len(Cot['x,R'])
         for i in range(N0):
-            ((x0,R0),(p0,PR0)) = Cot['x,R'][i]
-            nCot['x,R'].append(((p0 , PR0 ) ,(x0, R0)))
-
+            ((x0, R0), (p0, PR0)) = Cot['x,R'][i]
+            nCot['x,R'].append(((p0, PR0), (x0, R0)))
+    
     return nCot
+
 
 def exchange_value_in_cot_mult(Cot):
     nCot = dict()
     nCot['0'] = []
-    nCot['x,R'] = [] 
+    nCot['x,R'] = []
     if '0' in Cot:
         N0 = len(Cot['0'])
         for i in range(N0):
-            (x0,p0 ) = Cot['0'][i]
+            (x0, p0) = Cot['0'][i]
             nCot['0'].append((-p0, x0))
-
+    
     if 'x,R' in Cot:
         N0 = len(Cot['x,R'])
         for i in range(N0):
-            ((x0,R0),(p0,PR0)) = Cot['x,R'][i]
-            nCot['x,R'].append(((-p0 , -PR0 ) ,(x0, R0)))
-
+            ((x0, R0), (p0, PR0)) = Cot['x,R'][i]
+            nCot['x,R'].append(((-p0, -PR0), (x0, R0)))
+    
     return nCot
 
-def backward_step(Mod, eps, grad): #tested
+
+def backward_step(Mod, eps, grad):  # tested
     grad_exch = grad.copy()
     grad_exch.Cot = exchange_value_in_cot_mult(grad.Cot)
     grad_exch.updatefromCot()
     grad_exch.mult_Cot_scal(eps)
-    GD_0 = Mod.GD.copy_full() #n
-    GD_1 = Mod.GD.copy_full() #b
+    GD_0 = Mod.GD.copy_full()  # n
+    GD_1 = Mod.GD.copy_full()  # b
     
     GD_0.add_cot(grad_exch.Cot)
     grad_exch.mult_Cot_scal(-1.)
@@ -82,16 +76,15 @@ def backward_step(Mod, eps, grad): #tested
     dpH_1.Cot = exchange_value_in_cot(dpH_1.Cot)
     dpH_1.updatefromCot()
     
-    
     dxH_1.mult_Cot_scal(-1.)
     dpH_1.mult_Cot_scal(-1.)
     
     dxH_0.add_cot(dxH_1.Cot)
     dpH_0.add_cot(dpH_1.Cot)
     
-    eps1 = 2*eps
-    dxH_0.mult_Cot_scal(1./eps1)
-    dpH_0.mult_Cot_scal(1./eps1)
+    eps1 = 2 * eps
+    dxH_0.mult_Cot_scal(1. / eps1)
+    dpH_0.mult_Cot_scal(1. / eps1)
     
     out = dxH_0.copy_full()
     out.add_cot(dpH_0.Cot)
@@ -105,15 +98,15 @@ def backward_shoot_rk2(Modlist, grad_1, eps):
     grad_1 is a GD corresponding to the derivative of an attachment term
     eps in the step for finite differences
     """
-    #Modlist.reverse()
+    # Modlist.reverse()
     N_tot = len(Modlist)
     N = int((N_tot - 1) / 2)
     h = 1. / N
-    count = N_tot-1
+    count = N_tot - 1
     cgrad = grad_1.copy_full()
     
     for i in range(N):
-        count -= 1 
+        count -= 1
         Mod = Modlist[count].copy_full()
         
         dGD_np = backward_step(Mod, eps, cgrad)
@@ -123,22 +116,10 @@ def backward_shoot_rk2(Modlist, grad_1, eps):
         Mod = Modlist[count].copy_full()
         
         dGD = backward_step(Mod, eps, dGD_np)
-        dGD.mult_Cot_scal(h/2)
+        dGD.mult_Cot_scal(h / 2)
         
         cgrad.add_cot(dGD.Cot)
         cgrad.add_cot(dGD_np.Cot)
-        
+    
     Modlist.reverse()
     return cgrad
-
-
-
-
-
-
-
-
-
-
-
-    

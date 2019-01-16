@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 28 20:02:02 2018
-
-@author: barbaragris
-"""
-
 def dxH(Mod):
     """
     Supposes that Mod is updated, in particluar Mod.Cot and 
@@ -15,7 +7,7 @@ def dxH(Mod):
     v = Mod.field_generator_curr()
     
     ## derivation wrt GD in Xi_GD
-    der =  Mod.GD.dCotDotV(v)
+    der = Mod.GD.dCotDotV(v)
     
     ## derivation wrt GD in Zeta_GD
     der_fieldgen = Mod.cot_to_innerprod_curr(Mod.GD, 1)
@@ -29,14 +21,15 @@ def dxH(Mod):
     out = der.copy()
     # need to exchange values of GD and mom(=0) in cot
     if '0' in der.Cot:
-        for (x,p) in der.Cot['0']:
-            out.Cot['0'].append( (p, -x) )
+        for (x, p) in der.Cot['0']:
+            out.Cot['0'].append((p, -x))
     if 'x,R' in der.Cot:
         for ((x, R), (p, P)) in der.Cot['x,R']:
-            out.Cot['x,R'].append( ( (p,P), (-x,-R) ) )
+            out.Cot['x,R'].append(((p, P), (-x, -R)))
     
     out.updatefromCot()
     return out
+
 
 def dpH(Mod):
     """
@@ -47,10 +40,10 @@ def dpH(Mod):
     
     v = Mod.field_generator_curr()
     appli = Mod.GD.Ximv(v)
-    appli.updatefromCot()          
+    appli.updatefromCot()
     return appli
-    
-    
+
+
 def Ham(Mod):
     """
     Supposes that Geodesic controls have been computed and Mod updated
@@ -59,10 +52,3 @@ def Ham(Mod):
     v = Mod.field_generator_curr()
     Mod.Cost_curr()
     return Mod.GD.inner_prod_v(v) - Mod.cost
-
-
-
-
-
-
-  

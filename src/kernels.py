@@ -1,19 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 14 19:07:37 2018
-
-@author: barbaragris
-"""
-
 import numpy as np
 from src import functions_eta as fun_eta
 
 
 def my_tensordotaxes0(x, y):
-    """ we assume here that y is (N,d)
     """
-    
+    we assume here that y is (N,d)
+    """
     if len(x.shape) == 2:
         dx = x.shape[1]
         dy = y.shape[1]
@@ -32,25 +24,25 @@ def my_tensordotaxes0(x, y):
     return z
 
 
-def my_xmy(x,y):
-    (n,d) = x.shape
-    (m,d) = y.shape
-    xmy = np.empty((n*m,d))
+def my_xmy(x, y):
+    (n, d) = x.shape
+    (m, d) = y.shape
+    xmy = np.empty((n * m, d))
     for i in range(d):
-        xmy[:,i] = (np.tile(x[:,i].reshape((n,1)),(1,m))-
-                np.tile(y[:,i].reshape((1,m)),(n,1))).flatten()
+        xmy[:, i] = (np.tile(x[:, i].reshape((n, 1)), (1, m)) -
+                     np.tile(y[:, i].reshape((1, m)), (n, 1))).flatten()
     return xmy
 
 
 def my_vker(x, k, sig):  # tested
-    """ Gaussian radial function and its derivatives.
+    """
+    Gaussian radial function and its derivatives.
     vectorized version
     x is a matrix containing positions
     k is the order (0 gives the function at locations x, k=1 its
     first derivatives and k=2 its hessian
     sig is the gaussian size.
     """
-    
     x = x / sig
     h = np.asarray(np.exp(-np.sum(x ** 2 / 2, axis=1)))
     r = h  # order 0
@@ -75,10 +67,10 @@ def my_vker(x, k, sig):  # tested
 
 
 def my_K(x, y, sig, k):  # tested
-    """ vectorized version of my_K(x,y,sig,k,l) for x (N,2) and k=l
+    """
+    vectorized version of my_K(x,y,sig,k,l) for x (N,2) and k=l
     as need by SKS
     """
-    
     N = x.shape[0]
     M = y.shape[0]
     if (k == 0):
@@ -102,25 +94,25 @@ def my_K(x, y, sig, k):  # tested
     return K
 
 
-def my_nker(x,k,sig) : # tested
-    """ Gaussian radial function and its derivatives. 
+def my_nker(x, k, sig):  # tested
+    """
+    Gaussian radial function and its derivatives.
     x in a matrix of positions
     k is the order (0 gives the function at locations x, k=1 its 
     first derivatives and k=2 its hessian
     sig is the gaussian size.
     """
-
-    x = x/sig
-    h = np.exp(-np.sum(x**2/2))
-    r = h # order 0
-    if k==1:
-        r = -h*x/sig
-    elif k==2:
-        r = h*(-np.eye(2)+np.tensordot(x, x, axes=0))/sig**2
-    elif k==3:
-        r = h*(-np.eye(2)+np.tensordot(x, x, axes=0))
-        r = -np.tensordot(r,x,axes = 0) +\
-            h*(np.swapaxes(np.tensordot(np.eye(2),x,axes = 0),1,2)
-            +np.tensordot(x,np.eye(2),axes = 0))
-        r = r/sig**3
+    x = x / sig
+    h = np.exp(-np.sum(x ** 2 / 2))
+    r = h  # order 0
+    if k == 1:
+        r = -h * x / sig
+    elif k == 2:
+        r = h * (-np.eye(2) + np.tensordot(x, x, axes=0)) / sig ** 2
+    elif k == 3:
+        r = h * (-np.eye(2) + np.tensordot(x, x, axes=0))
+        r = -np.tensordot(r, x, axes=0) + \
+            h * (np.swapaxes(np.tensordot(np.eye(2), x, axes=0), 1, 2)
+                 + np.tensordot(x, np.eye(2), axes=0))
+        r = r / sig ** 3
     return r

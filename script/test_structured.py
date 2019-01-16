@@ -7,25 +7,24 @@ Created on Wed Nov 28 14:49:33 2018
 """
 import scipy .optimize
 import numpy as np
-import GeometricalDescriptors.GeometricalDescriptors as geo_descr
-import implicitmodules.field_structures as fields
-import StructerdFIelds.StructuredFields as stru_fie
-import DeformationModules.DeformationModules as defmod
-import DeformationModules.Combination as comb_mod
-import Forward.Hamiltonianderivatives as HamDer
-import Forward.shooting as shoot
-#%%
-from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
-    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
 
-import implicitmodules.src.data_attachment.varifold as var
-import implicitmodules.Backward.Backward as bckwd
-import implicitmodules.Backward.ScipyOptimise as opti
+import DeformationModules.ElasticOrder0
+import DeformationModules.ElasticOrder1
+import DeformationModules.SilentLandmark
+import DeformationModules.Combination as comb_mod
+import Forward.shooting as shoot
+
+#%%
+from src import shooting as shoot_old
+
+import Backward.Backward as bckwd
+import Backward.ScipyOptimise as opti
+
 #%%
 dim = 2
-Sil = defmod.SilentLandmark(xs.shape[0], dim)
-Model1 = defmod.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
-Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
+Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
+Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 
 #%% 
 

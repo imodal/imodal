@@ -1,18 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 14 19:06:44 2018
-
-@author: barbaragris
-"""
-
 import numpy as np
 from src import hamiltonian_derivatives as ham, modules_operations as modop, useful_functions as utils
 
 import src.data_attachment.varifold as var
 
+
 def my_fun(P0, *args):
-    """ compute the shooting and return the total cost
+    """
+    compute the shooting and return the total cost
     ie H(X0,P0)+ lam_var \| X1-Xtarg\|^2_var
     args = (X, nX, sig0, sig1, coeff0, coeff1, C, nu, xst, lam_var, sig_var, N)
     """
@@ -46,7 +40,8 @@ def my_fun(P0, *args):
 
 
 def my_fun_Traj(P0, *args):
-    """ compute the shooting and return the total cost
+    """
+    compute the shooting and return the total cost
     ie H(X0,P0)+ lam_var \| X1-Xtarg\|^2_var
     args = (X, nX, sig0, sig1, coeff0, coeff1, C, nun, xst, lam_var, sig_var, N)
     """
@@ -79,22 +74,23 @@ def my_fun_Traj(P0, *args):
     return Traj
 
 
-def my_fd_shoot(Mod0,Mod1,Cot,N):
-    h = 1./N
+def my_fd_shoot(Mod0, Mod1, Cot, N):
+    h = 1. / N
     Step = (Mod0, Mod1, Cot)
-    Traj =[Step]
+    Traj = [Step]
     # rk2 steps
     for i in range(N):
         print(i)
-        dStep = my_forward(Step[0], Step[1], Step[2], h/2.)
+        dStep = my_forward(Step[0], Step[1], Step[2], h / 2.)
         Traj.append(dStep)
-        Step =  my_nforward(Step[2], dStep[0], dStep[1], dStep[2],h)
-        Traj.append(Step)        
+        Step = my_nforward(Step[2], dStep[0], dStep[1], dStep[2], h)
+        Traj.append(Step)
     return Traj
 
 
 def my_nforward(Cot, dMod0, dMod1, dCot, Dt):
-    """ similar than my_forward but able to compute z + Dt X_H(z') where z is
+    """
+    similar than my_forward but able to compute z + Dt X_H(z') where z is
     determined by Cot and z' by dMod0, dMod1, dCot. Useful for RK2 shooting
     """
     [(x0, p0), (xs, ps)] = Cot['0']
@@ -127,7 +123,9 @@ def my_nforward(Cot, dMod0, dMod1, dCot, Dt):
 
 
 def my_forward(Mod0, Mod1, Cot, Dt):
-    """ Compute z + Dt X_H(z) where z is defined through Mod0, Mod1 and Cot """
+    """
+    Compute z + Dt X_H(z) where z is defined through Mod0, Mod1 and Cot
+    """
     [(x0, p0), (xs, ps)] = Cot['0']
     [((x1, R), (p1, PR))] = Cot['x,R']
     
@@ -158,7 +156,8 @@ def my_forward(Mod0, Mod1, Cot, Dt):
 
 
 def my_sub_bckwd(Mod0, Mod1, Cot, grad, my_eps):
-    """ my_sub_bckwd compute an elementary backward step associated with the
+    """
+    my_sub_bckwd compute an elementary backward step associated with the
     hamiltonian flow. grad is a dictionary with the following form
     grad = {'0':[(dx0G, dp0G),(dxsG, dpsG)], 'x,R':[((dx1G, dRG), (dp1G, dpRG))]}
     """
@@ -272,7 +271,8 @@ def my_bck_shoot(Traj, grad, my_eps):
 
 
 def my_jac(P0, *args):
-    """ jacobian associated with my_fun
+    """
+    jacobian associated with my_fun
     """
     (X, nX, sig0, sig1, coeff0, coeff1, C, nu, xst, lam_var, sig_var, N) = args
     (x0, xs, (x1, R)) = utils.my_splitX(X, nX)
@@ -316,4 +316,3 @@ def my_jac(P0, *args):
                            totgrad['0'][1][1].flatten(), totgrad['x,R'][0][1][0].flatten(),
                            totgrad['x,R'][0][1][1].flatten()])
     return dP0J
-

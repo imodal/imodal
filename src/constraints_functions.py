@@ -1,26 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 14 19:12:42 2018
-
-@author: barbaragris
-"""
-
 import numpy as np
 from scipy.linalg import solve
 from src import functions_eta as fun_eta
 
 
-def my_Amh(Mod1,h):
-    """ Compute the target value for the strain tensor
+def my_Amh(Mod1, h):
     """
-    (x,R) = Mod1['x,R']
+    Compute the target value for the strain tensor
+    """
+    (x, R) = Mod1['x,R']
     C = Mod1['C']
     N = x.shape[0]
     eta = fun_eta.my_eta()
-    out = np.asarray([np.tensordot(np.dot(R[i],
-        np.dot(np.diag(np.dot(C[i],h)),
-        R[i].transpose())),eta,axes = 2) for i in range(N)])
+    out = np.asarray(
+        [np.tensordot(np.dot(R[i], np.dot(np.diag(np.dot(C[i], h)), R[i].transpose())), eta, axes=2) for i in range(N)])
     return out
 
 

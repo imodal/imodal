@@ -3,9 +3,12 @@ import scipy .optimize
 import numpy as np
 import matplotlib.pyplot as plt
 
+import DeformationModules.ElasticOrder0
+import DeformationModules.ElasticOrder1
+import DeformationModules.SilentLandmark
 import GeometricalDescriptors.GeometricalDescriptors as geo_descr
 import implicitmodules.field_structures as fields
-import StructerdFIelds.StructuredFields as stru_fie
+import StructuredFields.StructuredFields as stru_fie
 import DeformationModules.DeformationModules as defmod
 import DeformationModules.Combination as comb_mod
 import Forward.Hamiltonianderivatives as HamDer
@@ -137,11 +140,11 @@ sig00 = 1000
 sig1 = 30
 nu = 0.001
 dim = 2
-Sil = defmod.SilentLandmark(xs.shape[0], dim)
-Model1 = defmod.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
-Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
-Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
-Model00 = defmod.ElasticOrderO(sig00, x00.shape[0], dim, 0.1)
+Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
+Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Model01 = DeformationModules.ElasticOrder1.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
+Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
+Model00 = DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1)
 #%% 
 
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model1])
@@ -190,7 +193,7 @@ Dy = 0.
 (nx,ny) = xx.shape
 grid_points= np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-Sil_grid = defmod.SilentLandmark(grid_points.shape[0], dim)
+Sil_grid = DeformationModules.SilentLandmark.SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 ##%%
@@ -313,7 +316,7 @@ Dy = 0.
 (nx,ny) = xx.shape
 grid_points= np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-Sil_grid = defmod.SilentLandmark(grid_points.shape[0], dim)
+Sil_grid = DeformationModules.SilentLandmark.SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 #%%
@@ -393,13 +396,4 @@ plt.plot(xs_i[:,0], xs_i[:,1], '-g')
 #plt.quiver(xs_i[:,0], xs_i[:,1], ps_i[:,0], ps_i[:,1])
 plt.axis('equal')
 #plt.plot(xsf[:,0], xsf[:,1], '-g')
-
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 11 00:08:25 2018
-
-@author: barbaragris
-"""
 
