@@ -1,4 +1,4 @@
-import scipy.optimize
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -170,10 +170,14 @@ Y = define_C1(0, X)
 plt.plot(Y, X, '-')
 plt.ylabel('x(2)')
 plt.xlabel('C')
-# plt.axis('equal')
-plt.axis([0, 30, 0, 40])
-plt.savefig(path_res + 'C_profil_match.pdf', format='pdf', bbox_inches='tight')
-# %%
+#plt.axis('equal')
+plt.axis([0,30,0,40])
+#plt.savefig(path_res + 'C_profil_match.pdf', format='pdf', bbox_inches = 'tight')
+
+
+
+
+#%%
 plt.figure()
 X = np.linspace(-10, 10, 100)
 Z = define_C1(X, 30 + np.zeros(X.shape))
@@ -193,7 +197,8 @@ Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, 
 Model00 = DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 # %%
 
-Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+#Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
 
 # Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 
@@ -208,9 +213,10 @@ param_0 = (x0, p0)
 param_00 = (np.zeros([1, 2]), np.zeros([1, 2]))
 param_1 = ((x1, R), (p1, PR))
 
-# %%
-param = [param_sil, param_00, param_0, param_1]
-# param = [param_sil, param_1]
+#%%
+#param = [param_sil, param_00, param_0, param_1]
+param = [param_00, param_0]
+#param = [param_sil, param_1]
 GD = Mod_el_init.GD.copy()
 Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el = Mod_el_init.copy_full()

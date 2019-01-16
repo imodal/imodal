@@ -8,7 +8,7 @@ Created on Fri Jan 11 13:24:26 2019
 import numpy as np
 
 import src.GeometricalDescriptors.Abstract as ab
-import src.StructuredFields.StructuredFields as stru_fie
+import src.StructuredFields.StructuredField_0 as stru_fie
         
 class GD_landmark(ab.GeometricalDescriptors):
     def __init__(self, N_pts, dim): #
@@ -31,6 +31,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         GD.GD = self.GD.copy()
         GD.tan = self.tan.copy()
         GD.cotan = self.cotan.copy()
+        return GD
 
     def fill_zero(self):        
         self.GD = np.zeros([self.N_pts, self.dim])
@@ -50,13 +51,12 @@ class GD_landmark(ab.GeometricalDescriptors):
         return self.cotan()
         
     
-    def mult_Cot_scal(self, s):
-        self.GD = s * self.GD
-        self.tan = s * self.cotan
-
+    def fill_cot_from_param(self, param):
+        self.GD = param[0].copy()
+        self.cotan = param[1].copy()
 
     def Cot_to_VS(self, sig):
-        v = stru_fie.StructuredField_0(sig, self.dim)
+        v = stru_fie.StructuredField_0(sig, self.N_pts, self.dim)
         v.fill_fieldparam((self.GD, self.cotan)) 
         return v
 
@@ -93,7 +93,29 @@ class GD_landmark(ab.GeometricalDescriptors):
         mom = self.get_mom()
         return np.dot(mom.flatten(), dpts.flatten())
 
+    
+    def add_GD(self, GDCot):
+        self.GD = self.GD + GDCot.GD
+        
+            
+    def add_tan(self, GDCot):
+        self.tan = self.tan + GDCot.tan
+        
+            
+    def add_cot(self, GDCot):
+        self.cotan = self.cotan + GDCot.cotan
+        
+    
+    def mult_GD_scal(self, s):
+        self.GD = s * self.GD
 
+    def mult_tan_scal(self, s):
+        self.tan = s * self.tan
+
+    def mult_Cot_scal(self, s):
+        self.cotan = s * self.cotan
+
+        
 
 
 
