@@ -12,7 +12,7 @@ import src.DeformationModules.Abstract as ab
 import src.GeometricalDescriptors.Landmark as GeoDescr
 
 import src.StructuredFields.StructuredFields as stru_fie
-from implicitmodules.src.Kernels import ScalarGaussian as ker
+from src.Kernels import ScalarGaussian as ker
 
 class ElasticOrderO(ab.DeformationModule):
     """

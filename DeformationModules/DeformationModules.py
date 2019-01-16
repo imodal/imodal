@@ -11,10 +11,9 @@ from scipy.linalg import solve
 
 import GeometricalDescriptors.GeometricalDescriptors as GeoDescr
 import StructerdFIelds.StructuredFields as stru
-from implicitmodules.src import kernels as ker
-from implicitmodules.src import functions_eta as fun_eta
-from implicitmodules.src import field_structures as fields, pairing_structures as pair
-import utilities.pairing_structures as npair
+from src import kernels as ker
+from src import functions_eta as fun_eta
+from src import field_structures as fields, pairing_structures as pair
 
 
 class DeformationModule(object):

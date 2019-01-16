@@ -6,7 +6,7 @@ Created on Fri Nov  9 14:10:59 2018
 @author: barbaragris
 """
 import numpy as np
-from implicitmodules.src import kernels as ker
+from src import kernels as ker
 
 
 def my_new_SKS(Mod):

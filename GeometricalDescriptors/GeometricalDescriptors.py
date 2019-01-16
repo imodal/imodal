@@ -8,8 +8,6 @@ Created on Tue Nov 27 13:39:57 2018
 
 import numpy as np
 
-from implicitmodules.src import field_structures as fields
-from implicitmodules.src import pairing_structures as pair
 import utilities.pairing_structures as npair
 
 

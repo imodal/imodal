@@ -6,8 +6,8 @@ Created on Fri Nov 30 14:47:03 2018
 @author: barbaragris
 """
 
-from implicitmodules.src import field_structures as fields
-from implicitmodules.src import pairing_structures as pair
+from src import field_structures as fields
+from src import pairing_structures as pair
 import StructerdFIelds.StructuredFields as stru_fie
 
 

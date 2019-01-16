@@ -12,16 +12,6 @@ plt.ion()
 
 
 ## Unitary test (passed)
-# my_nker order 3
-x = np.array([1., 0.5])
-xp = x + 0.001 * rd.normal(0, 1, (2))
-sig = 0.3
-Dk = my_nker(xp, 2, sig) - my_nker(x, 2, sig)
-Dx = xp - x
-dk = my_nker(x, 3, sig)
-print(np.dot(dk, Dx))
-print(Dk)
-
 ## my_dv0 (passed)
 M0 = Exp0['M0']
 h = rd.normal(0, 1, (M0['N'], 2))
@@ -52,48 +42,7 @@ dv0 = my_dv0(M0, z, px)
 print(np.dot(dv0[0], Dz[0]))
 print(Dv0[0])
 
-## Test my_VsToV (passed)
-x, p = rd.normal(0, 1, (13, 2)), rd.normal(0, 1, (13, 2))
-sig = 0.4
-Par = {'0': [(x, p)], 'p': [], 'm': [], 'sig': sig}
 
-z = rd.normal(0, 1, (20, 2))
-zp = z + 0.000001 * rd.normal(0, 1, z.shape)
-Dz = zp - z
-
-j = 0
-Djv = np.asarray(my_VsToV(Par, zp, j)) - np.asarray(my_VsToV(Par, z, j))
-djv = my_VsToV(Par, z, j + 1)
-k = 10
-print(np.dot(djv[k], Dz[k]))
-print(Djv[k])
-
-j = 1
-Djv = np.asarray(my_VsToV(Par, zp, j)) - np.asarray(my_VsToV(Par, z, j))
-djv = my_VsToV(Par, z, j + 1)
-k = 10
-print(np.dot(djv[k], Dz[k]))
-print(Djv[k])
-
-x, p = rd.normal(0, 1, (13, 2)), rd.normal(0, 1, (13, 2, 2))
-Par = {'0': [], 'p': [(x, p)], 'm': [], 'sig': sig}
-z = rd.normal(0, 1, (20, 2))
-zp = z + 0.00001 * rd.normal(0, 1, z.shape)
-Dz = zp - z
-
-j = 0
-Djv = np.asarray(my_VsToV(Par, zp, j)) - np.asarray(my_VsToV(Par, z, j))
-djv = my_VsToV(Par, z, j + 1)
-k = 10
-print(np.dot(djv[k], Dz[k]))
-print(Djv[k])
-
-j = 1
-Djv = np.asarray(my_VsToV(Par, zp, j)) - np.asarray(my_VsToV(Par, z, j))
-djv = my_VsToV(Par, z, j + 1)
-k = 10
-print(np.dot(djv[k], Dz[k]))
-print(Djv[k])
 
 ## my_CotDotV,
 

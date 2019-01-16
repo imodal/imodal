@@ -7,8 +7,8 @@ Created on Wed Nov 28 06:29:43 2018
 """
 
 import numpy as np
-from implicitmodules.src import field_structures as fields
-from implicitmodules.src import pairing_structures as pair
+from src import field_structures as fields
+from src import pairing_structures as pair
 
 class StructuredField(object):
             

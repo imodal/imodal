@@ -6,10 +6,10 @@ Created on Fri Dec  7 08:07:16 2018
 @author: barbaragris
 """
 import numpy as np
-import implicitmodules.src.data_attachment.varifold as var
+import src.data_attachment.varifold as var
 
 import Forward.shooting as shoot
-import implicitmodules.Backward.Backward as bckwd
+import Backward.Backward as bckwd
 import Forward.Hamiltonianderivatives as HamDer
 
 def fill_Vector_from_GD(GD): #tested

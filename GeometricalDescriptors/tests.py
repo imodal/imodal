@@ -7,15 +7,14 @@ Created on Thu Nov 29 17:07:08 2018
 """
 import numpy as np
 import GeometricalDescriptors.GeometricalDescriptors as geo_descr
-import implicitmodules.field_structures as fields
+
 import StructerdFIelds.StructuredFields as stru_fie
 import DeformationModules.DeformationModules as defmod
 import DeformationModules.Combination as comb_mod
 import Forward.Hamiltonianderivatives as hamder
 import Forward.shooting as shoot
 #%%
-from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
-    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
+from src import field_structures as fields
 #%%
 
 N_pts = 3
