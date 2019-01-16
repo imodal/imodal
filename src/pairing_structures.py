@@ -1,17 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 14 19:15:18 2018
-
-@author: barbaragris
-"""
-
 import numpy as np
 from src import field_structures as fields
 
 
 def my_CotDotV(Cot, Vs):
-    """  This function computes product betwwen a covector h  of the and a v
+    """
+    This function computes product betwwen a covector h  of the and a v
     field  such as (h|v.x) or (h[v.(x,R))
     """
     out = 0.
@@ -32,7 +25,8 @@ def my_CotDotV(Cot, Vs):
 
 
 def my_dCotDotV(Cot, Vs):
-    """  This function computes the derivative with respect to the parameter
+    """
+    This function computes the derivative with respect to the parameter
     of product between a covector h a v field  such as (h|v.x) or
     (h|v.(x,R))
     """
@@ -53,19 +47,19 @@ def my_dCotDotV(Cot, Vs):
             skew_dv = (dv - np.swapaxes(dv, 1, 2)) / 2
             skew_ddv = (ddv - np.swapaxes(ddv, 1, 2)) / 2
             
-            dedx = np.asarray([np.dot(p[i], dv[i]) + np.tensordot(P[i],
-                                                                  np.swapaxes(
-                                                                      np.tensordot(R[i], skew_ddv[i], axes=([0], [1])),
-                                                                      0, 1))
-                               for i in range(x.shape[0])])
+            dedx = np.asarray(
+                [np.dot(p[i], dv[i]) + np.tensordot(P[i], np.swapaxes(np.tensordot(R[i], skew_ddv[i], axes=([0], [1])), 0, 1))
+                 for i in range(x.shape[0])]
+            )
             
             dedR = np.asarray([np.dot(-skew_dv[i], P[i])
                                for i in range(x.shape[0])])
             
             der['x,R'].append(((x, R), (dedx, dedR)))
     return der
-    
-def my_pSmV(Vsl,Vsr,j):
+
+
+def my_pSmV(Vsl, Vsr, j):
     """ 
     Compute product (p|Sm(v)) (j=0) (= inner product of Vsl and Vsr) and 
     the gradient in m (j=1) (Geometrical suport of Vsl) coding
@@ -81,35 +75,34 @@ def my_pSmV(Vsl,Vsr,j):
         out = dict()
         
         if '0' in Vsl:
-            out['0']=[]
-            for (x,p) in Vsl['0']:
-                dv = fields.my_VsToV(Vsr,x,j)
-                der = np.asarray([np.dot(p[i],dv[i]) for i in range(x.shape[0])])
-                out['0'].append((x,der))
-                
+            out['0'] = []
+            for (x, p) in Vsl['0']:
+                dv = fields.my_VsToV(Vsr, x, j)
+                der = np.asarray([np.dot(p[i], dv[i]) for i in range(x.shape[0])])
+                out['0'].append((x, der))
+        
         if 'p' in Vsl:
-            out['p']=[]
-            for (x,P) in Vsl['p']:
-                ddv = fields.my_VsToV(Vsr,x,j+1)
-                ddv = (ddv + np.swapaxes(ddv,1,2))/2
-                der = np.asarray([np.tensordot(P[i],ddv[i]) 
-                    for i in range(x.shape[0])])
-                out['p'].append((x,der))
+            out['p'] = []
+            for (x, P) in Vsl['p']:
+                ddv = fields.my_VsToV(Vsr, x, j + 1)
+                ddv = (ddv + np.swapaxes(ddv, 1, 2)) / 2
+                der = np.asarray([np.tensordot(P[i], ddv[i])
+                                  for i in range(x.shape[0])])
+                out['p'].append((x, der))
     elif j == 0:
         out = 0.
         
         if '0' in Vsl:
-            for (x,p) in Vsl['0']:
-                v = fields.my_VsToV(Vsr,x,j)
-                out += np.sum(np.asarray([np.dot(p[i],v[i]) 
-                    for i in range(x.shape[0])]))
-                
+            for (x, p) in Vsl['0']:
+                v = fields.my_VsToV(Vsr, x, j)
+                out += np.sum(np.asarray([np.dot(p[i], v[i])
+                                          for i in range(x.shape[0])]))
+        
         if 'p' in Vsl:
-            for (x,P) in Vsl['p']:
-                dv = fields.my_VsToV(Vsr,x,j+1)
-                dv = (dv + np.swapaxes(dv,1,2))/2
-                out += np.sum(np.asarray([np.tensordot(P[i],dv[i]) 
-                    for i in range(x.shape[0])]))
-                
+            for (x, P) in Vsl['p']:
+                dv = fields.my_VsToV(Vsr, x, j + 1)
+                dv = (dv + np.swapaxes(dv, 1, 2)) / 2
+                out += np.sum(np.asarray([np.tensordot(P[i], dv[i])
+                                          for i in range(x.shape[0])]))
+    
     return out
-

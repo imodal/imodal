@@ -6,14 +6,24 @@ Created on Thu Nov 29 17:07:08 2018
 @author: barbaragris
 """
 import numpy as np
+
+import DeformationModules.ElasticOrder0
+import DeformationModules.ElasticOrder1
+import DeformationModules.SilentLandmark
+import GeometricalDescriptors.Combine_GD
+import GeometricalDescriptors.GD_landmark
+import GeometricalDescriptors.GD_xR
 import GeometricalDescriptors.GeometricalDescriptors as geo_descr
 
-import StructerdFIelds.StructuredFields as stru_fie
+import StructuredFields.StructuredFields as stru_fie
 import DeformationModules.DeformationModules as defmod
 import DeformationModules.Combination as comb_mod
 import Forward.Hamiltonianderivatives as hamder
 import Forward.shooting as shoot
 #%%
+import StructuredFields.StructuredFields_0
+import StructuredFields.SummedFields
+import StructuredFields.ZeroFields
 from src import field_structures as fields
 #%%
 
@@ -22,7 +32,7 @@ dim = 2
 
 #%%
 
-GD = geo_descr.GD_landmark(N_pts, dim)
+GD = GeometricalDescriptors.GD_landmark.GD_landmark(N_pts, dim)
 
 Pts = np.random.rand(N_pts, dim)
 mom = np.random.rand(N_pts, dim)
@@ -55,7 +65,7 @@ print(GD1.Cot)
 #%%
 sigma = 1
 dim = 2
-v = stru_fie.StructuredField_0(sigma, dim)
+v = StructuredFields.StructuredFields_0.StructuredField_0(sigma, dim)
 
 N_pts_f = 5
 Pts = np.random.rand(N_pts_f, dim)
@@ -83,7 +93,7 @@ pts1 = np.array([[0,0]])
 mom1 = np.array([[1,0]])
 
 param1 = [pts1, mom1]
-GD2 = geo_descr.GD_landmark(1, 2)
+GD2 = GeometricalDescriptors.GD_landmark.GD_landmark(1, 2)
 GD2.fill_cot_from_param(param1)
 
 print(GD1.Ximv(v).Cot['0'][0][0])
@@ -148,7 +158,7 @@ print(GD1.inner_prod_v(v))
 
 #%%
 
-GD_comb = geo_descr.Combine_GD([GD2, GD1])
+GD_comb = GeometricalDescriptors.Combine_GD.Combine_GD([GD2, GD1])
 print(GD_comb.Cot)
 #%%
 GD_comb1 = GD_comb.copy()
@@ -203,7 +213,7 @@ print(GD.Cot_to_Vs)
 
 #%%
 v1 = v.copy()
-v2 = stru_fie.sum_structured_fields([v, v1])
+v2 = StructuredFields.SummedFields.sum_structured_fields([v, v1])
 #%%
 
 z = np.array([[0,0], [1,2]])
@@ -216,7 +226,7 @@ sig = 1
 N_pts = 3
 dim=2
 coeff=2
-Mod = defmod.ElasticOrderO(sig, N_pts, dim, coeff)
+Mod = DeformationModules.ElasticOrder0.ElasticOrderO(sig, N_pts, dim, coeff)
 
 #%%
 
@@ -310,18 +320,18 @@ print(Mod.cot_to_innerprod_curr(GD,1).Cot)
 
 #%%
 dim=2
-v0 = stru_fie.ZeroField(dim)
+v0 = StructuredFields.ZeroFields.ZeroField(dim)
 v00 = v0.copy_full()
 v0.fill_fieldparam([])
 #%%
-v_sum = stru_fie.sum_structured_fields([v, v0])
+v_sum = StructuredFields.SummedFields.sum_structured_fields([v, v0])
 #%%
 print(v_sum.Apply(Pts, 0))
 print(v.Apply(Pts,0))
 
 #%%
 
-Sil = defmod.SilentLandmark(N_pts, dim)
+Sil = DeformationModules.SilentLandmark.SilentLandmark(N_pts, dim)
 
 #%%
 Sil.GD.fill_GD(Pts)
@@ -368,9 +378,9 @@ print(Mod_c.GD.Cot)
 
 #%%
 
-Mod0 = defmod.ElasticOrderO(10, 1, 2, 1)
-Mod01 = defmod.ElasticOrderO(1, 1, 2, 1)
-ModS = defmod.SilentLandmark(2, 2)
+Mod0 = DeformationModules.ElasticOrder0.ElasticOrderO(10, 1, 2, 1)
+Mod01 = DeformationModules.ElasticOrder0.ElasticOrderO(1, 1, 2, 1)
+ModS = DeformationModules.SilentLandmark.SilentLandmark(2, 2)
 
 Modc = comb_mod.CompoundModules([ModS, Mod0, Mod01])
 
@@ -489,7 +499,7 @@ plt.axis('equal')
 N_pts = 1
 dim = 2
 C = np.array([[[1],[1]]])
-GD = geo_descr.GD_xR(N_pts, dim, C)
+GD = GeometricalDescriptors.GD_xR.GD_xR(N_pts, dim, C)
 #%%
 GD1 = GD.copy()
 
@@ -534,7 +544,7 @@ print(v.dic)
 v1 = GD.Cot_to_Vs(1)
 v0 = Mod.field_generator_curr()
 
-v = stru_fie.sum_structured_fields([v0, v1])
+v = StructuredFields.SummedFields.sum_structured_fields([v0, v1])
 #%%
 dGD = GD.Ximv(v0)
 #%%
@@ -590,7 +600,7 @@ dim = 2
 coeff =1
 C = np.array([[[1],[1]]])
 C = np.ones([N_pts, dim, 1])
-Mod1 = defmod.ElasticOrder1(sig, N_pts, dim, coeff, C, 0.001)
+Mod1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig, N_pts, dim, coeff, C, 0.001)
 #%%
 x = np.array([[0.,0.], [1.5,1.]])
 R = np.array([[[0.,-1.],[1., 0.]], [[0.,-1.],[1., 0.]]])
