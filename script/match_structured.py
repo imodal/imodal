@@ -190,9 +190,9 @@ sig00 = 500
 sig1 = 50
 nu = 0.001
 dim = 2
-Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
-Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
-Model01 = DeformationModules.ElasticOrder1.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
+#Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
+#Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+#Model01 = DeformationModules.ElasticOrder1.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
 Model00 = DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 # %%
