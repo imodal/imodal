@@ -129,8 +129,19 @@ class GD_landmark(ab.GeometricalDescriptors):
     def add_speedGD(self, GDCot):
         self.GD = self.GD + GDCot.tan
         
+    def add_tantocotan(self, GDCot):
+        self.cotan = self.cotan + GDCot.tan
+        
+    def add_cotantotan(self, GDCot):
+        self.tan = self.tan + GDCot.cotan
 
+    def add_cotantoGD(self, GDCot):
+        self.GD = self.GD + GDCot.cotan
 
+    def exchange_tan_cotan(self):
+        cotan = self.cotan.copy()
+        self.cotan = self.tan.copy()
+        self.tan = cotan.copy()
 
 
 

@@ -123,3 +123,26 @@ class Combine_GD(ab.GeometricalDescriptors):
         for i in range(self.N_GDs):
             self.GD_list[i].add_speedGD(GDCot.GD_list[i])
             
+       
+    def add_tantocotan(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_tantocotan(GDCot.GD_list[i])        
+
+    def add_cotantotan(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_cotantotan(GDCot.GD_list[i])
+
+    def add_cotantoGD(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_cotantoGD(GDCot.GD_list[i])
+
+    def exchange_tan_cotan(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].exchange_tan_cotan()
+
+
+
+
+
+
+
