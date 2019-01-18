@@ -171,6 +171,7 @@ class ElasticOrderO(ab.DeformationModule):
 
         elif j==1:
             out = self.GD.copy_full()
+            out.fill_zero_tan()
             x = GD_cont.GD.copy()
             p = GD_cont.cotan.copy()
             vx = vs.Apply(x, j)
