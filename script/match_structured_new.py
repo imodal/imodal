@@ -11,6 +11,7 @@ import src.DeformationModules.Combination as comb_mod
 
 import src.Forward.Hamiltonianderivatives as HamDer
 import src.Forward.shooting as shoot
+import src.Backward.Backward as bckwrd
 #%%
 #from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
 #    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
@@ -245,39 +246,74 @@ N=5
 Modlist_save_new = shoot.shooting_traj(Mod_el, N)
 #xst = Modlist[-1].GD.Cot['0'][0][0].copy()
 # -*- coding: utf-8 -*-
+#%%
+grad_1 = Modlist_save_new[-1].GD.copy_full()
+grad_1.fill_zero_tan()
+grad_1.fill_zero_cotan()
+
+grad_1.GD_list[0].cotan = 0.2*grad_1.GD_list[0].GD.copy()
+grad_1.GD_list[1].cotan = 0.2*grad_1.GD_list[1].GD.copy()
+grad_1.GD_list[0].tan = np.random.rand(*grad_1.GD_list[0].GD.shape)
+grad_1.GD_list[1].tan = np.random.rand(*grad_1.GD_list[1].GD.shape)
 
 #%%
-t = -1
-x00_f = Modlist[t].GD.Cot['0'][0][0]
-x00_f_n = Modlist_save_new[t].GD.GD_list[0].GD
-x00_f_nbis = Modlist_save_new[t].ModList[0].GD.GD
-print(x00_f_n -x00_f_nbis )
-print(x00_f -x00_f_nbis )
-print(x00_f)
-print(x00_f_nbis)
-
-#%%
-print(Modlist[2].GD.Cot['0'][0][1] - Modlist[0].GD.Cot['0'][0][1])
-print(Modlist_save_new[2].ModList[0].GD.cotan - Modlist_save_new[0].ModList[0].GD.cotan)
-#%%
-t = 0
-cont = Modlist[t].Cont
-cont_n = Modlist_save_new[t].Cont
-print(cont[1] - cont_n[1])
+eps = 1e-6
+cgrad_new = bckwrd.backward_shoot_rk2(Modlist_save_new, grad_1, eps)
+out_new = bckwrd.backward_step(Modlist_save_new[-1], eps, grad_1)
 #%%
 
-a = Modlist[0].cot_to_innerprod_curr(Modlist[0].GD, 1)
-b = Modlist_save_new[0].cot_to_innerprod_curr(Modlist[0].GD, 1)
+grad_1_o =  Modlist[-1].GD.copy()
+grad_1_o.GD_list[0].Cot['0'].append((grad_1.GD_list[0].tan.copy(), grad_1.GD_list[0].cotan.copy()))
+grad_1_o.GD_list[1].Cot['0'].append((grad_1.GD_list[1].tan.copy(), grad_1.GD_list[1].cotan.copy()))
+grad_1_o.fill_cot_init()
+#%%
+cgrad = bck.backward_shoot_rk2(Modlist, grad_1_o, eps)
+out= bck.backward_step(Modlist[-1], eps, grad_1_o)
+#%%
+print(out_new.GD_list[0].tan)
+print(out_new.GD_list[0].cotan)
+print(out.Cot['0'][0])
 
-a = Modlist[0].DerCost_curr()
-b = Modlist_save_new[0].DerCost_curr()
-
-print(a - b)
 
 #%%
-v = Modlist[0].field_generator_curr()
-v_n = Modlist_save_new[0].field_generator_curr()
-der =  Modlist[0].ModList[0].GD.dCotDotV(v)
-der_n =  Modlist_save_new[0].ModList[0].GD.dCotDotV(v_n)
+print(cgrad_new.GD_list[0].tan)
+print(cgrad_new.GD_list[0].cotan)
+print(cgrad.Cot['0'][0])
+#
 #%%
-print(der_n.GD_list[0].cotan - der.GD_list[0].Cot['0'][0][0] )
+#t = -1
+#x00_f = Modlist[t].GD.Cot['0'][0][0]
+#x00_f_n = Modlist_save_new[t].GD.GD_list[0].GD
+#x00_f_nbis = Modlist_save_new[t].ModList[0].GD.GD
+##print(x00_f_n -x00_f_nbis )
+##print(x00_f -x00_f_nbis )
+#print(x00_f)
+##print(x00_f_nbis)
+#
+##%%
+#print(Modlist[2].GD.Cot['0'][0][1] - Modlist[0].GD.Cot['0'][0][1])
+#print(Modlist_save_new[2].ModList[0].GD.cotan - Modlist_save_new[0].ModList[0].GD.cotan)
+##%%
+#t = 0
+#cont = Modlist[t].Cont
+#cont_n = Modlist_save_new[t].Cont
+#print(cont[1] - cont_n[1])
+#%%
+t=2
+a = Modlist[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
+b = Modlist_save_new[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
+
+#a = Modlist[t].DerCost_curr()
+#b = Modlist_save_new[t].DerCost_curr()
+
+print(a.GD_list[0].Cot['0'][0][0] - b.GD_list[0].cotan)
+
+#%%
+t=2
+i=1
+v = Modlist[t].field_generator_curr()
+v_n = Modlist_save_new[t].field_generator_curr()
+der =  Modlist[t].ModList[i].GD.dCotDotV(v)
+der_n =  Modlist_save_new[t].ModList[i].GD.dCotDotV(v_n)
+#%%
+print(der_n.cotan - der.Cot['0'][0][0] )  

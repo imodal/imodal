@@ -37,6 +37,15 @@ class GD_landmark(ab.GeometricalDescriptors):
         self.GD = np.zeros([self.N_pts, self.dim])
         self.tan = np.zeros([self.N_pts, self.dim])
         self.cotan = np.zeros([self.N_pts, self.dim])
+
+    def fill_zero_GD(self):        
+        self.GD = np.zeros([self.N_pts, self.dim])
+
+    def fill_zero_tan(self):        
+        self.tan = np.zeros([self.N_pts, self.dim])
+
+    def fill_zero_cotan(self):        
+        self.cotan = np.zeros([self.N_pts, self.dim])
         
         
     def fill_GDpts(self, pts): #  
@@ -68,6 +77,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         pts = self.get_points()
         appli = v.Apply(pts, 0) 
         out = self.copy_full()
+        out.fill_zero_cotan()
         out.tan = appli.copy()
         return out
         
@@ -83,6 +93,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         dx = np.asarray([np.dot(p[i], der[i]) for i in range(x.shape[0])])
         
         GD = self.copy_full()
+        GD.fill_zero_tan()
         GD.cotan = dx.copy() 
         return GD    
                 
@@ -118,8 +129,19 @@ class GD_landmark(ab.GeometricalDescriptors):
     def add_speedGD(self, GDCot):
         self.GD = self.GD + GDCot.tan
         
+    def add_tantocotan(self, GDCot):
+        self.cotan = self.cotan + GDCot.tan
+        
+    def add_cotantotan(self, GDCot):
+        self.tan = self.tan + GDCot.cotan
 
+    def add_cotantoGD(self, GDCot):
+        self.GD = self.GD + GDCot.cotan
 
+    def exchange_tan_cotan(self):
+        cotan = self.cotan.copy()
+        self.cotan = self.tan.copy()
+        self.tan = cotan.copy()
 
 
 

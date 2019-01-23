@@ -34,8 +34,8 @@ class Combine_GD(ab.GeometricalDescriptors):
         for i in range(self.N_GDs):
             GD_list.append(self.GD_list[i].copy_full())
         GD_comb = Combine_GD(GD_list)
-        GD_comb.indi_0 = self.indi_0.copy()
-        GD_comb.indi_xR = self.indi_xR.copy()
+        #GD_comb.indi_0 = self.indi_0.copy()
+        #GD_comb.indi_xR = self.indi_xR.copy()
         #GD_comb.fill_cot_from_GD()
         return GD_comb
 
@@ -43,6 +43,19 @@ class Combine_GD(ab.GeometricalDescriptors):
         for i in range(self.N_GDs):
             self.GD_list[i].fill_zero()
         #self.fill_cot_from_GD()
+
+    def fill_zero_GD(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].fill_zero_GD()
+
+    def fill_zero_tan(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].fill_zero_tan()
+
+    def fill_zero_cotan(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].fill_zero_cotan()
+
 
     def fill_cot_from_param(self, param):
         for i in range(self.N_GDs):
@@ -110,3 +123,26 @@ class Combine_GD(ab.GeometricalDescriptors):
         for i in range(self.N_GDs):
             self.GD_list[i].add_speedGD(GDCot.GD_list[i])
             
+       
+    def add_tantocotan(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_tantocotan(GDCot.GD_list[i])        
+
+    def add_cotantotan(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_cotantotan(GDCot.GD_list[i])
+
+    def add_cotantoGD(self, GDCot):
+        for i in range(self.N_GDs):
+            self.GD_list[i].add_cotantoGD(GDCot.GD_list[i])
+
+    def exchange_tan_cotan(self):
+        for i in range(self.N_GDs):
+            self.GD_list[i].exchange_tan_cotan()
+
+
+
+
+
+
+
