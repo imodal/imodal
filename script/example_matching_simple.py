@@ -113,7 +113,7 @@ x00 = np.array([[0., 0.]])
 coeffs = [1., 0.01]
 sig0 = 30
 sig00 = 500
-sig1 = 50
+sig1 = 10
 nu = 0.001
 dim = 2
 Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
@@ -164,7 +164,7 @@ res = scipy.optimize.minimize(opti.fun, P0,
                               args=args,
                               method='L-BFGS-B', jac=opti.jac, bounds=None, tol=None, callback=None,
                               options={'disp': True, 'maxcor': 10, 'ftol': 1.e-09, 'gtol': 1e-03,
-                                       'eps': 1e-08, 'maxfun': 100, 'maxiter': 50, 'iprint': -1, 'maxls': 20})
+                                       'eps': 1e-08, 'maxfun': 20, 'maxiter': 50, 'iprint': -1, 'maxls': 20})
 #%%
 P1 = res['x']
 
@@ -173,9 +173,26 @@ opti.fill_Mod_from_Vector(P1, Mod_el_opti)
 #%%
 Modlist_opti_tot = shoot.shooting_traj(Mod_el_opti, N)
 
-
-
-
+##%% visualisation
+#
+#xst_c = my_close(xst)
+#xs_c = my_close(xs)
+#for i in range(N + 1):
+#    plt.figure()
+#    xs_i = Modlist_opti_tot[2 * i].ModList[0].GD.GD
+#    xs_ic = my_close(xs_i)
+#    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+#    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+#    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+#    x1_i = Modlist_opti_tot[2 * i].ModList[3].GD.GD[0]
+#    plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
+#    x00_i = Modlist_opti_tot[2 * i].ModList[1].GD.GD
+#    plt.plot(x00_i[:, 0], x00_i[:, 1], '.r')
+#    x00_i = Modlist_opti_tot[2 * i].ModList[2].GD.GD
+#    plt.plot(x00_i[:, 0], x00_i[:, 1], 'xr')  # , markersize=1)
+#    plt.axis('equal')
+#
+#
 
 
 

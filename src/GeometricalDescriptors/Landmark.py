@@ -50,7 +50,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         
         
     def fill_GDpts(self, pts): #  
-        self.gd = pts.copy()
+        self.GD = pts.copy()
 
 
     def get_points(self):

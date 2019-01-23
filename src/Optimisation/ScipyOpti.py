@@ -45,7 +45,7 @@ def jac(P0, *args):
     
     grad_1 = Mod.GD.copy()
     grad_1.fill_zero()
-    grad_1.GD_list[0].fill_GDpts(dxvarcost)
+    grad_1.GD_list[0].cotan = dxvarcost
     #grad_1.fill_cot_from_GD()
     
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
