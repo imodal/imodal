@@ -23,10 +23,11 @@ from src.visualisation import my_close
 import Backward.ScipyOptimise as opti
 
 #%%
+Sil = implicitmodules.DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
 Model0 = implicitmodules.DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
 Model00 = implicitmodules.DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 Model1 = implicitmodules.DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
-Mod_el_init = comb_mod_old.CompoundModules([Model00, Model0, Model1])
+Mod_el_init = comb_mod_old.CompoundModules([Sil, Model00, Model0, Model1])
 #Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
 
 #%%
