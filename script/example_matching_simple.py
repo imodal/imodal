@@ -149,6 +149,7 @@ Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el = Mod_el_init.copy_full()
 
 N=5
+Modlist = shoot.shooting_traj(Mod_el, N)
 
 #%%
 Mod_el_opti = Mod_el_init.copy_full()
@@ -163,9 +164,14 @@ res = scipy.optimize.minimize(opti.fun, P0,
                               args=args,
                               method='L-BFGS-B', jac=opti.jac, bounds=None, tol=None, callback=None,
                               options={'disp': True, 'maxcor': 10, 'ftol': 1.e-09, 'gtol': 1e-03,
-                                       'eps': 1e-08, 'maxfun': 100, 'maxiter': 5, 'iprint': -1, 'maxls': 20})
-# %%µ
+                                       'eps': 1e-08, 'maxfun': 100, 'maxiter': 50, 'iprint': -1, 'maxls': 20})
+#%%
+P1 = res['x']
 
+# %%
+opti.fill_Mod_from_Vector(P1, Mod_el_opti)                                       
+#%%
+Modlist_opti_tot = shoot.shooting_traj(Mod_el_opti, N)
 
 
 
