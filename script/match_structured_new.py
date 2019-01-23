@@ -4,9 +4,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import src.StructuredFields.StructuredField_0 as stru_fie0
+import src.StructuredFields.StructuredField_p as stru_fiep
+import src.StructuredFields.StructuredField_m as stru_fiem
 import src.StructuredFields.Sum as stru_fie_sum
 
 import src.DeformationModules.ElasticOrder0 as defmod0
+import src.DeformationModules.ElasticOrder1 as defmod1
 import src.DeformationModules.Combination as comb_mod
 
 import src.Forward.Hamiltonianderivatives as HamDer
@@ -173,24 +176,24 @@ z = a*(x1[:,1]-Dy)
 C[:,1,0] = K*((1-b)*z**2+b*z)
 
 C[:,0,0] = 0.9*C[:,1,0]
-
-
-#%% plot C profile
-plt.figure()
-X = np.linspace(0,38,100)
-#Y = K*(a*(38. - X)**3 + b*(38. - X)**2)
-Y = define_C1(0,X)
-plt.plot(Y, X, '-')
-plt.ylabel('x(2)')
-plt.xlabel('C')
-#plt.axis('equal')
-plt.axis([0,30,0,40])
+#
+#
+##%% plot C profile
+#plt.figure()
+#X = np.linspace(0,38,100)
+##Y = K*(a*(38. - X)**3 + b*(38. - X)**2)
+#Y = define_C1(0,X)
+#plt.plot(Y, X, '-')
+#plt.ylabel('x(2)')
+#plt.xlabel('C')
+##plt.axis('equal')
+#plt.axis([0,30,0,40])
 #plt.savefig(path_res + 'C_profil_match.pdf', format='pdf', bbox_inches = 'tight')
-#%%
-plt.figure()
-X = np.linspace(-10, 10,100)
-Z = define_C1(X, 30 + np.zeros(X.shape))
-plt.plot(X,Z, '-')
+##%%
+#plt.figure()
+#X = np.linspace(-10, 10,100)
+#Z = define_C1(X, 30 + np.zeros(X.shape))
+#plt.plot(X,Z, '-')
 #%%
 x00 = np.array([[0., 0.]])
 coeffs = [1., 0.01]
@@ -200,7 +203,7 @@ sig1 = 50
 nu = 0.001
 dim = 2
 #Sil = defmod.SilentLandmark(xs.shape[0], dim)
-#Model1 = defmod.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 #Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
 Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
@@ -208,7 +211,8 @@ Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
 
-Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
+Mod_el_init = comb_mod.CompoundModules([Model00, Model0, Model1])
+#Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
 
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 
@@ -222,6 +226,8 @@ ps = np.zeros(xs.shape)
 ps[0:4,1] = 2.
 ps[22:26,1] = 2.
 (p1,PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0],2,2)))
+(p1,PR) = (np.random.rand(*x1.shape), np.random.rand(x1.shape[0],2,2))
+
 param_sil = (xs, 0.3*ps)
 param_0 = (x0, p0)
 param_00 = (np.zeros([1, 2]), p00)
@@ -229,7 +235,8 @@ param_1 = ((x1, R), (p1, PR))
 
 #%%
 #param = [param_sil, param_00, param_0, param_1]
-param = [param_00, param_0]
+#param = [param_00, param_0]
+param = [param_00, param_0, param_1]
 #param = [param_sil, param_1]
 GD = Mod_el_init.GD.copy()
 
@@ -247,28 +254,72 @@ Modlist_save_new = shoot.shooting_traj(Mod_el, N)
 #xst = Modlist[-1].GD.Cot['0'][0][0].copy()
 # -*- coding: utf-8 -*-
 #%%
+t= -1
+i = 1
+print(Modlist_save_new[t].GD.GD_list[i].GD - Modlist[t].GD.GD_list[i].Cot['0'][0][0])
+print(Modlist_save_new[t].GD.GD_list[i].cotan- Modlist[t].GD.GD_list[i].Cot['0'][0][1])
+#print(Modlist[t].GD.GD_list[0].Cot['0'][i])
+#%%
+t=-1
+print(Modlist_save_new[t].GD.GD_list[2].GD[0] - Modlist[t].GD.GD_list[2].Cot['x,R'][0][0][0])
+print(Modlist_save_new[t].GD.GD_list[2].GD[1] - Modlist[t].GD.GD_list[2].Cot['x,R'][0][0][1])
+#print(Modlist_save_new[t].GD.GD_list[2].cotan[0]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][0])
+#print(Modlist_save_new[t].GD.GD_list[2].cotan[1]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][1])
+
+#%%
+t=0
+i=2
+print(Modlist_save_new[t].Cont[i] - Modlist[t].Cont[i])
+#%%
+t=0
+v_new = Modlist_save_new[t].field_generator_curr()
+dGD_new = Modlist_save_new[t].GD.dCotDotV(v_new)
+dGD_new = Modlist_save_new[t].GD.Ximv(v_new)
+#dGD_new = HamDer.dpH(Modlist_save_new[t])
+#%%
+v = Modlist[t].field_generator_curr()
+dGD = Modlist[t].GD.dCotDotV(v)
+dGD = Modlist[t].GD.Ximv(v)
+#dGD = HamDer_old.dpH(Modlist[t])
+#%%
+#
+i=1
+#dGD.Cot['0'][i][0]- dGD_new.GD_list[i].tan
+dGD.Cot['x,R'][0][0][1] - dGD_new.GD_list[2].tan[1]
+#%%
+t=0
+Modlist[t].ModList[2].Mom -Modlist_save_new[t].ModList[2].Mom
+#Modlist[t].ModList[2].Cont -Modlist_save_new[t].ModList[2].Cont
+
+#%%
 grad_1 = Modlist_save_new[-1].GD.copy_full()
 grad_1.fill_zero_tan()
 grad_1.fill_zero_cotan()
-
-grad_1.GD_list[0].cotan = 0.2*grad_1.GD_list[0].GD.copy()
-grad_1.GD_list[1].cotan = 0.2*grad_1.GD_list[1].GD.copy()
-grad_1.GD_list[0].tan = np.random.rand(*grad_1.GD_list[0].GD.shape)
-grad_1.GD_list[1].tan = np.random.rand(*grad_1.GD_list[1].GD.shape)
+#
+#grad_1.GD_list[0].cotan = 0.2*grad_1.GD_list[0].GD.copy()
+#grad_1.GD_list[1].cotan = 0.2*grad_1.GD_list[1].GD.copy()
+#grad_1.GD_list[2].cotan = (0.2*grad_1.GD_list[2].GD[0].copy(), 0.2*grad_1.GD_list[2].GD[1].copy())
+grad_1.GD_list[0].tan = 0.01*np.random.rand(*grad_1.GD_list[0].GD.shape)
+grad_1.GD_list[1].tan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
+grad_1.GD_list[2].tan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
+grad_1.GD_list[0].cotan = 0.01*np.random.rand(*grad_1.GD_list[0].GD.shape)
+grad_1.GD_list[1].cotan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
+grad_1.GD_list[2].cotan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
 
 #%%
 eps = 1e-6
 cgrad_new = bckwrd.backward_shoot_rk2(Modlist_save_new, grad_1, eps)
-out_new = bckwrd.backward_step(Modlist_save_new[-1], eps, grad_1)
+#out_new = bckwrd.backward_step(Modlist_save_new[-1], eps, grad_1)
 #%%
 
 grad_1_o =  Modlist[-1].GD.copy()
 grad_1_o.GD_list[0].Cot['0'].append((grad_1.GD_list[0].tan.copy(), grad_1.GD_list[0].cotan.copy()))
 grad_1_o.GD_list[1].Cot['0'].append((grad_1.GD_list[1].tan.copy(), grad_1.GD_list[1].cotan.copy()))
+grad_1_o.GD_list[2].Cot['x,R'].append(((grad_1.GD_list[2].tan[0].copy(), grad_1.GD_list[2].tan[1].copy()), (grad_1.GD_list[2].cotan[0].copy(), grad_1.GD_list[2].cotan[1].copy() )))
 grad_1_o.fill_cot_init()
 #%%
 cgrad = bck.backward_shoot_rk2(Modlist, grad_1_o, eps)
-out= bck.backward_step(Modlist[-1], eps, grad_1_o)
+#out= bck.backward_step(Modlist[-1], eps, grad_1_o)
 #%%
 print(out_new.GD_list[0].tan)
 print(out_new.GD_list[0].cotan)
@@ -276,10 +327,20 @@ print(out.Cot['0'][0])
 
 
 #%%
-print(cgrad_new.GD_list[0].tan)
-print(cgrad_new.GD_list[0].cotan)
-print(cgrad.Cot['0'][0])
-#
+i=1
+print(cgrad_new.GD_list[i].tan - cgrad.Cot['0'][i][0])
+print(cgrad_new.GD_list[i].cotan - cgrad.Cot['0'][i][1])
+
+#%%
+print(cgrad_new.GD_list[2].tan[0] - cgrad.Cot['x,R'][0][0][0])
+print(cgrad_new.GD_list[2].tan[1] - cgrad.Cot['x,R'][0][0][1])
+print(cgrad_new.GD_list[2].cotan[0] - cgrad.Cot['x,R'][0][1][0])
+print(cgrad_new.GD_list[2].cotan[1] - cgrad.Cot['x,R'][0][1][1])
+
+
+
+
+
 #%%
 #t = -1
 #x00_f = Modlist[t].GD.Cot['0'][0][0]

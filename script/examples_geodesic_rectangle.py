@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 # %%
 from src import rotation as rot
-
+import DeformationModules
 import DeformationModules.Combination as comb_mod
-import DeformationModules.ElasticOrder1
-import DeformationModules.SilentLandmark
+import DeformationModules.ElasticOrder1 as DefEl1
+import DeformationModules.SilentLandmark as DefSil
 import Forward.shooting as shoot
 #
 ##%%
@@ -36,8 +36,8 @@ Z0 = np.meshgrid(X0,Y0)
 
 Z = np.reshape(np.swapaxes(Z0, 0,2), [-1, 2])
 
-Z_c = np.concatenate([np.array([X0, np.zeros([nx])+ymin]).transpose(), np.array([np.zeros([ny])+xmax, Y0]).transpose(), np.array([np.flip(X0), np.zeros([nx])+ymax]).transpose(),
-                      np.array([np.zeros([ny])+xmin, np.flip(Y0)]).transpose()])
+Z_c = np.concatenate([np.array([X0, np.zeros([nx])+ymin]).transpose(), np.array([np.zeros([ny])+xmax, Y0]).transpose(), np.array([np.flipud(X0), np.zeros([nx])+ymax]).transpose(),
+                      np.array([np.zeros([ny])+xmin, np.flipud(Y0)]).transpose()])
 
 #%%
 plt.plot(Z[:,0], Z[:,1], '.')
@@ -124,7 +124,7 @@ ax2.plot(Z[:,0], Z[:,1], '.b')
 ax2.plot(Z_c[:,0], Z_c[:,1],'-g', linewidth=2)
 ax2.axis([xfigmin, xfigmax, yfigmin, yfigmax])
 
-plt.savefig(path_res + name_exp + 'init.pdf', format='pdf')
+#plt.savefig(path_res + name_exp + 'init.pdf', format='pdf')
 
 
 
@@ -134,8 +134,8 @@ sig0 = 10
 sig1 = 5
 nu = 0.001
 dim = 2
-Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
-Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Sil = DeformationModules.SilentLandmark(xs.shape[0], dim)
+Model1 = DeformationModules.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 #Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 #Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 #Model00 = defmod.ElasticOrderO(100, 1, dim, 0.1)
@@ -172,7 +172,7 @@ Dy = 0.
 (nxgrid,nygrid) = xx.shape
 grid_points= np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-Sil_grid = DeformationModules.SilentLandmark.SilentLandmark(grid_points.shape[0], dim)
+Sil_grid = DeformationModules.SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 
@@ -200,7 +200,7 @@ for i in range(N+1):
     #plt.axis([-10,10,-10,55])
     plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
     plt.axis('off')
-    plt.savefig(path_res + name_exp + '_t_' + str(i) + '.pdf', format='pdf', bbox_inches = 'tight')
+#    plt.savefig(path_res + name_exp + '_t_' + str(i) + '.pdf', format='pdf', bbox_inches = 'tight')
 
 #%% plot mom at t = i
 

@@ -84,7 +84,7 @@ R = np.asarray([rot.my_R(cth) for cth in th])
 for  i in range(x1.shape[0]):
     R[i] = rot.my_R(th[i])
 
-C = np.zeros((x1.shape[0],2,2))
+C = np.zeros((x1.shape[0],2,1))
 L = 38.
 K = 100
 a, b = -2/L**3, 3/L**2
@@ -192,8 +192,16 @@ Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 
 #%%
-ind0p = [54, 55, 56, 57]
-ind0m = [40, 71, 72, 73]
+
+xfigmin = -10
+xfigmax = 10
+yfigmin = -10
+yfigmax = 10
+
+#ind0p = [54, 55, 56, 57]
+ind0p = [54, 53]
+#ind0m = [40, 71, 72, 73]
+ind0m = [40, 41]
 ps = np.zeros(xs.shape)
 #ps[nx +ny:2*nx + ny, 1] = 0.5
 #ps[Ns_0:Ns_0+4, 1] = 1.
@@ -204,7 +212,12 @@ ps[ind0m, 1] = 1.
 param_sil = (xs, 1*ps)
 param_1 = ((x1, R), (p1, PR))
 
-
+plt.plot(x1[:,0], x1[:,1], '.b')
+plt.plot(xs[:,0], xs[:,1], '-g', linewidth=2)
+plt.quiver(xs[:,0], xs[:,1], ps[:,0], ps[:,1])
+plt.axis('equal')
+#plt.axis([-10,10,-10,55])
+plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
 #%%
 param = [param_sil, param_1]
 #param = [param_sil, param_1]
@@ -212,10 +225,6 @@ GD = Mod_el_init.GD.copy()
 Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el = Mod_el_init.copy_full()
 
-xfigmin = -10
-xfigmax = 10
-yfigmin = -10
-yfigmax = 10
 
 N=5
 height = 55
