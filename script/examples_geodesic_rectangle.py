@@ -6,10 +6,12 @@ os.makedirs(path_res, exist_ok=True)
 import matplotlib.pyplot as plt
 import numpy as np
 from src import rotation as rot
-
+import DeformationModules
 import DeformationModules.Combination as comb_mod
+
 from DeformationModules import ElasticOrder1
 from DeformationModules import SilentLandmark
+
 import Forward.shooting as shoot
 
 # %%
@@ -126,12 +128,14 @@ plt.show()
 # plt.savefig(path_res + name_exp + 'init.png', format='png')
 
 
+
 # %%
 coeffs = [5., 0.05]
 sig0 = 10
 sig1 = 5
 nu = 0.001
 dim = 2
+
 Sil = SilentLandmark(xs.shape[0], dim)
 Model1 = ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 # Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
@@ -171,6 +175,7 @@ Dy = 0.
 grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
 Sil_grid = SilentLandmark(grid_points.shape[0], dim)
+
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 

@@ -40,10 +40,3 @@ class Summed_field(ab.StructuredField):
         
         return djv
     
-    
-    
-    def p_Ximv(self, vsr, j):
-        
-        raise NameError('No inner product for summed fields')
-    
- 
