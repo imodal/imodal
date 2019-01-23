@@ -140,6 +140,26 @@ class Combine_GD(ab.GeometricalDescriptors):
         for i in range(self.N_GDs):
             self.GD_list[i].exchange_tan_cotan()
 
+    def get_GDinVector(self):
+        vec_list = [self.GD_list[i].get_GDinVector() for i in range(self.N_GDs)]
+        return np.concatenate(vec_list)
+
+    def get_cotaninVector(self):
+        vec_list = [self.GD_list[i].get_cotaninVector() for i in range(self.N_GDs)]
+        return np.concatenate(vec_list)
+
+
+
+    def fill_from_vec(self, PX, PMom):
+        countX = 0
+        countMom = 0
+        for i in range(self.N_GDs):
+            dimX = self.GD_list[i].dimGD
+            dimMom = self.GD_list[i].dimMom
+            self.GD_list[i].fill_from_vec(PX[countX: countX + dimX], PMom[countMom: countMom + dimMom])
+            countX += dimX
+            countMom += dimMom
+
 
 
 

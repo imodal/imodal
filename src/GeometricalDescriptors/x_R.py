@@ -20,7 +20,6 @@ class GD_xR(ab.GeometricalDescriptors):
         """
         The GD and Mom are arrays of size N_pts x dim.
         """
-        
         self.Cot = {'x,R': []}
         self.N_pts = N_pts
         self.dim = dim
@@ -29,6 +28,9 @@ class GD_xR(ab.GeometricalDescriptors):
         self.GD = (np.zeros([self.N_pts, self.dim]), np.zeros(self.Rshape))
         self.tan = (np.zeros([self.N_pts, self.dim]), np.zeros(self.Rshape))
         self.cotan = (np.zeros([self.N_pts, self.dim]), np.zeros(self.Rshape))
+        
+        self.dimGD = self.N_pts * self.dim + self.N_pts * self.dim * self.dim
+        self.dimMom = self.N_pts * self.dim + self.N_pts * self.dim * self.dim
     
     def copy(self):  # 
         return GD_xR(self.N_pts, self.dim)
@@ -198,4 +200,25 @@ class GD_xR(ab.GeometricalDescriptors):
         (cotx, cotR) = self.cotan
         self.tan = (cotx.copy(), cotR.copy())
         self.cotan = (dx.copy(), dR.copy())
+
+    def get_GDinVector(self):
+        x, R = self.GD
+        return np.concatenate([x.flatten(), R.flatten()])
+
+    def get_cotaninVector(self):
+        cotx, cotR = self.cotan
+        return np.concatenate([cotx.flatten(), cotR.flatten()])
+
+    def fill_from_vec(self, PX, PMom):
+        x = PX[:self.N_pts * self.dim]
+        x = x.reshape([self.N_pts, self.dim])
+        R = PX[self.N_pts * self.dim:]
+        R = R.reshape([self.N_pts, self.dim, self.dim])
         
+        cotx = PMom[:self.N_pts * self.dim]
+        cotx = cotx.reshape([self.N_pts, self.dim])
+        cotR = PMom[self.N_pts * self.dim:]
+        cotR = cotR.reshape([self.N_pts, self.dim, self.dim])
+        
+        param = ((x, R), (cotx, cotR))
+        self.fill_cot_from_param(param)

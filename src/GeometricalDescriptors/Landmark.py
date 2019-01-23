@@ -15,12 +15,13 @@ class GD_landmark(ab.GeometricalDescriptors):
         """
         The GD and Mom are arrays of size N_pts x dim.
         """
-        
         self.N_pts = N_pts
         self.dim = dim
         self.GD = np.zeros([self.N_pts, self.dim])
         self.tan = np.zeros([self.N_pts, self.dim])
         self.cotan = np.zeros([self.N_pts, self.dim])
+        self.dimGD = self.N_pts * self.dim
+        self.dimMom = self.N_pts * self.dim
         
     def copy(self): #
         return GD_landmark(self.N_pts, self.dim)
@@ -145,6 +146,23 @@ class GD_landmark(ab.GeometricalDescriptors):
 
 
 
+    def get_GDinVector(self):
+        return self.GD.flatten()
+
+    def get_cotaninVector(self):
+        return self.cotan.flatten()
+
+
+
+    def fill_from_vec(self, PX, PMom):
+        x = PX
+        x = x.reshape([self.N_pts, self.dim])
+        
+        cotx = PMom
+        cotx = cotx.reshape([self.N_pts, self.dim])
+        
+        param = (x, cotx)
+        self.fill_cot_from_param(param)
 
 
 
