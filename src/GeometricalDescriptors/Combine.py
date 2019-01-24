@@ -150,6 +150,12 @@ class Combine_GD(ab.GeometricalDescriptors):
 
 
 
+    def get_taninVector(self):
+        vec_list = [self.GD_list[i].get_taninVector() for i in range(self.N_GDs)]
+        return np.concatenate(vec_list)
+
+
+
     def fill_from_vec(self, PX, PMom):
         countX = 0
         countMom = 0
