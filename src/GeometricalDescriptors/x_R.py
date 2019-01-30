@@ -207,10 +207,10 @@ class GD_xR(ab.GeometricalDescriptors):
 
     def get_cotaninVector(self):
         cotx, cotR = self.cotan
-        return np.concatenate([cotx.flatten(), cotR.flatten()])
+        return np.concatenate([tanx.flatten(), tanR.flatten()])
 
     def get_taninVector(self):
-        cotx, cotR = self.cotan
+        tanx, tanR = self.tan
         return np.concatenate([cotx.flatten(), cotR.flatten()])
 
     def fill_from_vec(self, PX, PMom):
