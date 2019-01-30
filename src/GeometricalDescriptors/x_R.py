@@ -211,7 +211,7 @@ class GD_xR(ab.GeometricalDescriptors):
 
     def get_taninVector(self):
         tanx, tanR = self.tan
-        return np.concatenate([cotx.flatten(), cotR.flatten()])
+        return np.concatenate([tanx.flatten(), tanR.flatten()])
 
     def fill_from_vec(self, PX, PMom):
         x = PX[:self.N_pts * self.dim]
