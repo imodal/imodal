@@ -173,26 +173,26 @@ opti.fill_Mod_from_Vector(P1, Mod_el_opti)
 #%%
 Modlist_opti_tot = shoot.shooting_traj(Mod_el_opti, N)
 
-##%% visualisation
-#
-#xst_c = my_close(xst)
-#xs_c = my_close(xs)
-#for i in range(N + 1):
-#    plt.figure()
-#    xs_i = Modlist_opti_tot[2 * i].ModList[0].GD.GD
-#    xs_ic = my_close(xs_i)
-#    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
-#    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
-#    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
-#    x1_i = Modlist_opti_tot[2 * i].ModList[3].GD.GD[0]
-#    plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
-#    x00_i = Modlist_opti_tot[2 * i].ModList[1].GD.GD
-#    plt.plot(x00_i[:, 0], x00_i[:, 1], '.r')
-#    x00_i = Modlist_opti_tot[2 * i].ModList[2].GD.GD
-#    plt.plot(x00_i[:, 0], x00_i[:, 1], 'xr')  # , markersize=1)
-#    plt.axis('equal')
-#
-#
+#%% visualisation
+
+xst_c = my_close(xst)
+xs_c = my_close(xs)
+for i in range(N + 1):
+    plt.figure()
+    xs_i = Modlist_opti_tot[2 * i].ModList[0].GD.GD
+    xs_ic = my_close(xs_i)
+    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+    x1_i = Modlist_opti_tot[2 * i].ModList[3].GD.GD[0]
+    plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
+    x00_i = Modlist_opti_tot[2 * i].ModList[1].GD.GD
+    plt.plot(x00_i[:, 0], x00_i[:, 1], '.r')
+    x00_i = Modlist_opti_tot[2 * i].ModList[2].GD.GD
+    plt.plot(x00_i[:, 0], x00_i[:, 1], 'xr')  # , markersize=1)
+    plt.axis('equal')
+
+
 
 
 
