@@ -13,14 +13,14 @@ import implicitmodules.DeformationModules.ElasticOrder0
 import implicitmodules.DeformationModules.ElasticOrder1
 import implicitmodules.DeformationModules.SilentLandmark
 import implicitmodules.DeformationModules.Combination as comb_mod_old
-import Forward.shooting as shoot
+import Forward.shooting as shoot_old
 import Backward.Backward as bck
 import implicitmodules.Forward.Hamiltonianderivatives as HamDer_old
 # %%
 from src import rotation as rot
 from src.visualisation import my_close
 
-import Backward.ScipyOptimise as opti
+import Backward.ScipyOptimise as opti_old
 
 #%%
 Sil = implicitmodules.DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
@@ -36,9 +36,32 @@ Mod_el_init = comb_mod_old.CompoundModules([Sil, Model00, Model0, Model1])
 #param = [param_sil, param_1]
 GD = Mod_el_init.GD.copy()
 Mod_el_init.GD.fill_cot_from_param(param)
-Mod_el = Mod_el_init.copy_full()
+Mod_el_old = Mod_el_init.copy_full()
 
 N = 5
 
-# %%
-Modlist = shoot.shooting_traj(Mod_el, N)
+
+#%%
+
+
+N=5
+lam_var = 15.
+sig_var = 10.
+N = 5
+args_old = (Mod_el_old, xst, lam_var, sig_var, N, 0.001)
+
+jac_old = opti_old.jac
+
+#%%
+
+P0_old = opti_old.fill_Vector_from_GD(Mod_el_old.GD)
+
+#%%
+
+
+dP_old = jac_old(P0_old, *args_old)
+
+
+#
+## %%
+#Modlist = shoot.shooting_traj(Mod_el, N)

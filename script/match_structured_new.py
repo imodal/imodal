@@ -22,9 +22,8 @@ import src.Backward.Backward as bckwrd
 from implicitmodules.src.visualisation import my_close
 from implicitmodules.src import rotation as rot
 import implicitmodules.src.data_attachment.varifold as var
-import implicitmodules.Backward.Backward as bckwd
-import implicitmodules.Backward.ScipyOptimise as opti
-
+import src.Backward.Backward as bckwd
+import src.Optimisation.ScipyOpti as opti
 #%%
 #path_res = "/home/barbaragris/Results/ImplicitModules/"
 
@@ -250,136 +249,196 @@ Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el = Mod_el_init.copy_full()
 
 N=5
+lam_var = 15.
+sig_var = 10.
+N = 5
+args = (Mod_el, xst, lam_var, sig_var, N, 0.001)
 
-#%%
-Modlist_save_new = shoot.shooting_traj(Mod_el, N)
-
-
-#%%
-t= -1
-i = 2
-print(Modlist_save_new[t].GD.GD_list[i].GD - Modlist[t].GD.GD_list[i].Cot['0'][0][0])
-print(Modlist_save_new[t].GD.GD_list[i].cotan- Modlist[t].GD.GD_list[i].Cot['0'][0][1])
-#print(Modlist[t].GD.GD_list[0].Cot['0'][i])
-#%%
-t=-1
-print(Modlist_save_new[t].GD.GD_list[3].GD[0] - Modlist[t].GD.GD_list[3].Cot['x,R'][0][0][0])
-print(Modlist_save_new[t].GD.GD_list[3].GD[1] - Modlist[t].GD.GD_list[3].Cot['x,R'][0][0][1])
-#print(Modlist_save_new[t].GD.GD_list[2].cotan[0]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][0])
-#print(Modlist_save_new[t].GD.GD_list[2].cotan[1]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][1])
-
-#%%
-t=0
-i=2
-print(Modlist_save_new[t].Cont[i] - Modlist[t].Cont[i])
-#%%
-t=0
-v_new = Modlist_save_new[t].field_generator_curr()
-dGD_new = Modlist_save_new[t].GD.dCotDotV(v_new)
-dGD_new = Modlist_save_new[t].GD.Ximv(v_new)
-#dGD_new = HamDer.dpH(Modlist_save_new[t])
-#%%
-v = Modlist[t].field_generator_curr()
-dGD = Modlist[t].GD.dCotDotV(v)
-dGD = Modlist[t].GD.Ximv(v)
-#dGD = HamDer_old.dpH(Modlist[t])
-#%%
-#
-i=1
-#dGD.Cot['0'][i][0]- dGD_new.GD_list[i].tan
-dGD.Cot['x,R'][0][0][1] - dGD_new.GD_list[2].tan[1]
-#%%
-t=0
-Modlist[t].ModList[2].Mom -Modlist_save_new[t].ModList[2].Mom
-#Modlist[t].ModList[2].Cont -Modlist_save_new[t].ModList[2].Cont
-
-#%%
-grad_1 = Modlist_save_new[-1].GD.copy_full()
-grad_1.fill_zero_tan()
-grad_1.fill_zero_cotan()
-#
-#grad_1.GD_list[0].cotan = 0.2*grad_1.GD_list[0].GD.copy()
-#grad_1.GD_list[1].cotan = 0.2*grad_1.GD_list[1].GD.copy()
-#grad_1.GD_list[2].cotan = (0.2*grad_1.GD_list[2].GD[0].copy(), 0.2*grad_1.GD_list[2].GD[1].copy())
-grad_1.GD_list[0].tan = 1*np.random.rand(*grad_1.GD_list[0].GD.shape)
-#grad_1.GD_list[1].tan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
-#grad_1.GD_list[2].tan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
-grad_1.GD_list[0].cotan = 1*np.random.rand(*grad_1.GD_list[0].GD.shape)
-#grad_1.GD_list[1].cotan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
-#grad_1.GD_list[2].cotan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
-
-#%%
-eps = 1e-6
-cgrad_new = bckwrd.backward_shoot_rk2(Modlist_save_new, grad_1, eps)
-#out_new = bckwrd.backward_step(Modlist_save_new[-1], eps, grad_1)
+jac = opti.jac
+fun = opti.fun
 #%%
 
-grad_1_o =  Modlist[-1].GD.copy()
-grad_1_o.GD_list[0].Cot['0'].append((grad_1.GD_list[0].tan.copy(), grad_1.GD_list[0].cotan.copy()))
-grad_1_o.GD_list[1].Cot['0'].append((grad_1.GD_list[1].tan.copy(), grad_1.GD_list[1].cotan.copy()))
-grad_1_o.GD_list[2].Cot['0'].append((grad_1.GD_list[2].tan.copy(), grad_1.GD_list[2].cotan.copy()))
-grad_1_o.GD_list[3].Cot['x,R'].append(((grad_1.GD_list[3].tan[0].copy(), grad_1.GD_list[3].tan[1].copy()), (grad_1.GD_list[3].cotan[0].copy(), grad_1.GD_list[3].cotan[1].copy() )))
-grad_1_o.fill_cot_init()
-#%%
-cgrad = bck.backward_shoot_rk2(Modlist, grad_1_o, eps)
-#out= bck.backward_step(Modlist[-1], eps, grad_1_o)
-#%%
-print(out_new.GD_list[0].tan)
-print(out_new.GD_list[0].cotan)
-print(out.Cot['0'][0])
-
+P0 = opti.fill_Vector_from_GD(Mod_el.GD)
 
 #%%
-i=2
-
-print(cgrad_new.GD_list[i].tan - cgrad.Cot['0'][i][0])
-print(cgrad_new.GD_list[i].cotan - cgrad.Cot['0'][i][1])
+dp = jac(P0, *args)
 
 #%%
-i=3
-print(cgrad_new.GD_list[i].tan[0] - cgrad.Cot['x,R'][0][0][0])
-print(cgrad_new.GD_list[i].tan[1] - cgrad.Cot['x,R'][0][0][1])
-print(cgrad_new.GD_list[i].cotan[0] - cgrad.Cot['x,R'][0][1][0])
-print(cgrad_new.GD_list[i].cotan[1] - cgrad.Cot['x,R'][0][1][1])
 
+min(dp - dP_old)
+#%%
+
+
+
+ModTraj = shoot.shooting_traj(Mod_el, N)
+
+ModTraj_old = shoot_old.shooting_traj(Mod_el_old, N)
+#%%
+xsf = ModTraj[-1].ModList[0].GD.GD
+(varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
+dxvarcost = lam_var * dxvarcost
+
+xsf_old = ModTraj_old[-1].ModList[0].GD.Cot['0'][0][0]
+(varcost_old, dxvarcost_old) = var.my_dxvar_cost(xsf_old, xst, sig_var)
+dxvarcost_old = lam_var * dxvarcost_old
+
+#%%
+eps = 0.001
+grad_1 = Mod_el.GD.copy()
+grad_1.fill_zero()
+grad_1.GD_list[0].tan = dxvarcost
+#grad_1.fill_cot_from_GD()
+
+cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
+ 
+
+
+grad_1_old = Mod_el_old.GD.copy()
+grad_1_old.fill_zero()
+grad_1_old.GD_list[0].fill_GDpts(dxvarcost)
+grad_1_old.fill_cot_from_GD()
+
+cgrad_old = bck.backward_shoot_rk2(ModTraj_old, grad_1_old, eps)
+#%%
+cgrad.GD_list[0].tan - cgrad_old.Cot['0'][0][0]
+#%%
+grad_1.GD_list[0].cotan - grad_1_old.Cot['0'][0][0]
+#%%
 
 
 
 
 #%%
-#t = -1
-#x00_f = Modlist[t].GD.Cot['0'][0][0]
-#x00_f_n = Modlist_save_new[t].GD.GD_list[0].GD
-#x00_f_nbis = Modlist_save_new[t].ModList[0].GD.GD
-##print(x00_f_n -x00_f_nbis )
-##print(x00_f -x00_f_nbis )
-#print(x00_f)
-##print(x00_f_nbis)
 #
 ##%%
-#print(Modlist[2].GD.Cot['0'][0][1] - Modlist[0].GD.Cot['0'][0][1])
-#print(Modlist_save_new[2].ModList[0].GD.cotan - Modlist_save_new[0].ModList[0].GD.cotan)
+#Modlist_save_new = shoot.shooting_traj(Mod_el, N)
+#
+#
 ##%%
-#t = 0
-#cont = Modlist[t].Cont
-#cont_n = Modlist_save_new[t].Cont
-#print(cont[1] - cont_n[1])
-#%%
-t=2
-a = Modlist[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
-b = Modlist_save_new[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
-
-#a = Modlist[t].DerCost_curr()
-#b = Modlist_save_new[t].DerCost_curr()
-
-print(a.GD_list[0].Cot['0'][0][0] - b.GD_list[0].cotan)
-
-#%%
-t=2
-i=1
-v = Modlist[t].field_generator_curr()
-v_n = Modlist_save_new[t].field_generator_curr()
-der =  Modlist[t].ModList[i].GD.dCotDotV(v)
-der_n =  Modlist_save_new[t].ModList[i].GD.dCotDotV(v_n)
-#%%
-print(der_n.cotan - der.Cot['0'][0][0] )  
+#t= -1
+#i = 2
+#print(Modlist_save_new[t].GD.GD_list[i].GD - Modlist[t].GD.GD_list[i].Cot['0'][0][0])
+#print(Modlist_save_new[t].GD.GD_list[i].cotan- Modlist[t].GD.GD_list[i].Cot['0'][0][1])
+##print(Modlist[t].GD.GD_list[0].Cot['0'][i])
+##%%
+#t=-1
+#print(Modlist_save_new[t].GD.GD_list[3].GD[0] - Modlist[t].GD.GD_list[3].Cot['x,R'][0][0][0])
+#print(Modlist_save_new[t].GD.GD_list[3].GD[1] - Modlist[t].GD.GD_list[3].Cot['x,R'][0][0][1])
+##print(Modlist_save_new[t].GD.GD_list[2].cotan[0]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][0])
+##print(Modlist_save_new[t].GD.GD_list[2].cotan[1]- Modlist[t].GD.GD_list[2].Cot['x,R'][0][1][1])
+#
+##%%
+#t=0
+#i=2
+#print(Modlist_save_new[t].Cont[i] - Modlist[t].Cont[i])
+##%%
+#t=0
+#v_new = Modlist_save_new[t].field_generator_curr()
+#dGD_new = Modlist_save_new[t].GD.dCotDotV(v_new)
+#dGD_new = Modlist_save_new[t].GD.Ximv(v_new)
+##dGD_new = HamDer.dpH(Modlist_save_new[t])
+##%%
+#v = Modlist[t].field_generator_curr()
+#dGD = Modlist[t].GD.dCotDotV(v)
+#dGD = Modlist[t].GD.Ximv(v)
+##dGD = HamDer_old.dpH(Modlist[t])
+##%%
+##
+#i=1
+##dGD.Cot['0'][i][0]- dGD_new.GD_list[i].tan
+#dGD.Cot['x,R'][0][0][1] - dGD_new.GD_list[2].tan[1]
+##%%
+#t=0
+#Modlist[t].ModList[2].Mom -Modlist_save_new[t].ModList[2].Mom
+##Modlist[t].ModList[2].Cont -Modlist_save_new[t].ModList[2].Cont
+#
+##%%
+#grad_1 = Modlist_save_new[-1].GD.copy_full()
+#grad_1.fill_zero_tan()
+#grad_1.fill_zero_cotan()
+##
+##grad_1.GD_list[0].cotan = 0.2*grad_1.GD_list[0].GD.copy()
+##grad_1.GD_list[1].cotan = 0.2*grad_1.GD_list[1].GD.copy()
+##grad_1.GD_list[2].cotan = (0.2*grad_1.GD_list[2].GD[0].copy(), 0.2*grad_1.GD_list[2].GD[1].copy())
+#grad_1.GD_list[0].tan = 1*np.random.rand(*grad_1.GD_list[0].GD.shape)
+##grad_1.GD_list[1].tan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
+##grad_1.GD_list[2].tan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
+#grad_1.GD_list[0].cotan = 1*np.random.rand(*grad_1.GD_list[0].GD.shape)
+##grad_1.GD_list[1].cotan = 0.01*np.random.rand(*grad_1.GD_list[1].GD.shape)
+##grad_1.GD_list[2].cotan = (0.01*np.random.rand(*grad_1.GD_list[2].GD[0].shape),0.01*np.random.rand(*grad_1.GD_list[2].GD[1].shape))
+#
+##%%
+#eps = 1e-6
+#cgrad_new = bckwrd.backward_shoot_rk2(Modlist_save_new, grad_1, eps)
+##out_new = bckwrd.backward_step(Modlist_save_new[-1], eps, grad_1)
+##%%
+#
+#grad_1_o =  Modlist[-1].GD.copy()
+#grad_1_o.GD_list[0].Cot['0'].append((grad_1.GD_list[0].tan.copy(), grad_1.GD_list[0].cotan.copy()))
+#grad_1_o.GD_list[1].Cot['0'].append((grad_1.GD_list[1].tan.copy(), grad_1.GD_list[1].cotan.copy()))
+#grad_1_o.GD_list[2].Cot['0'].append((grad_1.GD_list[2].tan.copy(), grad_1.GD_list[2].cotan.copy()))
+#grad_1_o.GD_list[3].Cot['x,R'].append(((grad_1.GD_list[3].tan[0].copy(), grad_1.GD_list[3].tan[1].copy()), (grad_1.GD_list[3].cotan[0].copy(), grad_1.GD_list[3].cotan[1].copy() )))
+#grad_1_o.fill_cot_init()
+##%%
+#cgrad = bck.backward_shoot_rk2(Modlist, grad_1_o, eps)
+##out= bck.backward_step(Modlist[-1], eps, grad_1_o)
+##%%
+#print(out_new.GD_list[0].tan)
+#print(out_new.GD_list[0].cotan)
+#print(out.Cot['0'][0])
+#
+#
+##%%
+#i=2
+#
+#print(cgrad_new.GD_list[i].tan - cgrad.Cot['0'][i][0])
+#print(cgrad_new.GD_list[i].cotan - cgrad.Cot['0'][i][1])
+#
+##%%
+#i=3
+#print(cgrad_new.GD_list[i].tan[0] - cgrad.Cot['x,R'][0][0][0])
+#print(cgrad_new.GD_list[i].tan[1] - cgrad.Cot['x,R'][0][0][1])
+#print(cgrad_new.GD_list[i].cotan[0] - cgrad.Cot['x,R'][0][1][0])
+#print(cgrad_new.GD_list[i].cotan[1] - cgrad.Cot['x,R'][0][1][1])
+#
+#
+#
+#
+#
+##%%
+##t = -1
+##x00_f = Modlist[t].GD.Cot['0'][0][0]
+##x00_f_n = Modlist_save_new[t].GD.GD_list[0].GD
+##x00_f_nbis = Modlist_save_new[t].ModList[0].GD.GD
+###print(x00_f_n -x00_f_nbis )
+###print(x00_f -x00_f_nbis )
+##print(x00_f)
+###print(x00_f_nbis)
+##
+###%%
+##print(Modlist[2].GD.Cot['0'][0][1] - Modlist[0].GD.Cot['0'][0][1])
+##print(Modlist_save_new[2].ModList[0].GD.cotan - Modlist_save_new[0].ModList[0].GD.cotan)
+###%%
+##t = 0
+##cont = Modlist[t].Cont
+##cont_n = Modlist_save_new[t].Cont
+##print(cont[1] - cont_n[1])
+##%%
+#t=2
+#a = Modlist[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
+#b = Modlist_save_new[t].cot_to_innerprod_curr(Modlist[0].GD, 1)
+#
+##a = Modlist[t].DerCost_curr()
+##b = Modlist_save_new[t].DerCost_curr()
+#
+#print(a.GD_list[0].Cot['0'][0][0] - b.GD_list[0].cotan)
+#
+##%%
+#t=2
+#i=1
+#v = Modlist[t].field_generator_curr()
+#v_n = Modlist_save_new[t].field_generator_curr()
+#der =  Modlist[t].ModList[i].GD.dCotDotV(v)
+#der_n =  Modlist_save_new[t].ModList[i].GD.dCotDotV(v_n)
+##%%
+#print(der_n.cotan - der.Cot['0'][0][0] )  
