@@ -214,6 +214,7 @@ Model0 = implicitmodules.DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0
 Model00 = implicitmodules.DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 # %%
 
+
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
 Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model1])
 #Mod_el_init = comb_mod.CompoundModules([Model00, Model0])
