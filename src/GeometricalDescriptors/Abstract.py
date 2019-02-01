@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 11 13:26:02 2019
-
-@author: gris
-"""
-
 class GeometricalDescriptors(object):
-    
     """
     Abstract class for geometrical descriptors, needs to have the 
       following methods:
@@ -23,6 +15,6 @@ class GeometricalDescriptors(object):
                 Returns derivative of (p Ximv(m,v)) wrt m
     
     """
+    
     def __init__(self):
         pass
-    

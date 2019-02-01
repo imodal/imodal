@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 11 16:41:20 2019
-
-@author: gris
-"""
-
 import numpy as np
+
 from src.Utilities import FunctionsEta as fun_eta
+
 
 def my_tensordotaxes0(x, y):
     """ we assume here that y is (N,d)
@@ -30,15 +25,14 @@ def my_tensordotaxes0(x, y):
     return z
 
 
-def my_xmy(x,y):
-    (n,d) = x.shape
-    (m,d) = y.shape
-    xmy = np.empty((n*m,d))
+def my_xmy(x, y):
+    (n, d) = x.shape
+    (m, d) = y.shape
+    xmy = np.empty((n * m, d))
     for i in range(d):
-        xmy[:,i] = (np.tile(x[:,i].reshape((n,1)),(1,m))-
-                np.tile(y[:,i].reshape((1,m)),(n,1))).flatten()
+        xmy[:, i] = (np.tile(x[:, i].reshape((n, 1)), (1, m)) -
+                     np.tile(y[:, i].reshape((1, m)), (n, 1))).flatten()
     return xmy
-
 
 
 def my_vker(x, k, sig):  # tested

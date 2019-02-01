@@ -1,14 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 15:11:01 2019
-
-@author: gris
-"""
-
-
-
 class StructuredField(object):
-            
     """
     Abstract class for structured field
     
@@ -29,8 +19,7 @@ class StructuredField(object):
         Needs pre-assigned parametrization of the field in dic
                    
     """
-       
+    
     def __init__(self, dim):
         self.dim = dim
         pass
-   

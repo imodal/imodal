@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jan 17 14:34:32 2019
-
-@author: gris
-"""
-
 import src.Forward.Hamiltonianderivatives as HamDer
-
 
 
 def backward_step(Mod, eps, grad):  # tested
@@ -30,7 +22,6 @@ def backward_step(Mod, eps, grad):  # tested
     # GD_0.GD = Mod.GD.GD - eps*grad.p  
     grad_c.mult_tan_scal(-1.)
     GD_1.add_tantocotan(grad_c)
-     
     
     # Mod with GD_0 and corresponding geodesic controles
     Mod_tmp = Mod.copy()
@@ -38,13 +29,12 @@ def backward_step(Mod, eps, grad):  # tested
     Mod_tmp.update()
     Mod_tmp.GeodesicControls_curr(Mod_tmp.GD)
     
-    #Hamiltonian derivatives for GD_0
-    dxH_0 = HamDer.dxH(Mod_tmp) # put in cotan, it is -\partial_x
-    dxH_0.mult_cotan_scal(-1.) # so that in cotan there is \partial_x
-    dxH_0.exchange_tan_cotan() # now \partial_x H in tan
-    dpH_0 = HamDer.dpH(Mod_tmp) #put in tan
-    dpH_0.exchange_tan_cotan() #now \partial_p H in cotan
-    
+    # Hamiltonian derivatives for GD_0
+    dxH_0 = HamDer.dxH(Mod_tmp)  # put in cotan, it is -\partial_x
+    dxH_0.mult_cotan_scal(-1.)  # so that in cotan there is \partial_x
+    dxH_0.exchange_tan_cotan()  # now \partial_x H in tan
+    dpH_0 = HamDer.dpH(Mod_tmp)  # put in tan
+    dpH_0.exchange_tan_cotan()  # now \partial_p H in cotan
     
     # Mod with GD_1 and corresponding geodesic controles
     Mod_tmp = Mod.copy()
@@ -52,15 +42,15 @@ def backward_step(Mod, eps, grad):  # tested
     Mod_tmp.update()
     Mod_tmp.GeodesicControls_curr(Mod_tmp.GD)
     
-    #Hamiltonian derivatives for GD_0
-    dxH_1 = HamDer.dxH(Mod_tmp) # put in cotan, it is -\partial_x
-    dxH_1.exchange_tan_cotan() # now -\partial_x H in tan
-    dpH_1 = HamDer.dpH(Mod_tmp) #put in tan
-    dpH_1.exchange_tan_cotan() #now \partial_p H in cotan
-    dpH_1.mult_cotan_scal(-1.) # -now \partial_p H in cotan
+    # Hamiltonian derivatives for GD_0
+    dxH_1 = HamDer.dxH(Mod_tmp)  # put in cotan, it is -\partial_x
+    dxH_1.exchange_tan_cotan()  # now -\partial_x H in tan
+    dpH_1 = HamDer.dpH(Mod_tmp)  # put in tan
+    dpH_1.exchange_tan_cotan()  # now \partial_p H in cotan
+    dpH_1.mult_cotan_scal(-1.)  # -now \partial_p H in cotan
     
-    dxH_0.add_tan(dxH_1) # in tan : (\partial_x H (GD1) - \partial_x H (GD0))
-    dpH_0.add_cotan(dpH_1) # in cotan : (\partial_p H (GD1) - \partial_p H (GD0))
+    dxH_0.add_tan(dxH_1)  # in tan : (\partial_x H (GD1) - \partial_x H (GD0))
+    dpH_0.add_cotan(dpH_1)  # in cotan : (\partial_p H (GD1) - \partial_p H (GD0))
     
     eps1 = 2 * eps
     dxH_0.mult_tan_scal(1. / eps1)
@@ -70,8 +60,6 @@ def backward_step(Mod, eps, grad):  # tested
     out.add_cotan(dpH_0)
     
     return out
-
-
 
 
 def backward_shoot_rk2(Modlist, grad_1, eps):
@@ -110,7 +98,5 @@ def backward_shoot_rk2(Modlist, grad_1, eps):
         cgrad.add_cotan(dnu)
         cgrad.add_cotan(dnu_np)
     
-    #Modlist.reverse()
+    # Modlist.reverse()
     return cgrad
-
-

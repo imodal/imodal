@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 15:43:14 2019
-
-@author: gris
-"""
-
-
 def dxH(Mod):
     """
     Supposes that Mod is updated, in particluar Mod.Cot and 
@@ -15,20 +7,19 @@ def dxH(Mod):
     v = Mod.field_generator_curr()
     
     ## derivation wrt GD in Xi_GD
-    der =  Mod.GD.dCotDotV(v)
+    der = Mod.GD.dCotDotV(v)
     
     ## derivation wrt GD in Zeta_GD
-    der_fieldgen = Mod.cot_to_innerprod_curr(Mod.GD, 1)    
+    der_fieldgen = Mod.cot_to_innerprod_curr(Mod.GD, 1)
     der.add_cotan(der_fieldgen)
     der.mult_cotan_scal(-1.)
     
     ## derivation of the cost
     der_cost = Mod.DerCost_curr()
     der.add_cotan(der_cost)
-
+    
     return der
 
-    
 
 def dpH(Mod):
     """
@@ -38,11 +29,10 @@ def dpH(Mod):
     """
     
     v = Mod.field_generator_curr()
-    appli = Mod.GD.Ximv(v)  
+    appli = Mod.GD.Ximv(v)
     return appli
-    
 
-    
+
 def Ham(Mod):
     """
     Supposes that Geodesic controls have been computed and Mod updated
@@ -51,4 +41,3 @@ def Ham(Mod):
     v = Mod.field_generator_curr()
     Mod.Cost_curr()
     return Mod.GD.inner_prod_v(v) - Mod.cost
-

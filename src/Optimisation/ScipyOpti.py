@@ -1,29 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 23 17:31:40 2019
-
-@author: gris
-"""
-
 import numpy as np
-import src.DataAttachment.Varifold as var
 
-import src.Forward.Shooting as shoot
 import src.Backward.Backward as bckwd
+import src.DataAttachment.Varifold as var
 import src.Forward.Hamiltonianderivatives as HamDer
+import src.Forward.Shooting as shoot
 
 
 def fill_Vector_from_GD(GD):  # 
     PX = GD.get_GDinVector()
     PMom = GD.get_cotaninVector()
-
+    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
 def fill_Vector_from_tancotan(GD):  # 
     PX = GD.get_taninVector()
     PMom = GD.get_cotaninVector()
-
+    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
@@ -37,8 +30,8 @@ def fill_Mod_from_Vector(P, Mod):  # tested
     PMom = P[dimP:]
     GD = Mod.GD.copy()
     GD.fill_from_vec(PX, PMom)
-
-    #GD.updatefromCot()
+    
+    # GD.updatefromCot()
     Mod.fill_GD(GD)
 
 
@@ -53,7 +46,7 @@ def jac(P0, *args):
     grad_1 = Mod.GD.copy()
     grad_1.fill_zero()
     grad_1.GD_list[0].tan = dxvarcost
-    #grad_1.fill_cot_from_GD()
+    # grad_1.fill_cot_from_GD()
     
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
     

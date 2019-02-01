@@ -3,7 +3,6 @@ from scipy.linalg import solve
 
 import src.DeformationModules.Abstract as ab
 import src.GeometricalDescriptors.x_R as GeoDescr
-
 import src.StructuredFields.StructuredField_p as stru_fiep
 from src.Kernels import ScalarGaussian as ker
 from src.Utilities import FunctionsEta as fun_eta
@@ -14,7 +13,6 @@ class ElasticOrder1(ab.DeformationModule):
      Elastic module of order 0
     """
     
-    
     def __init__(self, sigma, N_pts, dim, coeff, C, nu):
         """
         sigma is the scale of the rkhs of generated vector fields
@@ -23,20 +21,20 @@ class ElasticOrder1(ab.DeformationModule):
         """
         self.sig = sigma
         self.N_pts = N_pts
-        self.dim =dim
+        self.dim = dim
         self.coeff = coeff
         self.C = C.copy()
         self.nu = nu
         self.dimR = 3
         self.dimcont = C.shape[2]
         self.GD = GeoDescr.GD_xR(N_pts, dim)
-        self.SKS = np.zeros([self.N_pts*self.dimR,self.N_pts*self.dimR])
+        self.SKS = np.zeros([self.N_pts * self.dimR, self.N_pts * self.dimR])
         self.Mom = np.zeros([self.N_pts, self.dim, self.dim])
-        self.lam = np.zeros([self.N_pts*self.dimR])
+        self.lam = np.zeros([self.N_pts * self.dimR])
         self.Amh = []
         self.Cont = np.zeros([self.dimcont])
         self.cost = 0.
-
+    
     def copy(self):
         return ElasticOrder1(self.sig, self.N_pts, self.dim, self.coeff, self.C, self.nu)
     
@@ -50,14 +48,11 @@ class ElasticOrder1(ab.DeformationModule):
         Mod.Amh = self.Amh
         Mod.lam = self.lam
         return Mod
-
-    
     
     def fill_GD(self, GD):
         self.GD = GD.copy_full()
-        self.SKS = np.zeros([self.N_pts*self.dimR,self.N_pts*self.dimR])
-
-
+        self.SKS = np.zeros([self.N_pts * self.dimR, self.N_pts * self.dimR])
+    
     def Compute_SKS_curr(self):
         """
         Supposes that values of GD have been filled
@@ -65,14 +60,13 @@ class ElasticOrder1(ab.DeformationModule):
         try:
             x = self.GD.get_points()
             self.SKS = ker.my_K(x, x, self.sig, 1)
-            self.SKS += self.nu * np.eye(self.N_pts*self.dimR)
+            self.SKS += self.nu * np.eye(self.N_pts * self.dimR)
         except:
             raise NameError('Need to fill landmark points before computing SKS')
     
-    #def Compute_SKS(self, x):
+    # def Compute_SKS(self, x):
     #    return ker.my_K(x, x, self.sig, 0) + self.nu * np.eye(self.N_pts * self.dim)
-
-
+    
     def update(self):
         """
         Computes SKS so that it is done only once.
@@ -80,16 +74,14 @@ class ElasticOrder1(ab.DeformationModule):
         """
         
         self.Compute_SKS_curr()
-
     
     def Amh_curr(self, h):
         R = self.GD.get_R()
         eta = fun_eta.my_eta()
         out = np.asarray([np.tensordot(np.dot(R[i],
-        np.dot(np.diag(np.dot(self.C[i],h)),
-        R[i].transpose())),eta,axes = 2) for i in range(self.N_pts)])
+                                              np.dot(np.diag(np.dot(self.C[i], h)),
+                                                     R[i].transpose())), eta, axes=2) for i in range(self.N_pts)])
         return out
-
     
     def AmKiAm_curr(self):
         lam = np.zeros((self.dimcont, self.dimR * self.N_pts))
@@ -111,32 +103,32 @@ class ElasticOrder1(ab.DeformationModule):
         
         vs = GDCot.Cot_to_Vs(self.sig)
         dvsx = vs.Apply(x, 1)
-        dvsx_sym = (dvsx + np.swapaxes(dvsx,1,2))/2
-        S  = np.tensordot(dvsx_sym, fun_eta.my_eta())
+        dvsx_sym = (dvsx + np.swapaxes(dvsx, 1, 2)) / 2
+        S = np.tensordot(dvsx_sym, fun_eta.my_eta())
         
-        tlam = solve(self.coeff * self.SKS, S.flatten(), sym_pos = True)
+        tlam = solve(self.coeff * self.SKS, S.flatten(), sym_pos=True)
         (Am, AmKiAm) = self.AmKiAm_curr()
         
-        Am_s_tlam = np.dot(tlam,Am)
+        Am_s_tlam = np.dot(tlam, Am)
         
-        self.Cont = solve(AmKiAm, Am_s_tlam, sym_pos = True)
+        self.Cont = solve(AmKiAm, Am_s_tlam, sym_pos=True)
         self.compute_mom_from_cont_curr()
     
     def compute_mom_from_cont_curr(self):
         self.Amh = self.Amh_curr(self.Cont).flatten()
-        self.lam = solve(self.SKS, self.Amh, sym_pos = True)
-        self.Mom = np.tensordot(self.lam.reshape(self.N_pts,3),
-            fun_eta.my_eta().transpose(), axes =1)
-
+        self.lam = solve(self.SKS, self.Amh, sym_pos=True)
+        self.Mom = np.tensordot(self.lam.reshape(self.N_pts, 3),
+                                fun_eta.my_eta().transpose(), axes=1)
+    
     def field_generator_curr(self):
         v = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
         param = (self.GD.get_points(), self.Mom)
         v.fill_fieldparam(param)
         return v
-
+    
     def Cost_curr(self):
-        self.cost = self.coeff * np.dot(self.Amh, self.lam)/2
-       
+        self.cost = self.coeff * np.dot(self.Amh, self.lam) / 2
+    
     def DerCost_curr(self):
         out = self.GD.copy_full()
         out.fill_zero_tan()
@@ -144,21 +136,18 @@ class ElasticOrder1(ab.DeformationModule):
         R = self.GD.get_R()
         v = self.field_generator_curr()
         
-        #der = self.my_pSmV(v.dic,v.dic,1)
+        # der = self.my_pSmV(v.dic,v.dic,1)
         der = self.p_Ximv_curr(v, 1)
         cotx = -self.coeff * der.cotan[0]
         
-        
         tP = self.coeff * self.Mom
-        cotR = 2*np.asarray([np.dot(np.dot(tP[i],R[i]),np.diag(np.dot(self.C[i],self.Cont)))
-                             for i in range(x.shape[0])])
+        cotR = 2 * np.asarray([np.dot(np.dot(tP[i], R[i]), np.diag(np.dot(self.C[i], self.Cont)))
+                               for i in range(x.shape[0])])
         
         out.cotan = (cotx, cotR)
-
+        
         return out
     
-    
-      
     """
             
     def Cost(self, GD, Cont):
@@ -175,9 +164,8 @@ class ElasticOrder1(ab.DeformationModule):
     out.Cot['0'] = [( self.coeff * der['0'][0][1], np.zeros([self.N_pts, self.dim]) )]
     return out
     """
-
     
-    def cot_to_innerprod_curr(self, GDCot, j):#
+    def cot_to_innerprod_curr(self, GDCot, j):  #
         """
          Transforms the GD (with Cot filled) GDCot into vsr and computes
          the inner product (or derivative wrt self.GD) with the
@@ -189,7 +177,7 @@ class ElasticOrder1(ab.DeformationModule):
         
         # der wrt x as support of generated vector field by self
         der0 = self.p_Ximv_curr(vsr, j)
-
+        
         x = self.GD.get_points()
         R = self.GD.get_R()
         
@@ -197,9 +185,9 @@ class ElasticOrder1(ab.DeformationModule):
         dvx_sym = (dvx + np.swapaxes(dvx, 1, 2)) / 2
         S = np.tensordot(dvx_sym, fun_eta.my_eta())
         
-        tlam = solve(self.SKS, S.flatten(), sym_pos = True)
-        tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes = 1)
-
+        tlam = solve(self.SKS, S.flatten(), sym_pos=True)
+        tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes=1)
+        
         tVs = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
         tVs.fill_fieldparam((x.copy(), tP.copy()))
         
@@ -216,8 +204,8 @@ class ElasticOrder1(ab.DeformationModule):
         der0.add_cotan(der1)
         der0.add_cotan(der2)
         
-        cotR = 2*np.asarray([np.dot(np.dot(tP[i],R[i]),np.diag(np.dot(self.C[i],self.Cont)))
-                                 for i in range(x.shape[0])])
+        cotR = 2 * np.asarray([np.dot(np.dot(tP[i], R[i]), np.diag(np.dot(self.C[i], self.Cont)))
+                               for i in range(x.shape[0])])
         
         out = self.GD.copy_full()
         out.fill_zero_tan()
@@ -227,8 +215,7 @@ class ElasticOrder1(ab.DeformationModule):
         out.cotan = (cotx0.copy(), cotR.copy())
         
         return out
- 
-
+    
     def p_Ximv_curr(self, vs, j):
         """
         Put in Module because it uses the link between GD and support 
@@ -240,66 +227,22 @@ class ElasticOrder1(ab.DeformationModule):
         x = v_curr.support
         P = v_curr.mom
         
-        if j==0:
+        if j == 0:
             out = 0.
             dvx = vs.Apply(x, j + 1)
             dvx = (dvx + np.swapaxes(dvx, 1, 2)) / 2
             out += np.sum(np.asarray([np.tensordot(P[i], dvx[i])
-                                          for i in range(x.shape[0])]))
-
-        elif j==1:
+                                      for i in range(x.shape[0])]))
+        
+        elif j == 1:
             out = self.GD.copy_full()
             out.fill_zero_tan()
             out.fill_zero_cotan()
             ddvx = vs.Apply(x, j + 1)
             ddvx = (ddvx + np.swapaxes(ddvx, 1, 2)) / 2
             der = np.asarray([np.tensordot(P[i], ddvx[i])
-                                  for i in range(x.shape[0])])
+                              for i in range(x.shape[0])])
             
             out.cotan = (der.copy(), np.zeros([self.N_pts, self.dim, self.dim]))
-            
-        return out
-            
-      
         
-
-
-          
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
+        return out

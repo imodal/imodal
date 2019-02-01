@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -6,7 +5,7 @@ from old import DeformationModules as comb_mod
 from src.Utilities import Rotation as rot
 import old.Forward.shooting as shoot
 # %%
-from old.visualisation import my_close
+from src.Utilities.visualisation import my_close
 
 import old.Backward.ScipyOptimise as opti
 

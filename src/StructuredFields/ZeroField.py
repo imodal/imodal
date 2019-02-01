@@ -1,24 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 15:12:29 2019
-
-@author: gris
-"""
-
 import numpy as np
+
 import src.StructuredFields.Abstract as ab
 
 
 class ZeroField(ab.StructuredField):
     
-    def __init__(self, dim): #tested
+    def __init__(self, dim):  # tested
         """
          sigma is the scale of the rkhs to which the field belongs
          support and mom are the parametrization of the vector field
         """
         self.dim = dim
-
-    
     
     def copy(self):
         v = ZeroField(self.dim)
@@ -27,8 +19,7 @@ class ZeroField(ab.StructuredField):
     def copy_full(self):
         v = SZeroField(self.dim)
         return v
-        
-        
+    
     def fill_fieldparam(self, param):
         pass
     
@@ -40,8 +31,6 @@ class ZeroField(ab.StructuredField):
         """
         Nz = z.shape[0]
         lsize = ((Nz, 2), (Nz, 2, 2), (Nz, 2, 2, 2))
-        djv = np.zeros(lsize[j])    
+        djv = np.zeros(lsize[j])
         
         return djv
-        
-
