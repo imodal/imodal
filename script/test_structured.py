@@ -1,30 +1,19 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 28 14:49:33 2018
-
-@author: barbaragris
-"""
 import scipy .optimize
 import numpy as np
 
-import DeformationModules.ElasticOrder0
-import DeformationModules.ElasticOrder1
-import DeformationModules.SilentLandmark
-import DeformationModules.Combination as comb_mod
-import Forward.shooting as shoot
+from old import DeformationModules as comb_mod, shooting as shoot_old
+import old.Forward.shooting as shoot
 
 #%%
-from src import shooting as shoot_old
 
-import Backward.Backward as bckwd
-import Backward.ScipyOptimise as opti
+from old.Backward import Backward as bckwd
+import old.Backward.ScipyOptimise as opti
 
 #%%
 dim = 2
 Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
 Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
-Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
+Model0 = old.DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 
 #%% 
 

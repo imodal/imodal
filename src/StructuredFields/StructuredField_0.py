@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 15 15:12:29 2019
-
-@author: gris
-"""
-
 import numpy as np
 import src.StructuredFields.Abstract as ab
-from implicitmodules.src.Kernels import ScalarGaussian as ker
+from src.Kernels import ScalarGaussian as ker
 
 
 class StructuredField_0(ab.StructuredField):

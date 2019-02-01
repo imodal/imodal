@@ -1,9 +1,9 @@
-import src.DeformationModules.Abstract as ab
-import src.GeometricalDescriptors.Combine  as GeoDescr_comb
-import src.StructuredFields.Sum as stru_fie_sum
+from old import GeometricalDescriptors
+import old.StructuredFields.SummedFields
+from old.DeformationModules import DeformationModules as defmod
 
 
-class CompoundModules(ab.DeformationModule):  # tested
+class CompoundModules(defmod.DeformationModule):  # tested
     def __init__(self, ModList):
         self.ModList = ModList
         self.NbMod = len(ModList)
@@ -12,7 +12,7 @@ class CompoundModules(ab.DeformationModule):  # tested
         self.cost = 0.
     
     def init_GD(self):  # tested
-        self.GD = GeoDescr_comb.Combine_GD([Modi.GD for Modi in self.ModList])
+        self.GD = old.GeometricalDescriptors.Combine_GD.Combine_GD([Modi.GD for Modi in self.ModList])
     
     def init_Cont(self):  # tested
         self.Cont = [Modi.Cont for Modi in self.ModList]
@@ -42,17 +42,29 @@ class CompoundModules(ab.DeformationModule):  # tested
         for i in range(self.NbMod):
             self.ModList[i].update()
     
+    def add_cot(self, GD):
+        for i in range(self.NbMod):
+            self.ModList[i].add_cot(GD.GD_list[i])
+        self.init_GD()
+    
     def GeodesicControls_curr(self, GDCot):  # tested0
         for i in range(self.NbMod):
             self.ModList[i].GeodesicControls_curr(GDCot)
         self.init_Cont()
     
+    def GeodesicControls(self, GD, GDCot):  # tested0
+        Cont = []
+        GDlist = GD.GD_list
+        for i in range(self.NbMod):
+            Cont.append(self.ModList[i].GeodesicControls(GDlist[i], GDCot))
+        return Cont
+    
     def field_generator_curr(self):  # tested0
-        return stru_fie_sum.sum_structured_fields([self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
+        return old.StructuredFields.SummedFields.sum_structured_fields([self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
     
     def field_generator(self, GD, Cont):  # tested
         GDlist = GD.GD_list
-        return stru_fie_sum.sum_structured_fields(
+        return old.StructuredFields.SummedFields.sum_structured_fields(
             [self.ModList[i].field_generator(GDlist[i], Cont[i]) for i in range(self.NbMod)])
     
     def Cost_curr(self):  # tested0
@@ -66,23 +78,13 @@ class CompoundModules(ab.DeformationModule):  # tested
     
     def DerCost_curr(self):  # tested0
         derlist = [self.ModList[i].DerCost_curr() for i in range(self.NbMod)]
-        return GeoDescr_comb.Combine_GD(derlist)
+        return old.GeometricalDescriptors.Combine_GD.Combine_GD(derlist)
     
     def cot_to_innerprod_curr(self, GDCot, j):  # tested0
-        # vsr = GDCot.Cot_to_Vs(self.sig)
-        # out = self.p_Ximv_curr(vsr, j)
-        
         if j == 0:
             out = sum([self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)])
         if j == 1:
             derlist = [self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)]
-            out = GeoDescr_comb.Combine_GD(derlist)
-        return out
-    
-    def p_Ximv_curr(self, vs, j):
-        if j == 0:
-            out = sum([self.ModList[i].p_Ximv_curr(vs, j) for i in range(self.NbMod)])
-        if j == 1:
-            derlist = [self.ModList[i].p_Ximv_curr(vs, j) for i in range(self.NbMod)]
-            out = GeoDescr_comb.Combine_GD(derlist)
+            out = old.GeometricalDescriptors.Combine_GD.Combine_GD(derlist)
+        
         return out

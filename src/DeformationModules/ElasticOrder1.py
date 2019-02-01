@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 11 16:34:11 2019
-
-@author: gris
-"""
-
 import numpy as np
 from scipy.linalg import solve
 
@@ -13,7 +6,7 @@ import src.GeometricalDescriptors.x_R as GeoDescr
 
 import src.StructuredFields.StructuredField_p as stru_fiep
 from src.Kernels import ScalarGaussian as ker
-from src.utilities import functions_eta as fun_eta
+from src.Utilities import FunctionsEta as fun_eta
 
 
 class ElasticOrder1(ab.DeformationModule):

@@ -13,7 +13,7 @@ plt.show()
 plt.ion()
 
 #%%
-from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot, \
+from src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot, \
     useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
 #%% import data
 

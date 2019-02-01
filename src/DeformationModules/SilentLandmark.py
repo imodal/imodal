@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 11 16:34:11 2019
-
-@author: gris
-"""
-
 import numpy as np
-from scipy.linalg import solve
 
 import src.DeformationModules.Abstract as ab
 import src.GeometricalDescriptors.Landmark as GeoDescr
 
 import src.StructuredFields.ZeroField as stru_fie_zero
-from src.Kernels import ScalarGaussian as ker
 
 class SilentLandmark(ab.DeformationModule):
     """

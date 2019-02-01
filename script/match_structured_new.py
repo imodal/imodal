@@ -1,36 +1,20 @@
+import pickle
 
-import scipy .optimize
 import numpy as np
-import matplotlib.pyplot as plt
 
-import src.StructuredFields.StructuredField_0 as stru_fie0
-import src.StructuredFields.StructuredField_p as stru_fiep
-import src.StructuredFields.StructuredField_m as stru_fiem
-import src.StructuredFields.Sum as stru_fie_sum
-
-import src.DeformationModules.SilentLandmark as defmodsil
+import src.Backward.Backward as bckwrd
+import src.DeformationModules.Combination as comb_mod
 import src.DeformationModules.ElasticOrder0 as defmod0
 import src.DeformationModules.ElasticOrder1 as defmod1
-import src.DeformationModules.Combination as comb_mod
+import src.DeformationModules.SilentLandmark as defmodsil
+import src.Forward.Shooting as shoot
 
-import src.Forward.Hamiltonianderivatives as HamDer
-import src.Forward.shooting as shoot
-import src.Backward.Backward as bckwrd
-#%%
-#from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
-#    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
-from implicitmodules.src.visualisation import my_close
-from implicitmodules.src import rotation as rot
-import implicitmodules.src.data_attachment.varifold as var
-import implicitmodules.Backward.Backward as bckwd
-import implicitmodules.Backward.ScipyOptimise as opti
+from src.Utilities import Rotation as rot
 
-#%%
-#path_res = "/home/barbaragris/Results/ImplicitModules/"
+# %%
+# path_res = "/home/barbaragris/Results/ImplicitModules/"
+# %%
 
-#%%
-
-import pickle
 with open('../data/basi1.pkl', 'rb') as f:
     img, lx = pickle.load(f)
     

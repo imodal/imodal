@@ -1,18 +1,15 @@
 import os.path
-
 path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
 os.makedirs(path_res, exist_ok=True)
 
 import matplotlib.pyplot as plt
 import numpy as np
-from src import rotation as rot
-import DeformationModules
-import DeformationModules.Combination as comb_mod
 
-from DeformationModules import ElasticOrder1
-from DeformationModules import SilentLandmark
-
-import Forward.shooting as shoot
+from src.DeformationModules.Combination import CompoundModules
+import src.Utilities.Rotation as rot
+from src.DeformationModules.ElasticOrder1 import ElasticOrder1
+from src.DeformationModules.SilentLandmark import SilentLandmark
+import src.Forward.Shooting as shoot
 
 # %%
 xmin, xmax = -5, 5
@@ -52,27 +49,21 @@ L = 38.
 K = 100
 a, b = -2 / L ** 3, 3 / L ** 2
 
-
 def define_C0(x, y):
-    return 1
+        return 1
 
-
-def define_C1(x, y):
-    return K * (a * (50. - y) ** 3 + b * (50. - y) ** 2) - 100  # + 10# - K**3 * a*2 *  x**2
-
-
-def define_C1(x, y):
-    return K * (b * (50. - y) ** 2)  # + 10# - K**3 * a*2 *  x**2
-
-
-def define_C1(x, y):
-    return K * (b * np.abs(5. - x))  # + 10# - K**3 * a*2 *  x**2
-
-
-# def define_C1(x,y):
-#    return b*np.abs(y-5)
-def define_C1(x, y):
-    return np.ones(y.shape)
+def define_C1(x, y,  j=0):
+    if j == 0:
+        return K * (a * (50. - y) ** 3 + b * (50. - y) ** 2) - 100
+    elif j == 1:
+        return K * (b * np.abs(5. - x))
+    elif j ==2:
+        return b*np.abs(y-5)
+    elif j == 3:
+        return np.ones(y.shape)
+    elif j == 4:
+        return K * (b * (50. - y) ** 2)
+    return -1
 
 
 C[:, 1, 0] = define_C1(x1[:, 0], x1[:, 1]) * define_C0(x1[:, 0], x1[:, 1])
@@ -143,9 +134,7 @@ Model1 = ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 # Model00 = defmod.ElasticOrderO(100, 1, dim, 0.1)
 # %%
 
-Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
-
-# Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
+Mod_el_init = CompoundModules([Sil, Model1])
 
 # %%
 ps = np.zeros(xs.shape)
@@ -179,7 +168,7 @@ Sil_grid = SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 
-Mod_tot = comb_mod.CompoundModules([Sil_grid, Mod_el])
+Mod_tot = CompoundModules([Sil_grid, Mod_el])
 # Mod_tot
 # %%
 Modlist_opti_tot = shoot.shooting_traj(Mod_tot, N)
@@ -187,15 +176,13 @@ Modlist_opti_tot = shoot.shooting_traj(Mod_tot, N)
 # %% Plot with grid
 for i in range(N + 1):
     plt.figure()
-    xgrid = Modlist_opti_tot[2 * i].GD.Cot['0'][0][0]
+    xgrid = Modlist_opti_tot[2 * i].GD.GD_list[0].GD
     xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
     xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
     plt.plot(xsx, xsy, color='lightblue')
     plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
-    xs_i = Modlist_opti_tot[2 * i].GD.Cot['0'][1][0]
-    x1_i = Modlist_opti_tot[2 * i].GD.Cot['x,R'][0][0][0]
-    # xs_ic = my_close(xs_i)
-    # plt.plot(xs[:,0], xs[:,1], '-b', linewidth=1)
+    xs_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].GD
+    x1_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[1].GD[0]
     plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
     plt.plot(xs_i[:, 0], xs_i[:, 1], '-g', linewidth=2)
     plt.axis('equal')
@@ -209,16 +196,14 @@ for i in range(N + 1):
 # %% plot mom at t = i
 i = 0
 plt.figure()
-xgrid = Modlist_opti_tot[2 * i].GD.Cot['0'][0][0]
+xgrid = Modlist_opti_tot[2 * i].GD.GD_list[0].GD
 xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
 xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
 plt.plot(xsx, xsy, color='lightblue')
 plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
-xs_i = Modlist_opti_tot[2 * i].GD.Cot['0'][1][0]
-ps_i = Modlist_opti_tot[2 * i].GD.Cot['0'][1][1]
-x1_i = Modlist_opti_tot[2 * i].GD.Cot['x,R'][0][0][0]
-# xs_ic = my_close(xs_i)
-# plt.plot(xs[:,0], xs[:,1], '-b', linewidth=1)
+xs_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].GD
+ps_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].cotan
+x1_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[1].GD[0]
 plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
 plt.plot(xs_i[:, 0], xs_i[:, 1], '-g', linewidth=2)
 plt.quiver(xs_i[:, 0], xs_i[:, 1], 0.1 * ps_i[:, 0], 0.1 * ps_i[:, 1], scale=1, color='r', linewidth=2)

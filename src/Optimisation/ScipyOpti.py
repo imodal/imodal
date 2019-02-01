@@ -6,9 +6,9 @@ Created on Wed Jan 23 17:31:40 2019
 """
 
 import numpy as np
-import src.data_attachment.varifold as var
+import src.DataAttachment.Varifold as var
 
-import src.Forward.shooting as shoot
+import src.Forward.Shooting as shoot
 import src.Backward.Backward as bckwd
 import src.Forward.Hamiltonianderivatives as HamDer
 

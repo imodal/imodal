@@ -1,31 +1,17 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 23 16:58:34 2019
-
-@author: gris
-"""
-
-
 import scipy .optimize
 import numpy as np
-import matplotlib.pyplot as plt
-
 
 import src.DeformationModules.SilentLandmark as defmodsil
 import src.DeformationModules.ElasticOrder0 as defmod0
 import src.DeformationModules.ElasticOrder1 as defmod1
 import src.DeformationModules.Combination as comb_mod
+import src.Optimisation.ScipyOpti as opti
+import src.Forward.Shooting as shoot
 
-import src.Forward.shooting as shoot
-import src.Backward.Backward as bckwrd
-#%%
-#from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
-#    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
+from src.Utilities import Rotation as rot
+
+
 from implicitmodules.src.visualisation import my_close
-from implicitmodules.src import rotation as rot
-import implicitmodules.src.data_attachment.varifold as var
-
-import implicitmodules.src.Optimisation.ScipyOpti as opti
 
 import pickle
 #%%  source

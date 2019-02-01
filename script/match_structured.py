@@ -2,16 +2,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import DeformationModules.ElasticOrder0
-import DeformationModules.ElasticOrder1
-import DeformationModules.SilentLandmark
-import DeformationModules.Combination as comb_mod
-import Forward.shooting as shoot
+from old import DeformationModules as comb_mod
+from src.Utilities import Rotation as rot
+import old.Forward.shooting as shoot
 # %%
-from src import rotation as rot
-from src.visualisation import my_close
+from old.visualisation import my_close
 
-import Backward.ScipyOptimise as opti
+import old.Backward.ScipyOptimise as opti
 
 # %%
 import os.path
@@ -193,8 +190,8 @@ dim = 2
 #Sil = DeformationModules.SilentLandmark.SilentLandmark(xs.shape[0], dim)
 #Model1 = DeformationModules.ElasticOrder1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 #Model01 = DeformationModules.ElasticOrder1.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
-Model0 = DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
-Model00 = DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
+Model0 = old.DeformationModules.ElasticOrder0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
+Model00 = old.DeformationModules.ElasticOrder0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 # %%
 
 #Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
