@@ -20,6 +20,13 @@ def fill_Vector_from_GD(GD):  #
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
+def fill_Vector_from_tancotan(GD):  # 
+    PX = GD.get_taninVector()
+    PMom = GD.get_cotaninVector()
+
+    return np.concatenate([PX.copy(), PMom.copy()])
+
+
 def fill_Mod_from_Vector(P, Mod):  # tested
     """
     Supposes that Mod has a Cot already filled (and that needs to be changed)
@@ -45,12 +52,12 @@ def jac(P0, *args):
     
     grad_1 = Mod.GD.copy()
     grad_1.fill_zero()
-    grad_1.GD_list[0].fill_GDpts(dxvarcost)
+    grad_1.GD_list[0].tan = dxvarcost
     #grad_1.fill_cot_from_GD()
     
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
     
-    dP = fill_Vector_from_GD(cgrad)
+    dP = fill_Vector_from_tancotan(cgrad)
     n = dP.shape[0]
     n = int(0.5 * n)
     # n = np.prod(xst.shape)

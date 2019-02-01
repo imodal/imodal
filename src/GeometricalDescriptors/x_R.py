@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jan 18 16:02:37 2019
-
-@author: gris
-"""
-
 import numpy as np
 
 import src.GeometricalDescriptors.Abstract as ab
@@ -199,7 +192,11 @@ class GD_xR(ab.GeometricalDescriptors):
     def get_cotaninVector(self):
         cotx, cotR = self.cotan
         return np.concatenate([cotx.flatten(), cotR.flatten()])
-    
+
+    def get_taninVector(self):
+        tanx, tanR = self.tan
+        return np.concatenate([tanx.flatten(), tanR.flatten()])
+
     def fill_from_vec(self, PX, PMom):
         x = PX[:self.N_pts * self.dim]
         x = x.reshape([self.N_pts, self.dim])

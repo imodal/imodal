@@ -50,7 +50,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         
         
     def fill_GDpts(self, pts): #  
-        self.gd = pts.copy()
+        self.GD = pts.copy()
 
 
     def get_points(self):
@@ -148,6 +148,9 @@ class GD_landmark(ab.GeometricalDescriptors):
 
     def get_GDinVector(self):
         return self.GD.flatten()
+
+    def get_taninVector(self):
+        return self.tan.flatten()
 
     def get_cotaninVector(self):
         return self.cotan.flatten()
