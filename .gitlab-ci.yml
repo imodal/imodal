@@ -10,4 +10,4 @@ test_ubuntu:
 
     tags:
     - python3
-    - ubuntu18.04
+    - ubuntu18.04 
