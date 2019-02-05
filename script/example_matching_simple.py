@@ -213,10 +213,27 @@ for i in range(N + 1):
     plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
     plt.axis('equal')
 
+#%% Shooting from controls
 
+Contlist = []
+for i in range(len(Modlist_opti_tot)):
+    Contlist.append(Modlist_opti_tot[i].Cont)
 
+#%%
+Mod_cont_init = Modlist_opti_tot[0].copy_full()
+Modlist_cont = shoot.shooting_from_cont_traj(Mod_cont_init, Contlist, 5)
 
-
+#%% Visualisation
+xst_c = my_close(xst)
+xs_c = my_close(xs)
+for i in range(N + 1):
+    plt.figure()
+    xs_i = Modlist_cont[2 * i].GD.GD_list[0].GD
+    xs_ic = my_close(xs_i)
+    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+    plt.axis('equal')
 
 
 

@@ -32,6 +32,11 @@ class CompoundModules(ab.DeformationModule):#tested
     def init_Cont(self):#tested
         self.Cont = [Modi.Cont for Modi in self.ModList]
 
+    def fill_Cont(self, Cont):
+        for i in range(self.NbMod):
+            self.ModList[i].fill_Cont(Cont[i])
+        self.init_Cont()
+         
     def copy(self):#tested
         ModList = []
         for i in range(self.NbMod):
