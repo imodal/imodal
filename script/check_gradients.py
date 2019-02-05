@@ -282,7 +282,7 @@ print(grad_dir[:5])
 print(grad_man_x1[:5])
 #%%
 #dim0 = 2*(np.prod(xs.shape)) + np.prod(x1.shape)
-dim0 = 1*(np.prod(xs.shape))# + np.prod(x1.shape) + np.prod(R.shape)
+dim0 = 1*(np.prod(xs.shape)) + np.prod(x1.shape) + np.prod(R.shape)
 print(np.reshape(grad_man_x1[:5,:], -1) )
 print(grad[dim0:dim0+ 10])
 print(np.reshape(grad_man_x1[:5,:], -1) - grad[dim0:dim0+ 10])  
