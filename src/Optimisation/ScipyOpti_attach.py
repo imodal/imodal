@@ -6,7 +6,6 @@ Created on Wed Jan 23 17:31:40 2019
 """
 
 import numpy as np
-import src.data_attachment.varifold as var
 
 import src.Forward.shooting as shoot
 import src.Backward.Backward as bckwd
@@ -60,6 +59,7 @@ def jac(P0, *args):
     fill_Mod_from_Vector(P0, Mod)
     Mod.update()
     Mod.GeodesicControls_curr(Mod.GD)
+    
     # dxH is -derivtes wrt x, it is put in the cotan element
     dx = HamDer.dxH(Mod)
     dx.exchange_tan_cotan()   
@@ -69,10 +69,7 @@ def jac(P0, *args):
     # dxH derivtes wrt p, it is a speed of GD, it is put in the tan element
     dp = HamDer.dpH(Mod)
     dp.exchange_tan_cotan() 
-    dP_dp = fill_Vector_from_tancotan(dp)
-    
-    
-    
+    dP_dp = fill_Vector_from_tancotan(dp)  
     
     dP = fill_Vector_from_tancotan(cgrad)
     dP += dP_dx + dP_dp    

@@ -5,7 +5,6 @@ Created on Tue Jan 15 15:43:14 2019
 @author: gris
 """
 
-
 def dxH(Mod):
     """
     Supposes that Mod is updated, in particluar Mod.Cot and 
@@ -25,7 +24,6 @@ def dxH(Mod):
     ## derivation of the cost
     der_cost = Mod.DerCost_curr()
     der.add_cotan(der_cost)
-
     return der
 
     
@@ -38,6 +36,7 @@ def dpH(Mod):
     """
     
     v = Mod.field_generator_curr()
+    
     appli = Mod.GD.Ximv(v)  
     return appli
     
