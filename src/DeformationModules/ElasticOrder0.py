@@ -89,8 +89,9 @@ class ElasticOrderO(ab.DeformationModule):
         vs = GDCot.Cot_to_Vs(self.sig)
         vm = vs.Apply(self.GD.get_points(), 0)
         #print(self.sig)
-        self.Cont = solve(self.coeff * self.SKS,
+        self.Cont = solve(self.SKS,
                      vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
+        self.Cont /= self.coeff
         self.Mom = self.Cont.copy()
 
 
@@ -117,8 +118,9 @@ class ElasticOrderO(ab.DeformationModule):
        
     def DerCost_curr(self):
         vs  = self.field_generator_curr()
-        out =  self.p_Ximv_curr(vs, 1)
-        
+        out = self.p_Ximv_curr(vs, 1)
+        out.mult_cotan_scal(self.coeff)
+                
         return out
     
     
@@ -172,7 +174,7 @@ class ElasticOrderO(ab.DeformationModule):
 
         elif j==1:
             out = self.GD.copy_full()
-            out.fill_zero_tan()
+            out.fill_zero_cotan()
             x = GD_cont.GD.copy()
             p = GD_cont.cotan.copy()
             vx = vs.Apply(x, j)
