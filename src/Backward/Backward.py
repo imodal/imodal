@@ -18,18 +18,21 @@ def backward_step(Mod, eps, grad):  # tested
     grad_c.mult_tan_scal(eps)
     grad_c.mult_cotan_scal(eps)
     
-    # GD_0.p = Mod.GD.p + eps*grad.x    
+    #GD_0_p = Mod.GD.p  + eps grad.x
     GD_0.add_tantocotan(grad_c)
-    # GD_1.GD = Mod.GD.GD + eps*grad.p
+    
+    #GD_1_x = Mod.GD.x  + eps grad.p
     GD_1.add_cotantoGD(grad_c)
     
-    # GD_0.p = Mod.GD.p - eps*grad.x   
+    #GD_0_x = Mod.GD.x  - eps grad.p
     grad_c.mult_cotan_scal(-1.)
     GD_0.add_cotantoGD(grad_c)
     
-    # GD_0.GD = Mod.GD.GD - eps*grad.p  
+    #GD_1_p = Mod.GD.p  - eps grad.x
     grad_c.mult_tan_scal(-1.)
     GD_1.add_tantocotan(grad_c)
+    
+    
      
     
     # Mod with GD_0 and corresponding geodesic controles
@@ -69,8 +72,10 @@ def backward_step(Mod, eps, grad):  # tested
     out = dxH_0.copy_full()
     out.add_cotan(dpH_0)
     
+    # in tan : d (\partial_x H (GD) ). (-grad.p, grad.x)
+    # in cotan : d (\partial_p H (GD) ). (-grad.p, grad.x)
+    
     return out
-
 
 
 
