@@ -100,6 +100,7 @@ x0 = nlx[nlx[:, 2] == 0, 0:2]
 x1 = nlx[nlx[:, 2] == 1, 0:2]
 xs = nlx[nlx[:, 2] == 2, 0:2]
 
+xs = np.delete(xs, 3, axis=0)
 # %% target
 with open(path_data + 'basi1t.pkl', 'rb') as f:
     imgt, lxt = pickle.load(f)
@@ -112,7 +113,6 @@ nlxt[:, 1] = 38.0 - scale * (nlxt[:, 1] - lmin)
 nlxt[:, 0] = scale * (nlxt[:, 0] - np.mean(nlxt[:, 0]))
 
 xst = nlxt[nlxt[:, 2] == 2, 0:2]
-
 
 #%% parameter for module of order 1
 th = 0*np.pi
@@ -131,7 +131,7 @@ K = 10
 L = height
 a, b = -2/L**3, 3/L**2
 C[:,1,0] = K*(a*(L-x1[:,1]+Dy)**3 + b*(L-x1[:,1]+Dy)**2)
-C[:,0,0] = 1.*C[:,1,0]
+C[:,0,0] = -0.5*C[:,1,0]
 
 #%%
 x00 = np.array([[0., 0.]])
@@ -147,11 +147,9 @@ Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
 Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
 #%% 
 
-Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+#Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
 
-#Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model1])
-
-
+Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model1])
 #%%
 p00 = np.zeros([1, 2])
 
@@ -165,8 +163,8 @@ param_00 = (np.zeros([1, 2]), p00)
 param_1 = ((x1, R), (p1, PR))
 
 #%%
-param = [param_sil, param_00, param_0, param_1]
-#param = [param_sil, param_00, param_1]
+#param = [param_sil, param_00, param_0, param_1]
+param = [param_sil, param_00, param_1]
 GD = Mod_el_init.GD.copy()
 
 #%%
@@ -177,7 +175,7 @@ Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el = Mod_el_init.copy_full()
 
 N=5
-Modlist = shoot.shooting_traj(Mod_el, N)
+#Modlist = shoot.shooting_traj(Mod_el, N)
 
 #%%
 Mod_el_opti = Mod_el_init.copy_full()
@@ -185,19 +183,20 @@ P0 = opti.fill_Vector_from_GD(Mod_el_opti.GD)
 # %%
 lam_var = 10.
 sig_var = 30.
-N = 5
+N = 10
 args = (Mod_el_opti, xst, lam_var, sig_var, N, 0.001)
 
 res = scipy.optimize.minimize(opti.fun, P0,
                               args=args,
                               method='L-BFGS-B', jac=opti.jac, bounds=None, tol=None, callback=None,
                               options={'disp': True, 'maxcor': 10, 'ftol': 1.e-09, 'gtol': 1e-03,
-                                       'eps': 1e-08, 'maxfun': 100, 'maxiter': 5, 'iprint': -1, 'maxls': 20})
+                                       'eps': 1e-08, 'maxfun': 100, 'maxiter': 10, 'iprint': -1, 'maxls': 20})
 #%%
 P1 = res['x']
 
 # %%
-opti.fill_Mod_from_Vector(P1, Mod_el_opti)                                       
+opti.fill_Mod_from_Vector(P1, Mod_el_opti)  
+Mod_el_opti_init = Mod_el_opti.copy_full()
 #%%
 Modlist_opti_tot = shoot.shooting_traj(Mod_el_opti, N)
 
@@ -212,6 +211,51 @@ for i in range(N + 1):
     plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
     plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
     plt.axis('equal')
+
+#%% With grid
+nxgrid, nygrid = (21, 21)  # create a grid for visualisation purpose
+xfigmin, xfigmax, yfigmin, yfigmax = -20, 20, 0, 40
+(a, b, c, d) = (xfigmin, xfigmax, yfigmin, yfigmax)
+[xx, xy] = np.meshgrid(np.linspace(a, b, nxgrid), np.linspace(c, d, nygrid))
+(nxgrid, nygrid) = xx.shape
+grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
+
+
+Sil_grid = defmodsil.SilentLandmark(grid_points.shape[0], dim)
+
+param_grid = (grid_points, np.zeros(grid_points.shape))
+Sil_grid.GD.fill_cot_from_param(param_grid)
+
+Mod_tot = comb_mod.CompoundModules([Sil_grid, Mod_el_opti_init])
+
+# %%
+Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
+# %% Plot with grid
+xs_c = my_close(xs)
+xst_c = my_close(xst)
+for i in range(N + 1):
+    plt.figure()
+    xgrid = Modlist_opti_tot_grid[2 * i].GD.GD_list[0].GD
+    xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
+    xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
+    plt.plot(xsx, xsy, color='lightblue')
+    plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
+    xs_i = Modlist_opti_tot_grid[2 * i].GD.GD_list[1].GD_list[0].GD
+    xs_ic = my_close(xs_i)
+    # plt.plot(xs[:,0], xs[:,1], '-b', linewidth=1)
+    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+    plt.axis('equal')
+    # plt.axis([-10,10,-10,55])
+    #plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
+    plt.axis('off')
+    plt.show()
+    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+
+
+
+
 
 #%% Shooting from controls
 
