@@ -1,23 +1,36 @@
 import os.path
 
-path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
-os.makedirs(path_res, exist_ok=True)
+#path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
+#os.makedirs(path_res, exist_ok=True)
 
 import matplotlib.pyplot as plt
 import numpy as np
-from src import rotation as rot
-import DeformationModules
-import DeformationModules.Combination as comb_mod
 
-from DeformationModules import ElasticOrder1
-from DeformationModules import SilentLandmark
 
-import Forward.shooting as shoot
+import src.DeformationModules.SilentLandmark as defmodsil
+import src.DeformationModules.ElasticOrder0 as defmod0
+import src.DeformationModules.ElasticOrder1 as defmod1
+import src.DeformationModules.Combination as comb_mod
+
+import src.Forward.shooting as shoot
+import src.Backward.Backward as bckwrd
+#%%
+#from implicitmodules.src import constraints_functions as con_fun, field_structures as fields, rotation as rot, shooting as shoot_old, \
+#    useful_functions as fun, modules_operations as modop, functions_eta as fun_eta, visualisation as visu
+from implicitmodules.src.visualisation import my_close
+from implicitmodules.src import rotation as rot
+import implicitmodules.src.data_attachment.varifold as var
+
+import implicitmodules.src.Optimisation.ScipyOpti as opti
+
+
+
+#import Forward.shooting as shoot
 
 # %%
 xmin, xmax = -5, 5
-ymin, ymax = -5, 5
-nx, ny = 5, 5
+ymin, ymax = -15, 15
+nx, ny = 10, 30
 
 X0 = np.linspace(xmin, xmax, nx)
 Y0 = np.linspace(ymin, ymax, ny)
@@ -41,7 +54,7 @@ x1 = Z.copy()
 xs = Z_c.copy()
 
 # %% parameter for module of order 1
-th = 0.25 * np.pi
+th = 0. * np.pi
 th = th * np.ones(x1.shape[0])
 R = np.asarray([rot.my_R(cth) for cth in th])
 for i in range(x1.shape[0]):
@@ -78,6 +91,13 @@ def define_C1(x, y):
 C[:, 1, 0] = define_C1(x1[:, 0], x1[:, 1]) * define_C0(x1[:, 0], x1[:, 1])
 C[:, 0, 0] = 0. * C[:, 1, 0]
 
+
+# sinusoidal
+C[:, 1, 0] = np.cos(x1[:,1] * np.pi / 7.5) * x1[:,0]/5 
+C[:, 0, 0] = - np.log(2) * np.cos(x1[:,1] * np.pi / 30) 
+
+
+
 ZX = define_C1(X0, np.zeros([nx]))
 ZY = define_C1(np.zeros([ny]), Y0)
 name_exp = 'linear_angle05pi'
@@ -102,8 +122,8 @@ yfigmax = 55
 
 xfigmin = -10
 xfigmax = 10
-yfigmin = -10
-yfigmax = 10
+yfigmin = -20
+yfigmax = 20
 
 from matplotlib import gridspec
 
@@ -136,8 +156,8 @@ sig1 = 5
 nu = 0.001
 dim = 2
 
-Sil = SilentLandmark(xs.shape[0], dim)
-Model1 = ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
+Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
+Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 # Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
 # Model0 = defmod.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0])
 # Model00 = defmod.ElasticOrderO(100, 1, dim, 0.1)
@@ -150,7 +170,8 @@ Mod_el_init = comb_mod.CompoundModules([Sil, Model1])
 # %%
 ps = np.zeros(xs.shape)
 ps[nx + ny:2 * nx + ny, 1] = 0.5
-
+ps[:10,:] = 10.
+#1ps[:,:,] = 1.
 (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
 param_sil = (xs, 1 * ps)
 param_1 = ((x1, R), (p1, PR))
@@ -164,7 +185,7 @@ Mod_el = Mod_el_init.copy_full()
 
 N = 5
 height = 55
-nxgrid, nygrid = (11, 11)  # create a grid for visualisation purpose
+nxgrid, nygrid = (41, 81)  # create a grid for visualisation purpose
 u = height / 38.
 Dx = 0.
 Dy = 0.
@@ -174,7 +195,7 @@ Dy = 0.
 (nxgrid, nygrid) = xx.shape
 grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-Sil_grid = SilentLandmark(grid_points.shape[0], dim)
+Sil_grid = defmodsil.SilentLandmark(grid_points.shape[0], dim)
 
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
@@ -187,13 +208,13 @@ Modlist_opti_tot = shoot.shooting_traj(Mod_tot, N)
 # %% Plot with grid
 for i in range(N + 1):
     plt.figure()
-    xgrid = Modlist_opti_tot[2 * i].GD.Cot['0'][0][0]
+    xgrid = Modlist_opti_tot[2 * i].GD.GD_list[0].GD
     xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
     xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
     plt.plot(xsx, xsy, color='lightblue')
     plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
-    xs_i = Modlist_opti_tot[2 * i].GD.Cot['0'][1][0]
-    x1_i = Modlist_opti_tot[2 * i].GD.Cot['x,R'][0][0][0]
+    xs_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].GD
+    x1_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[1].GD[0]
     # xs_ic = my_close(xs_i)
     # plt.plot(xs[:,0], xs[:,1], '-b', linewidth=1)
     plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
@@ -201,9 +222,9 @@ for i in range(N + 1):
     plt.axis('equal')
     # plt.axis([-10,10,-10,55])
     plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-    plt.axis('off')
+#    plt.axis('off')
     plt.show()
-    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
 
 
 # %% plot mom at t = i
@@ -225,6 +246,6 @@ plt.quiver(xs_i[:, 0], xs_i[:, 1], 0.1 * ps_i[:, 0], 0.1 * ps_i[:, 1], scale=1, 
 plt.axis('equal')
 # plt.axis([-10,10,-10,55])
 plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-plt.axis('off')
+#plt.axis('off')
 plt.show()
-# plt.savefig(path_res + name_exp + 'mom_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+# plt.savefig(path_res + name_exp + 'mom_t_' + str(i) + '.png', format='png', bbox_inches='tight')
