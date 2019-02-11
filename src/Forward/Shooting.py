@@ -54,7 +54,7 @@ def shooting(Mod, N_int):
     for i in range(N_int):
         Mod.update()
         Mod.GeodesicControls_curr(Mod.GD)
-        Modtmp = forward_step_rk2(Mod, step)
+        _ = forward_step_rk2(Mod, step)
     
     return Mod
 
@@ -64,7 +64,6 @@ def shooting_traj(Mod, N_int):
     Supposes that Cot is filled
     
     """
-    
     step = 1. / N_int
     Mod.update()
     Mod.GeodesicControls_curr(Mod.GD)

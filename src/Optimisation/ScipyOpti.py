@@ -9,14 +9,12 @@ import src.Forward.Shooting as shoot
 def fill_Vector_from_GD(GD):  # 
     PX = GD.get_GDinVector()
     PMom = GD.get_cotaninVector()
-    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
 def fill_Vector_from_tancotan(GD):  # 
     PX = GD.get_taninVector()
     PMom = GD.get_cotaninVector()
-    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
@@ -66,8 +64,8 @@ def fun(P0, *args):
     (varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
     varcost = lam_var * varcost
     hamval = HamDer.Ham(ModTraj[0])
-    
-    print("ham     = {0:10.3e}".format(hamval))
-    print("varcost = {0:10.3e}".format(varcost))
-    print("totener = {0:10.3e}".format(hamval + varcost))
+
+    print("Energy = {0:10.3e}".format(hamval + varcost), end=' ; ')
+    print("Hamiltonian = {0:10.3e}".format(hamval), end=' ; ')
+    print("Data Attachment = {0:10.3e}".format(varcost), end='\n')
     return hamval + varcost

@@ -64,7 +64,6 @@ class ElasticOrderO(ab.DeformationModule):
         Computes SKS so that it is done only once.
         Supposes that values of GD have been filled
         """
-        
         self.Compute_SKS_curr()
     
     def GeodesicControls_curr(self, GDCot):
@@ -84,7 +83,7 @@ class ElasticOrderO(ab.DeformationModule):
     
     def field_generator(self, GD, Cont):
         param = [GD.get_points(), Cont]
-        v = StructuredField_0(self.sig, self.dim)
+        v = StructuredField_0(self.sig, self.N_pts, self.dim)
         v.fill_fieldparam(param)
         return v
     
