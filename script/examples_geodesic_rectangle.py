@@ -13,8 +13,8 @@ import src.Forward.Shooting as shoot
 
 # %%
 xmin, xmax = -5, 5
-ymin, ymax = -5, 5
-nx, ny = 5, 5
+ymin, ymax = -15, 15
+nx, ny = 10, 30
 
 X0 = np.linspace(xmin, xmax, nx)
 Y0 = np.linspace(ymin, ymax, ny)
@@ -38,7 +38,7 @@ x1 = Z.copy()
 xs = Z_c.copy()
 
 # %% parameter for module of order 1
-th = 0.25 * np.pi
+th = 0. * np.pi
 th = th * np.ones(x1.shape[0])
 R = np.asarray([rot.my_R(cth) for cth in th])
 for i in range(x1.shape[0]):
@@ -69,6 +69,13 @@ def define_C1(x, y,  j=0):
 C[:, 1, 0] = define_C1(x1[:, 0], x1[:, 1]) * define_C0(x1[:, 0], x1[:, 1])
 C[:, 0, 0] = 0. * C[:, 1, 0]
 
+
+# sinusoidal
+C[:, 1, 0] = np.cos(x1[:,1] * np.pi / 7.5) * x1[:,0]/5
+C[:, 0, 0] = - np.log(2) * np.cos(x1[:,1] * np.pi / 30)
+
+
+
 ZX = define_C1(X0, np.zeros([nx]))
 ZY = define_C1(np.zeros([ny]), Y0)
 name_exp = 'linear_angle05pi'
@@ -93,8 +100,8 @@ yfigmax = 55
 
 xfigmin = -10
 xfigmax = 10
-yfigmin = -10
-yfigmax = 10
+yfigmin = -20
+yfigmax = 20
 
 from matplotlib import gridspec
 
@@ -139,7 +146,8 @@ Mod_el_init = CompoundModules([Sil, Model1])
 # %%
 ps = np.zeros(xs.shape)
 ps[nx + ny:2 * nx + ny, 1] = 0.5
-
+ps[:10,:] = 10.
+#1ps[:,:,] = 1.
 (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
 param_sil = (xs, 1 * ps)
 param_1 = ((x1, R), (p1, PR))
@@ -153,7 +161,7 @@ Mod_el = Mod_el_init.copy_full()
 
 N = 5
 height = 55
-nxgrid, nygrid = (11, 11)  # create a grid for visualisation purpose
+nxgrid, nygrid = (41, 81)  # create a grid for visualisation purpose
 u = height / 38.
 Dx = 0.
 Dy = 0.
@@ -188,9 +196,9 @@ for i in range(N + 1):
     plt.axis('equal')
     # plt.axis([-10,10,-10,55])
     plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-    plt.axis('off')
+#    plt.axis('off')
     plt.show()
-    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
 
 
 # %% plot mom at t = i
@@ -210,6 +218,6 @@ plt.quiver(xs_i[:, 0], xs_i[:, 1], 0.1 * ps_i[:, 0], 0.1 * ps_i[:, 1], scale=1, 
 plt.axis('equal')
 # plt.axis([-10,10,-10,55])
 plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-plt.axis('off')
+#plt.axis('off')
 plt.show()
-# plt.savefig(path_res + name_exp + 'mom_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+# plt.savefig(path_res + name_exp + 'mom_t_' + str(i) + '.png', format='png', bbox_inches='tight')

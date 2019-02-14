@@ -29,6 +29,9 @@ class SilentLandmark(ab.DeformationModule):
         Mod = SilentLandmark(self.N_pts, self.dim)
         Mod.GD = self.GD.copy_full()
         return Mod
+
+    def fill_Cont(self, Cont):
+        pass
     
     def fill_GD(self, GD):
         self.GD = GD.copy_full()
@@ -68,3 +71,4 @@ class SilentLandmark(ab.DeformationModule):
             out.GD = self.GD.GD.copy()
         
         return out
+

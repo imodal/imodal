@@ -54,6 +54,7 @@ dim = 2
 
 # %% Silent Module
 xs = nlx[nlx[:, 2] == 2, 0:2]
+xs = np.delete(xs, 3, axis=0)
 Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
 ps = np.zeros(xs.shape)
 param_sil = (xs, ps)
@@ -127,7 +128,8 @@ res = scipy.optimize.minimize(opti.fun, P0,
                                   'maxls': 25
                               })
 
-opti.fill_Mod_from_Vector(res['x'], Mod_el)
+P1 = res['x']
+opti.fill_Mod_from_Vector(P1, Mod_el)
 Modlist_opti = shoot.shooting_traj(Mod_el, N)
 
 # %% Visualisation
@@ -145,10 +147,75 @@ for i in range(N + 1):
     x00_i = Modlist_opti[2 * i].GD.GD_list[2].GD
     plt.plot(x00_i[:, 0], x00_i[:, 1], 'or', linewidth=2)
 
-    # x1_i = Modlist_opti[2 * i].GD.GD_list[3].GD
-    # plt.plot(x1_i[:, 0], x1_i[:, 1], 'og', linewidth=2)
-
     plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
     plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
     plt.axis('equal')
     plt.show()
+
+
+#%% With grid
+nxgrid, nygrid = (21, 21)  # create a grid for visualisation purpose
+xfigmin, xfigmax, yfigmin, yfigmax = -20, 20, 0, 40
+(a, b, c, d) = (xfigmin, xfigmax, yfigmin, yfigmax)
+[xx, xy] = np.meshgrid(np.linspace(a, b, nxgrid), np.linspace(c, d, nygrid))
+(nxgrid, nygrid) = xx.shape
+grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
+
+
+Sil_grid = defmodsil.SilentLandmark(grid_points.shape[0], dim)
+
+param_grid = (grid_points, np.zeros(grid_points.shape))
+Sil_grid.GD.fill_cot_from_param(param_grid)
+
+Mod_tot = comb_mod.CompoundModules([Sil_grid, Mod_el])
+
+# %%
+Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
+# %% Plot with grid
+xs_c = my_close(xs)
+xst_c = my_close(xst)
+for i in range(N + 1):
+    plt.figure()
+    xgrid = Modlist_opti_tot_grid[2 * i].GD.GD_list[0].GD
+    xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
+    xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
+    plt.plot(xsx, xsy, color='lightblue')
+    plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
+    xs_i = Modlist_opti_tot_grid[2 * i].GD.GD_list[1].GD_list[0].GD
+    xs_ic = my_close(xs_i)
+    # plt.plot(xs[:,0], xs[:,1], '-b', linewidth=1)
+    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+    plt.axis('equal')
+    # plt.axis([-10,10,-10,55])
+    #plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
+    plt.axis('off')
+    plt.show()
+    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+
+
+
+
+
+#%% Shooting from controls
+
+Contlist = []
+for i in range(len(Modlist_opti)):
+    Contlist.append(Modlist_opti[i].Cont)
+
+#%%
+Mod_cont_init = Modlist_opti[0].copy_full()
+Modlist_cont = shoot.shooting_from_cont_traj(Mod_cont_init, Contlist, 5)
+
+#%% Visualisation
+xst_c = my_close(xst)
+xs_c = my_close(xs)
+for i in range(N + 1):
+    plt.figure()
+    xs_i = Modlist_cont[2 * i].GD.GD_list[0].GD
+    xs_ic = my_close(xs_i)
+    plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
+    plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
+    plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
+    plt.axis('equal')

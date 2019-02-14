@@ -78,3 +78,39 @@ def shooting_traj(Mod, N_int):
         Mod_list.append(Mod.copy_full())
     
     return Mod_list
+
+
+
+def shooting_from_cont_traj(Mod, Contlist, N_int):
+    Mod.fill_Cont(Contlist[0])
+    Mod.update()
+    Mod_list = [Mod.copy_full()]
+    step = 1./N_int
+    #print(Contlist[0])
+    for i in range(N_int):
+        #speed = Mod.GD.Ximv(Mod.field_generator_curr())
+        
+        Modtmp = Mod.copy_full()
+        Modtmp.update()
+        speed = HamDer.dpH(Modtmp)
+        speed.mult_tan_scal(0.5 * step)
+        Modtmp.add_speedGD(speed)
+        Modtmp.update()
+        Modtmp.fill_Cont(Contlist[2 * i + 1])
+        #print(Contlist[2 * i + 1])
+        #print(Modtmp.Cont)
+        Mod_list.append(Modtmp.copy_full())
+        #speed = Modtmp.GD.Ximv(Modtmp.field_generator_curr())
+        speed = HamDer.dpH(Modtmp)
+        speed.mult_tan_scal(step)
+        Mod.add_speedGD(speed)
+        Mod.update()
+        Mod.fill_Cont(Contlist[2 * i + 2])
+        #print(Contlist[2 * i + 2])
+        #print(Mod.Cont)
+        Mod_list.append(Mod.copy_full())
+    return Mod_list
+
+    
+
+

@@ -17,7 +17,7 @@ def dxH(Mod):
     ## derivation of the cost
     der_cost = Mod.DerCost_curr()
     der.add_cotan(der_cost)
-    
+
     return der
 
 

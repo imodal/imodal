@@ -44,7 +44,10 @@ class ElasticOrderO(ab.DeformationModule):
     def fill_GD(self, GD):
         self.GD = GD.copy_full()
         self.SKS = np.zeros([self.N_pts * self.dim, self.N_pts * self.dim])
-    
+        
+    def fill_Cont(self, Cont):
+        self.Cont = Cont.copy()
+        
     def Compute_SKS_curr(self):
         """
         Supposes that values of GD have been filled
@@ -73,9 +76,11 @@ class ElasticOrderO(ab.DeformationModule):
         """
         vs = GDCot.Cot_to_Vs(self.sig)
         vm = vs.Apply(self.GD.get_points(), 0)
-        # print(self.sig)
-        self.Cont = solve(self.coeff * self.SKS,
-                          vm.flatten(), sym_pos=True).reshape(self.N_pts, self.dim)
+        #print(self.sig)
+        self.Cont = solve(self.SKS,
+                     vm.flatten(), sym_pos = True).reshape(self.N_pts, self.dim)
+        self.Cont /= self.coeff
+        
         self.Mom = self.Cont.copy()
     
     def field_generator_curr(self):
@@ -99,8 +104,9 @@ class ElasticOrderO(ab.DeformationModule):
         return self.coeff * np.dot(p, np.dot(SKS, p)) / 2
     
     def DerCost_curr(self):
-        vs = self.field_generator_curr()
+        vs  = self.field_generator_curr()
         out = self.p_Ximv_curr(vs, 1)
+        out.mult_cotan_scal(self.coeff)
         
         return out
     
@@ -151,6 +157,7 @@ class ElasticOrderO(ab.DeformationModule):
         
         elif j == 1:
             out = self.GD.copy_full()
+            out.fill_zero_cotan()
             out.fill_zero_tan()
             x = GD_cont.GD.copy()
             p = GD_cont.cotan.copy()
