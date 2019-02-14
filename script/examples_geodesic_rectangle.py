@@ -1,4 +1,5 @@
 import os.path
+
 path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
 os.makedirs(path_res, exist_ok=True)
 
@@ -49,16 +50,18 @@ L = 38.
 K = 100
 a, b = -2 / L ** 3, 3 / L ** 2
 
-def define_C0(x, y):
-        return 1
 
-def define_C1(x, y,  j=0):
+def define_C0(x, y):
+    return 1
+
+
+def define_C1(x, y, j=0):
     if j == 0:
         return K * (a * (50. - y) ** 3 + b * (50. - y) ** 2) - 100
     elif j == 1:
         return K * (b * np.abs(5. - x))
-    elif j ==2:
-        return b*np.abs(y-5)
+    elif j == 2:
+        return b * np.abs(y - 5)
     elif j == 3:
         return np.ones(y.shape)
     elif j == 4:
@@ -106,7 +109,6 @@ gs = gridspec.GridSpec(10, 4, width_ratios=[1, 1, 1, 1])
 
 endv = 7
 endh = 2
-
 
 # %%
 coeffs = [5., 0.05]

@@ -26,4 +26,3 @@ class DeformationModule(object):
     
     def sum_GD(self, GD0, GD1):
         self.GD.sum_GD(GD0, GD1)
- 

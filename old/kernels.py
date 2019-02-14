@@ -1,4 +1,5 @@
 import numpy as np
+
 from old import functions_eta as fun_eta
 
 
@@ -59,7 +60,7 @@ def my_vker(x, k, sig):  # tested
         r = th * (-tI + my_tensordotaxes0(x, x))
         tth = np.tile(h.reshape((x.shape[0], 1, 1, 1)), (1, 2, 2, 2))
         r = - my_tensordotaxes0(r, x) + tth * (
-                    np.swapaxes(np.tensordot(x, np.eye(2), axes=0), 1, 2) + np.tensordot(x, np.eye(2), axes=0))
+                np.swapaxes(np.tensordot(x, np.eye(2), axes=0), 1, 2) + np.tensordot(x, np.eye(2), axes=0))
         r = r / sig ** 3
     return r
     

@@ -1,4 +1,5 @@
 import numpy as np
+
 from old import kernels as ker
 
 
@@ -40,7 +41,7 @@ def my_VsToV(Par, z, j):  # generic vector field (tested)
     # djv2 = np.zeros(lsize[j])
     
     if '0' in Par:
-        
+    
         for (x, p) in Par['0']:
             ker_vec = ker.my_vker(ker.my_xmy(z, x), j, sig)
             my_shape = (Nz, x.shape[0]) + tuple(ker_vec.shape[1:])

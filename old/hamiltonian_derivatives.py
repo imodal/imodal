@@ -7,6 +7,7 @@ Created on Wed Nov 14 19:05:41 2018
 """
 import numpy as np
 from scipy.linalg import solve
+
 from old import functions_eta as fun_eta, field_structures as fields, modules_operations as mod, \
     pairing_structures as pair
 
@@ -43,42 +44,40 @@ def my_dxH(Mod0, Mod1, Cot):
     sig0, sig1 = Mod0['sig'], Mod1['sig']
     Vs0 = {'0':[(Mod0['0'],Mod0['mom'])], 'sig':sig0}
     (x,R), P = Mod1['x,R'], Mod1['mom']
-    Vs1 = {'p':[(x,P)], 'sig':sig1}  
-    
+    Vs1 = {'p':[(x,P)], 'sig':sig1}
+
     # derivatives with respect to the end conditions (der of \xi_m)
     cder = my_add_der(pair.my_dCotDotV(Cot,Vs0),pair.my_dCotDotV(Cot,Vs1))
-    
-    
+
     # derivatives with respect to the initial conditions (KS_m^\ast)
     Vsr1 = fields.my_CotToVs(Cot, sig1)
     der = pair.my_pSmV(Vs1,Vsr1,1)
     dx1H = der['p'][0][1]
     # 
-    
+
     # derivation of the \zeta_x0 part
     Vsr0 = fields.my_CotToVs(Cot, sig0)
     der = pair.my_pSmV(Vs0,Vsr0,1)
     dx0H = der['0'][0][1]
-    
+
     # derivative of cost0, use the symmetric properties with S_m0
     der = pair.my_pSmV(Vs0,Vs0,1) # to take into acc. the cost var.
     dx0H += -Mod0['coeff']*der['0'][0][1]
-    
-    
+
     # derivatives with respect to the operator \lambda(m,h)
     ## Sm1 vsr1
     dv = fields.my_VsToV(Vsr1,x,1)
-    dv_sym = (dv + np.swapaxes(dv,1,2))/2
-    S = np.tensordot(dv_sym,fun_eta.my_eta())
-    
+    dv_sym = (dv + np.swapaxes(dv, 1, 2)) / 2
+    S = np.tensordot(dv_sym, fun_eta.my_eta())
+
     ## (S1m1Sm1^\ast)^{-1} Sm1 K1 \xi^\ast_m p
     tlam = solve(Mod1['SKS'], S.flatten(), sym_pos = True)
     ## reshape so that it is a symmetric matrix
-    tP = np.tensordot(tlam.reshape(S.shape),fun_eta.my_eta().transpose(), axes = 1) 
-    
+    tP = np.tensordot(tlam.reshape(S.shape),fun_eta.my_eta().transpose(), axes = 1)
+
     ## tlam and Sm seen as dual of vector field
     tVs = {'p':[(x,tP)], 'sig':sig1}
-    
+
     ## computes derivative wrt m in (Sm1 K1 Sm1^ast) ^{-1}
     der = pair.my_pSmV(tVs,Vs1,1)
     dx1H += - der['p'][0][1]
@@ -92,11 +91,10 @@ def my_dxH(Mod0, Mod1, Cot):
     Ptmp = (tP - Mod1['coeff']*P) # takes into acc. the cost variation in x1
     dRH = 2*np.asarray([np.dot(np.dot(Ptmp[i],R[i]),np.diag(np.dot(C[i],h)))
         for i in range(x.shape[0])])
-    
-    der = pair. my_pSmV(Vs1,Vs1,1)
+
+    der = pair.my_pSmV(Vs1, Vs1, 1)
     dx1H += Mod1['coeff']*der['p'][0][1]
-    
-    
+
     # put everything in cder
     (x,dxe) = cder['0'][0]
     cder['0'][0]=(x,dxe+dx0H)

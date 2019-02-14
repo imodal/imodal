@@ -52,11 +52,11 @@ class ElasticOrder1(ab.DeformationModule):
     def fill_GD(self, GD):
         self.GD = GD.copy_full()
         self.SKS = np.zeros([self.N_pts * self.dimR, self.N_pts * self.dimR])
-
+    
     def fill_Cont(self, Cont):
         self.Cont = Cont.copy()
         self.compute_mom_from_cont_curr()
-        
+    
     def Compute_SKS_curr(self):
         """
         Supposes that values of GD have been filled

@@ -1,4 +1,5 @@
 import numpy as np
+
 from old import field_structures as fields
 
 
@@ -46,9 +47,10 @@ def my_dCotDotV(Cot, Vs):
             
             skew_dv = (dv - np.swapaxes(dv, 1, 2)) / 2
             skew_ddv = (ddv - np.swapaxes(ddv, 1, 2)) / 2
-            
+
             dedx = np.asarray(
-                [np.dot(p[i], dv[i]) + np.tensordot(P[i], np.swapaxes(np.tensordot(R[i], skew_ddv[i], axes=([0], [1])), 0, 1))
+                [np.dot(p[i], dv[i]) + np.tensordot(P[i],
+                                                    np.swapaxes(np.tensordot(R[i], skew_ddv[i], axes=([0], [1])), 0, 1))
                  for i in range(x.shape[0])]
             )
             

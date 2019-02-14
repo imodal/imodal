@@ -47,7 +47,7 @@ def jac(P0, *args):
     # grad_1.fill_cot_from_GD()
     
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
-
+    
     # add gradient of the cost ie of the hamiltonian here:
     fill_Mod_from_Vector(P0, Mod)
     Mod.update()
@@ -57,14 +57,11 @@ def jac(P0, *args):
     dx.exchange_tan_cotan()
     dx.mult_tan_scal(-1.)
     dP_dx = fill_Vector_from_tancotan(dx)
-
+    
     # dxH derivtes wrt p, it is a speed of GD, it is put in the tan element
     dp = HamDer.dpH(Mod)
     dp.exchange_tan_cotan()
     dP_dp = fill_Vector_from_tancotan(dp)
-    
-    
-    
     
     dP = fill_Vector_from_tancotan(cgrad)
     dP += dP_dx + dP_dp
@@ -72,7 +69,7 @@ def jac(P0, *args):
     n = int(0.5 * n)
     # n = np.prod(xst.shape)
     dP[:n] = 0.
-
+    
     return dP
 
 
@@ -84,7 +81,7 @@ def fun(P0, *args):
     (varcost, dxvarcost) = var.my_dxvar_cost(xsf, xst, sig_var)
     varcost = lam_var * varcost
     hamval = HamDer.Ham(ModTraj[0])
-
+    
     print("Energy = {0:10.3e}".format(hamval + varcost), end=' ; ')
     print("Hamiltonian = {0:10.3e}".format(hamval), end=' ; ')
     print("Data Attachment = {0:10.3e}".format(varcost), end='\n')

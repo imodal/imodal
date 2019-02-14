@@ -1,5 +1,5 @@
-from old import GeometricalDescriptors
 import old.StructuredFields.SummedFields
+from old import GeometricalDescriptors
 from old.DeformationModules import DeformationModules as defmod
 
 
@@ -60,7 +60,8 @@ class CompoundModules(defmod.DeformationModule):  # tested
         return Cont
     
     def field_generator_curr(self):  # tested0
-        return old.StructuredFields.SummedFields.sum_structured_fields([self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
+        return old.StructuredFields.SummedFields.sum_structured_fields(
+            [self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
     
     def field_generator(self, GD, Cont):  # tested
         GDlist = GD.GD_list

@@ -102,8 +102,6 @@ Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
 Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
 P0 = opti.fill_Vector_from_GD(Module.GD)
 
-
-
 # %%
 lam_var = 10.
 sig_var = 30.
@@ -141,13 +139,13 @@ for i in range(N + 1):
     xs_i = Modules_list[2 * i].GD.GD_list[0].GD
     xs_ic = my_close(xs_i)
     plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
-
+    
     x0_i = Modules_list[2 * i].GD.GD_list[1].GD
     plt.plot(x0_i[:, 0], x0_i[:, 1], '*r', linewidth=2)
-
+    
     x00_i = Modules_list[2 * i].GD.GD_list[2].GD
     plt.plot(x00_i[:, 0], x00_i[:, 1], 'or', linewidth=2)
-
+    
     plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
     plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
     plt.axis('equal')

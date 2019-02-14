@@ -1,12 +1,12 @@
-import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from random import random,randint
 import numpy.random as rd
-from numpy.linalg import eigh,inv
 from scipy.linalg import solve
+import matplotlib.pyplot as plt
+import numpy as np
+import numpy.random as rd
+from scipy.linalg import solve
+
 plt.show()
 plt.ion()
 

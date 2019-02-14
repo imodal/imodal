@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.linalg import solve
+
 from old import functions_eta as fun_eta, field_structures as fields, constraints_functions as con_fun, \
     useful_functions as utils
 
@@ -7,7 +8,7 @@ from old import functions_eta as fun_eta, field_structures as fields, constraint
 def my_mod_update(Mod):
     if not 'SKS' in Mod:
         Mod['SKS'] = utils.my_new_SKS(Mod)
-    
+
     if '0' in Mod:
         (x, p) = (Mod['0'], Mod['mom'].flatten())
         Mod['cost'] = Mod['coeff'] * np.dot(p, np.dot(Mod['SKS'], p)) / 2

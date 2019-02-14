@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.linalg import solve
 
-from old import GeometricalDescriptors, kernels as ker
 import old.StructuredFields.StructuredFields_0
+from old import GeometricalDescriptors, kernels as ker
 from old.DeformationModules.DeformationModules import DeformationModule
 
 
@@ -10,7 +10,6 @@ class ElasticOrderO(DeformationModule):
     """
      Elastic module of order 0
     """
-    
     
     def __init__(self, sigma, N_pts, dim, coeff, nu):
         """
@@ -20,15 +19,15 @@ class ElasticOrderO(DeformationModule):
         """
         self.sig = sigma
         self.N_pts = N_pts
-        self.dim =dim
+        self.dim = dim
         self.coeff = coeff
         self.nu = nu
         self.GD = old.GeometricalDescriptors.GD_landmark.GD_landmark(N_pts, dim)
-        self.SKS = np.zeros([self.N_pts*self.dim,self.N_pts*self.dim])
+        self.SKS = np.zeros([self.N_pts * self.dim, self.N_pts * self.dim])
         self.Mom = np.zeros([self.N_pts, self.dim])
         self.Cont = np.zeros([self.N_pts, self.dim])
         self.cost = 0.
-        
+    
     def copy(self):
         return ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
     
@@ -43,11 +42,11 @@ class ElasticOrderO(DeformationModule):
     
     def fill_GD(self, GD):
         self.GD = GD.copy_full()
-        self.SKS = np.zeros([self.N_pts*self.dim,self.N_pts*self.dim])
+        self.SKS = np.zeros([self.N_pts * self.dim, self.N_pts * self.dim])
     
     def add_cot(self, GD):
         self.GD.add_cot(GD.Cot)
-        
+    
     def Compute_SKS_curr(self):
         """
         Supposes that values of GD have been filled
@@ -70,7 +69,6 @@ class ElasticOrderO(DeformationModule):
         
         self.Compute_SKS_curr()
     
-    
     def GeodesicControls_curr(self, GDCot):
         """
         Supposes that SKS has been computed and values of GD filled
@@ -78,12 +76,12 @@ class ElasticOrderO(DeformationModule):
         """
         vs = GDCot.Cot_to_Vs(self.sig)
         vm = vs.Apply(self.GD.get_points(), 0)
-        #print(self.sig)
+        # print(self.sig)
         self.Cont = solve(self.coeff * self.SKS,
-                     vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
+                          vm.flatten(), sym_pos=True).reshape(self.N_pts, self.dim)
         self.Mom = self.Cont.copy()
     
-    #def GeodesicControls(self, GD, GDCot):
+    # def GeodesicControls(self, GD, GDCot):
     #    """
     #    Supposes that SKS has been computed and values of GD filled
     #    """
@@ -93,10 +91,8 @@ class ElasticOrderO(DeformationModule):
     #    return solve(self.coeff * SKS,
     #                 vm.flatten(),sym_pos = True).reshape(self.N_pts, self.dim)
     
-    
     def field_generator_curr(self):
         return self.field_generator(self.GD, self.Cont)
-    
     
     def field_generator(self, GD, Cont):
         param = [GD.get_points(), Cont]
@@ -107,32 +103,29 @@ class ElasticOrderO(DeformationModule):
     def Cost_curr(self):
         SKS = self.SKS
         p = self.Cont.flatten()
-        self.cost = self.coeff * np.dot(p, np.dot(SKS, p))/2
-        
+        self.cost = self.coeff * np.dot(p, np.dot(SKS, p)) / 2
+    
     def Cost(self, GD, Cont):
         x = GD.get_points()
         SKS = self.Compute_SKS(x)
         p = Cont.flatten()
-        return self.coeff * np.dot(p, np.dot(SKS, p))/2
-       
-    def DerCost_curr(self):#tested
-        vs  = self.field_generator_curr()
-        der = vs.p_Ximv(vs, 1)
-        out = self.GD.copy()
-        out.Cot['0'] = [( self.coeff * der['0'][0][1], np.zeros([self.N_pts, self.dim]) )]
-        return out
-
-      
-    def DerCost(self, GD, Mom):#tested
-        vs  = self.field_generator(GD, Mom)
-        der = vs.p_Ximv(vs, 1)
-        out = self.GD.copy()
-        out.Cot['0'] = [( self.coeff * der['0'][0][1], np.zeros([self.N_pts, self.dim]) )]
-        return out
-
-
+        return self.coeff * np.dot(p, np.dot(SKS, p)) / 2
     
-    def cot_to_innerprod_curr(self, GDCot, j):#tested
+    def DerCost_curr(self):  # tested
+        vs = self.field_generator_curr()
+        der = vs.p_Ximv(vs, 1)
+        out = self.GD.copy()
+        out.Cot['0'] = [(self.coeff * der['0'][0][1], np.zeros([self.N_pts, self.dim]))]
+        return out
+    
+    def DerCost(self, GD, Mom):  # tested
+        vs = self.field_generator(GD, Mom)
+        der = vs.p_Ximv(vs, 1)
+        out = self.GD.copy()
+        out.Cot['0'] = [(self.coeff * der['0'][0][1], np.zeros([self.N_pts, self.dim]))]
+        return out
+    
+    def cot_to_innerprod_curr(self, GDCot, j):  # tested
         """
          Transforms the GD (with Cot filled) GDCot into vsr and computes
          the inner product (or derivative wrt self.GD) with the
@@ -144,10 +137,10 @@ class ElasticOrderO(DeformationModule):
         v = self.field_generator_curr()
         innerprod = v.p_Ximv(vsr, j)
         
-        if j==0:
+        if j == 0:
             out = innerprod
-        if j==1:
+        if j == 1:
             out = self.GD.copy()
-            out.Cot['0'] = [ (innerprod['0'][0][1], np.zeros([self.N_pts,self.dim]) )]
-            
+            out.Cot['0'] = [(innerprod['0'][0][1], np.zeros([self.N_pts, self.dim]))]
+        
         return out

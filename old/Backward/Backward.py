@@ -121,5 +121,5 @@ def backward_shoot_rk2(Modlist, grad_1, eps):
         cgrad.add_cot(dGD.Cot)
         cgrad.add_cot(dGD_np.Cot)
     
-    #Modlist.reverse()
+    # Modlist.reverse()
     return cgrad

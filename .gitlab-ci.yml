@@ -1,12 +1,12 @@
 stages:
-    - test
+- test
 
 test_ubuntu:
     stage: test
 
     script:
-        - cd test
-        - python3 unit_tests.py
+    - cd test
+    - python3 unit_tests.py
 
     tags:
     - python3

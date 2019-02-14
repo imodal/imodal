@@ -8,14 +8,14 @@ import src.Forward.Shooting as shoot
 def fill_Vector_from_GD(GD):  # 
     PX = GD.get_GDinVector()
     PMom = GD.get_cotaninVector()
-
+    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
 def fill_Vector_from_tancotan(GD):  # 
     PX = GD.get_taninVector()
     PMom = GD.get_cotaninVector()
-
+    
     return np.concatenate([PX.copy(), PMom.copy()])
 
 
@@ -29,7 +29,7 @@ def fill_Mod_from_Vector(P, Mod):  # tested
     PMom = P[dimP:]
     GD = Mod.GD.copy()
     GD.fill_from_vec(PX, PMom)
-
+    
     # GD.updatefromCot()
     Mod.fill_GD(GD)
 

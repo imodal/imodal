@@ -9,13 +9,13 @@ import numpy as np
 
 class NumpyUnitTestCase(unittest.TestCase):
     sig = 0.9
-
+    
     def test_matching_simple(self):
         import pickle
-    
+        
         import numpy as np
         import scipy.optimize
-    
+        
         import src.DeformationModules.Combination as comb_mod
         import src.DeformationModules.ElasticOrder0 as defmod0
         import src.DeformationModules.ElasticOrder1 as defmod1
@@ -23,57 +23,57 @@ class NumpyUnitTestCase(unittest.TestCase):
         import src.Forward.Shooting as shoot
         import src.Optimisation.ScipyOpti as opti
         from src.Utilities import Rotation as rot
-    
+        
         # Source
         path_data = '../data/'
         with open(path_data + 'basi1b.pkl', 'rb') as f:
             _, lx = pickle.load(f)
-
+        
         nlx = np.asarray(lx).astype(np.float32)
         (lmin, lmax) = (np.min(nlx[:, 1]), np.max(nlx[:, 1]))
         scale = 38. / (lmax - lmin)
-
+        
         nlx[:, 1] = 38.0 - scale * (nlx[:, 1] - lmin)
         nlx[:, 0] = scale * (nlx[:, 0] - np.mean(nlx[:, 0]))
-
+        
         # %% target
         with open(path_data + 'basi1t.pkl', 'rb') as f:
             _, lxt = pickle.load(f)
-
+        
         nlxt = np.asarray(lxt).astype(np.float32)
         (lmin, lmax) = (np.min(nlxt[:, 1]), np.max(nlxt[:, 1]))
         scale = 100. / (lmax - lmin)
-
+        
         nlxt[:, 1] = 38.0 - scale * (nlxt[:, 1] - lmin)
         nlxt[:, 0] = scale * (nlxt[:, 0] - np.mean(nlxt[:, 0]))
-
+        
         xst = nlxt[nlxt[:, 2] == 2, 0:2]
-    
+        
         #  common options
         nu = 0.001
         dim = 2
-    
+        
         # %% Silent Module
         xs = nlx[nlx[:, 2] == 2, 0:2]
         xs = np.delete(xs, 3, axis=0)
         Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
         ps = np.zeros(xs.shape)
         param_sil = (xs, ps)
-    
+        
         # %% Modules of Order 0
         sig0 = 6
         x0 = nlx[nlx[:, 2] == 1, 0:2]
         Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, 1., nu)
         p0 = np.zeros(x0.shape)
         param_0 = (x0, p0)
-    
+        
         # %% Modules of Order 0
         sig00 = 200
         x00 = np.array([[0., 0.]])
         Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
         p00 = np.zeros([1, 2])
         param_00 = (x00, p00)
-    
+        
         # %% Modules of Order 1
         sig1 = 30
         x1 = nlx[nlx[:, 2] == 1, 0:2]
@@ -83,24 +83,24 @@ class NumpyUnitTestCase(unittest.TestCase):
         C[:, 1, 0] = K * (a * (L - x1[:, 1]) ** 3 + b * (L - x1[:, 1]) ** 2)
         C[:, 0, 0] = 1. * C[:, 1, 0]
         Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, 0.01, C, nu)
-    
+        
         th = 0 * np.pi * np.ones(x1.shape[0])
         R = np.asarray([rot.my_R(cth) for cth in th])
-    
+        
         (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
         param_1 = ((x1, R), (p1, PR))
-    
+        
         # %% Full model
         Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
         Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
         P0 = opti.fill_Vector_from_GD(Module.GD)
-
+        
         # %%
         lam_var = 10.
         sig_var = 30.
         N = 10
         args = (Module, xst, lam_var, sig_var, N, 1e-7)
-
+        
         res = scipy.optimize.minimize(opti.fun, P0,
                                       args=args,
                                       method='L-BFGS-B',
@@ -118,11 +118,11 @@ class NumpyUnitTestCase(unittest.TestCase):
                                           'iprint': -1,
                                           'maxls': 5
                                       })
-
+        
         P1 = res['x']
         opti.fill_Mod_from_Vector(P1, Module)
         Modules_list = shoot.shooting_traj(Module, N)
-    
+        
         Modules_list_tem0 = np.array([[-2.21646979, 38.57068066],
                                       [-4.83115561, 36.39164195],
                                       [-6.89468678, 34.48598193],
@@ -157,9 +157,9 @@ class NumpyUnitTestCase(unittest.TestCase):
                                       [11.39486544, 21.68441742],
                                       [9.94786, 24.98582738],
                                       [8.41835073, 27.89836421]])
-    
+        
         Modules_list_tem1 = np.array([[-2.22073448, -39.70241681]])
-    
+        
         Modules_list_tem2 = np.array([[-4.19662402e+00, 3.58872205e+01],
                                       [-3.20024125e-01, 3.61027131e+01],
                                       [-7.95089309e+00, 3.15345709e+01],
@@ -188,7 +188,7 @@ class NumpyUnitTestCase(unittest.TestCase):
                                       [1.28152413e+01, -5.23665663e+00],
                                       [-1.07220737e+01, -1.77074052e+01],
                                       [-6.04816514e-01, -1.81170066e+01]])
-    
+        
         Modules_list_tem31 = np.array([[-4.19662402e+00, 3.58872205e+01],
                                        [-3.20024125e-01, 3.61027131e+01],
                                        [-7.95089309e+00, 3.15345709e+01],
@@ -217,7 +217,7 @@ class NumpyUnitTestCase(unittest.TestCase):
                                        [1.28152413e+01, -5.23665663e+00],
                                        [-1.07220737e+01, -1.77074052e+01],
                                        [-6.04816514e-01, -1.81170066e+01]])
-    
+        
         Modules_list_tem32 = np.array([[[0.99971065, 0.02418204], [-0.02418204, 0.99971065]],
                                        [[0.99996505, -0.0083005], [0.0083005, 0.99996505]],
                                        [[0.9975893, 0.06968298], [-0.06968298, 0.9975893]],
@@ -235,14 +235,13 @@ class NumpyUnitTestCase(unittest.TestCase):
                                        [[0.98419081, 0.17813439], [-0.17813439, 0.98419081]],
                                        [[0.99688275, 0.07946446], [-0.07946446, 0.99688275]],
                                        [[0.99809376, - 0.0621291], [0.0621291, 0.99809376]]])
-    
+        
         self.assertTrue(np.allclose(Modules_list[11].GD.GD_list[0].GD[0:34], Modules_list_tem0, atol=1e-6))
         self.assertTrue(np.allclose(Modules_list[11].GD.GD_list[1].GD, Modules_list_tem1, atol=1e-6))
         self.assertTrue(np.allclose(Modules_list[11].GD.GD_list[2].GD[0:28], Modules_list_tem2, atol=1e-6))
         self.assertTrue(np.allclose(Modules_list[11].GD.GD_list[3].GD[0][0:28], Modules_list_tem31, atol=1e-6))
         self.assertTrue(np.allclose(Modules_list[11].GD.GD_list[3].GD[1][0:17, :, :], Modules_list_tem32, atol=1e-6))
-        
-
+    
     def test_geodesic_rectangle(self):
         from src.DeformationModules.Combination import CompoundModules
         from src.DeformationModules.ElasticOrder1 import ElasticOrder1

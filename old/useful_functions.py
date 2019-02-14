@@ -6,6 +6,7 @@ Created on Fri Nov  9 14:10:59 2018
 @author: barbaragris
 """
 import numpy as np
+
 from old import kernels as ker
 
 
