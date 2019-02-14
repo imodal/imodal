@@ -98,9 +98,9 @@ param_1 = ((x1, R), (p1, PR))
 my_plot(x1, "Module order 1", 'og')
 
 # %% Full model
-Mod_el = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
-Mod_el.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
-P0 = opti.fill_Vector_from_GD(Mod_el.GD)
+Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
+P0 = opti.fill_Vector_from_GD(Module.GD)
 
 
 
@@ -108,7 +108,7 @@ P0 = opti.fill_Vector_from_GD(Mod_el.GD)
 lam_var = 10.
 sig_var = 30.
 N = 10
-args = (Mod_el, xst, lam_var, sig_var, N, 1e-7)
+args = (Module, xst, lam_var, sig_var, N, 1e-7)
 
 res = scipy.optimize.minimize(opti.fun, P0,
                               args=args,
@@ -129,22 +129,23 @@ res = scipy.optimize.minimize(opti.fun, P0,
                               })
 
 P1 = res['x']
-opti.fill_Mod_from_Vector(P1, Mod_el)
-Modlist_opti = shoot.shooting_traj(Mod_el, N)
+opti.fill_Mod_from_Vector(P1, Module)
+Module_optimized = Module.copy_full()
+Modules_list = shoot.shooting_traj(Module, N)
 
 # %% Visualisation
 xst_c = my_close(xst)
 xs_c = my_close(xs)
 for i in range(N + 1):
     plt.figure()
-    xs_i = Modlist_opti[2 * i].GD.GD_list[0].GD
+    xs_i = Modules_list[2 * i].GD.GD_list[0].GD
     xs_ic = my_close(xs_i)
     plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
 
-    x0_i = Modlist_opti[2 * i].GD.GD_list[1].GD
+    x0_i = Modules_list[2 * i].GD.GD_list[1].GD
     plt.plot(x0_i[:, 0], x0_i[:, 1], '*r', linewidth=2)
 
-    x00_i = Modlist_opti[2 * i].GD.GD_list[2].GD
+    x00_i = Modules_list[2 * i].GD.GD_list[2].GD
     plt.plot(x00_i[:, 0], x00_i[:, 1], 'or', linewidth=2)
 
     plt.plot(xst_c[:, 0], xst_c[:, 1], '-k', linewidth=1)
@@ -152,22 +153,20 @@ for i in range(N + 1):
     plt.axis('equal')
     plt.show()
 
-
-#%% With grid
+# %% With grid
 nxgrid, nygrid = (21, 21)  # create a grid for visualisation purpose
 xfigmin, xfigmax, yfigmin, yfigmax = -20, 20, 0, 40
 (a, b, c, d) = (xfigmin, xfigmax, yfigmin, yfigmax)
-[xx, xy] = np.meshgrid(np.linspace(a, b, nxgrid), np.linspace(c, d, nygrid))
+[xx, xy] = np.meshgrid(np.linspace(xfigmin, xfigmax, nxgrid), np.linspace(yfigmin, yfigmax, nygrid))
 (nxgrid, nygrid) = xx.shape
 grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
-
 
 Sil_grid = defmodsil.SilentLandmark(grid_points.shape[0], dim)
 
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 
-Mod_tot = comb_mod.CompoundModules([Sil_grid, Mod_el])
+Mod_tot = comb_mod.CompoundModules([Sil_grid, Module_optimized])
 
 # %%
 Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
@@ -189,26 +188,22 @@ for i in range(N + 1):
     plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
     plt.axis('equal')
     # plt.axis([-10,10,-10,55])
-    #plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-    plt.axis('off')
+    # plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
+    # plt.axis('off')
     plt.show()
     # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
 
-
-
-
-
-#%% Shooting from controls
+# %% Shooting from controls
 
 Contlist = []
-for i in range(len(Modlist_opti)):
-    Contlist.append(Modlist_opti[i].Cont)
+for i in range(len(Modules_list)):
+    Contlist.append(Modules_list[i].Cont)
 
-#%%
-Mod_cont_init = Modlist_opti[0].copy_full()
+# %%
+Mod_cont_init = Modules_list[0].copy_full()
 Modlist_cont = shoot.shooting_from_cont_traj(Mod_cont_init, Contlist, 5)
 
-#%% Visualisation
+# %% Visualisation
 xst_c = my_close(xst)
 xs_c = my_close(xs)
 for i in range(N + 1):

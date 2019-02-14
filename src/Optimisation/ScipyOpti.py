@@ -47,20 +47,20 @@ def jac(P0, *args):
     # grad_1.fill_cot_from_GD()
     
     cgrad = bckwd.backward_shoot_rk2(ModTraj, grad_1, eps)
-    
+
     # add gradient of the cost ie of the hamiltonian here:
     fill_Mod_from_Vector(P0, Mod)
     Mod.update()
     Mod.GeodesicControls_curr(Mod.GD)
     # dxH is -derivtes wrt x, it is put in the cotan element
     dx = HamDer.dxH(Mod)
-    dx.exchange_tan_cotan()   
+    dx.exchange_tan_cotan()
     dx.mult_tan_scal(-1.)
     dP_dx = fill_Vector_from_tancotan(dx)
-    
+
     # dxH derivtes wrt p, it is a speed of GD, it is put in the tan element
     dp = HamDer.dpH(Mod)
-    dp.exchange_tan_cotan() 
+    dp.exchange_tan_cotan()
     dP_dp = fill_Vector_from_tancotan(dp)
     
     
@@ -72,7 +72,7 @@ def jac(P0, *args):
     n = int(0.5 * n)
     # n = np.prod(xst.shape)
     dP[:n] = 0.
-    
+
     return dP
 
 

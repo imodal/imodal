@@ -69,12 +69,9 @@ def define_C1(x, y,  j=0):
 C[:, 1, 0] = define_C1(x1[:, 0], x1[:, 1]) * define_C0(x1[:, 0], x1[:, 1])
 C[:, 0, 0] = 0. * C[:, 1, 0]
 
-
 # sinusoidal
-C[:, 1, 0] = np.cos(x1[:,1] * np.pi / 7.5) * x1[:,0]/5
-C[:, 0, 0] = - np.log(2) * np.cos(x1[:,1] * np.pi / 30)
-
-
+C[:, 1, 0] = np.cos(x1[:, 1] * np.pi / 7.5) * x1[:, 0] / 5
+C[:, 0, 0] = -  np.log(2) * np.cos(x1[:, 1] * np.pi / 30)
 
 ZX = define_C1(X0, np.zeros([nx]))
 ZY = define_C1(np.zeros([ny]), Y0)
@@ -110,22 +107,6 @@ gs = gridspec.GridSpec(10, 4, width_ratios=[1, 1, 1, 1])
 endv = 7
 endh = 2
 
-ax0 = plt.subplot(gs[endv + 1:, :endh])
-ax0.plot(X0, ZX, '-')
-plt.yticks([])
-
-ax1 = plt.subplot(gs[:endv, endh + 1])
-ax1.plot(ZY, Y0, '-')
-plt.xticks([])
-
-ax2 = plt.subplot(gs[:endv, :endh])
-ax2.plot(Z[:, 0], Z[:, 1], '.b')
-ax2.plot(Z_c[:, 0], Z_c[:, 1], '-g', linewidth=2)
-ax2.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-plt.show()
-# plt.savefig(path_res + name_exp + 'init.png', format='png')
-
-
 
 # %%
 coeffs = [5., 0.05]
@@ -146,8 +127,8 @@ Mod_el_init = CompoundModules([Sil, Model1])
 # %%
 ps = np.zeros(xs.shape)
 ps[nx + ny:2 * nx + ny, 1] = 0.5
-ps[:10,:] = 10.
-#1ps[:,:,] = 1.
+ps[:10, :] = 10.
+# 1ps[:,:,] = 1.
 (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
 param_sil = (xs, 1 * ps)
 param_1 = ((x1, R), (p1, PR))
@@ -196,28 +177,6 @@ for i in range(N + 1):
     plt.axis('equal')
     # plt.axis([-10,10,-10,55])
     plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-#    plt.axis('off')
+    #    plt.axis('off')
     plt.show()
     # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
-
-
-# %% plot mom at t = i
-i = 0
-plt.figure()
-xgrid = Modlist_opti_tot[2 * i].GD.GD_list[0].GD
-xsx = xgrid[:, 0].reshape((nxgrid, nygrid))
-xsy = xgrid[:, 1].reshape((nxgrid, nygrid))
-plt.plot(xsx, xsy, color='lightblue')
-plt.plot(xsx.transpose(), xsy.transpose(), color='lightblue')
-xs_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].GD
-ps_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[0].cotan
-x1_i = Modlist_opti_tot[2 * i].GD.GD_list[1].GD_list[1].GD[0]
-plt.plot(x1_i[:, 0], x1_i[:, 1], '.b')
-plt.plot(xs_i[:, 0], xs_i[:, 1], '-g', linewidth=2)
-plt.quiver(xs_i[:, 0], xs_i[:, 1], 0.1 * ps_i[:, 0], 0.1 * ps_i[:, 1], scale=1, color='r', linewidth=2)
-plt.axis('equal')
-# plt.axis([-10,10,-10,55])
-plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-#plt.axis('off')
-plt.show()
-# plt.savefig(path_res + name_exp + 'mom_t_' + str(i) + '.png', format='png', bbox_inches='tight')
