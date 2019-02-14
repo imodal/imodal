@@ -1,3 +1,4 @@
+# Temp files
 *~
 *.swp
 # temporaries from editors
@@ -13,9 +14,10 @@
 *_auto_tutorials*
 *.png
 *.gif
-
-# Exclude mex files
 *mexa64
+
+# Exclude virtual python env
+*venv*
 
 # Exclude "private" experimental research folders
 *private*
@@ -40,7 +42,4 @@
 /*.egg-info
 /*.egg
 
-keopslab/generic/pathtocmake
-
-keopslab/common/pathtocmake
 
