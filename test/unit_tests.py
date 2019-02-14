@@ -113,7 +113,7 @@ class NumpyUnitTestCase(unittest.TestCase):
                                           'ftol': 1.e-09,
                                           'gtol': 1e-03,
                                           'eps': 1e-08,
-                                          'maxfun': 100,
+                                          'maxfun': 6,
                                           'maxiter': 3,
                                           'iprint': -1,
                                           'maxls': 5
