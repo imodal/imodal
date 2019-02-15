@@ -25,8 +25,7 @@ class NumpyUnitTestCase(unittest.TestCase):
         from src.Utilities import Rotation as rot
         
         # Source
-        path_data = '../data/'
-        with open(path_data + 'basi1b.pkl', 'rb') as f:
+        with open('./data/basi1b.pkl', 'rb') as f:
             _, lx = pickle.load(f)
         
         nlx = np.asarray(lx).astype(np.float32)
@@ -37,7 +36,7 @@ class NumpyUnitTestCase(unittest.TestCase):
         nlx[:, 0] = scale * (nlx[:, 0] - np.mean(nlx[:, 0]))
         
         # %% target
-        with open(path_data + 'basi1t.pkl', 'rb') as f:
+        with open('./data/basi1t.pkl', 'rb') as f:
             _, lxt = pickle.load(f)
         
         nlxt = np.asarray(lxt).astype(np.float32)
@@ -63,14 +62,14 @@ class NumpyUnitTestCase(unittest.TestCase):
         # %% Modules of Order 0
         sig0 = 6
         x0 = nlx[nlx[:, 2] == 1, 0:2]
-        Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, 1., nu)
+        Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, 1., nu)
         p0 = np.zeros(x0.shape)
         param_0 = (x0, p0)
         
         # %% Modules of Order 0
         sig00 = 200
         x00 = np.array([[0., 0.]])
-        Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
+        Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
         p00 = np.zeros([1, 2])
         param_00 = (x00, p00)
         

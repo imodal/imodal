@@ -7,7 +7,7 @@ from src.Kernels import ScalarGaussian as ker
 from src.StructuredFields.StructuredField_0 import StructuredField_0
 
 
-class ElasticOrderO(ab.DeformationModule):
+class ElasticOrder0(ab.DeformationModule):
     """
      Elastic module of order 0
     """
@@ -30,10 +30,10 @@ class ElasticOrderO(ab.DeformationModule):
         self.cost = 0.
     
     def copy(self):
-        return ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
+        return ElasticOrder0(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
     
     def copy_full(self):
-        Mod = ElasticOrderO(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
+        Mod = ElasticOrder0(self.sig, self.N_pts, self.dim, self.coeff, self.nu)
         Mod.GD = self.GD.copy_full()
         Mod.SKS = self.SKS.copy()
         Mod.Mom = self.Mom.copy()

@@ -187,8 +187,8 @@ dim = 2
 Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
 Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[1], C, nu)
 # Model01 = defmod.ElasticOrder1(sig0, x1.shape[0], dim, coeffs[1], C, nu)
-Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[0], nu)
-Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, 0.1, nu)
+Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, coeffs[0], nu)
+Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
 # %%
 
 Mod_el_init = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
