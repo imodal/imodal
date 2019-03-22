@@ -1,6 +1,8 @@
 import pickle
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+
 import numpy as np
 import scipy.optimize
 
@@ -15,11 +17,31 @@ from src.Utilities.visualisation import my_close
 
 
 # helper function
-def my_plot(x, title="", col='*b'):
-    plt.figure()
-    plt.plot(x[:, 0], x[:, 1], col)
+def my_plot(x, ellipse=[], title="", col='*b'):
+    _, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
+    
+    if ellipse == []:
+        ax.plot(x[:, 0], x[:, 1], col)
+    
+    else:
+        ells = [Ellipse(xy=x[i, :],
+                        width=ellipse[i, 0, 0] * .3, height=ellipse[i, 1, 0] * .3,
+                        angle=0)
+                for i in range(x.shape[0])]
+        
+        for e in ells:
+            ax.add_artist(e)
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(1)
+            e.set_facecolor('g')
+
+    
+    m, M = np.min(x, axis=0), np.max(x, axis=0)
+    
+    ax.set_xlim(m[0] - (M[0] - m[0]) * .2, M[0] + (M[0] - m[0] ) * .2)
+    ax.set_ylim(m[1] - (M[1] - m[1]) * .2, M[1] + (M[1] - m[1] ) * .2)
+    
     plt.title(title)
-    plt.axis('equal')
     plt.show()
 
 
@@ -58,7 +80,7 @@ Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
 ps = np.zeros(xs.shape)
 param_sil = (xs, ps)
 
-my_plot(xs, "Silent Module", '*b')
+my_plot(xs, title="Silent Module", col='*b')
 
 # %% Modules of Order 0
 sig0 = 6
@@ -67,7 +89,7 @@ Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, 1., nu)
 p0 = np.zeros(x0.shape)
 param_0 = (x0, p0)
 
-my_plot(x0, "Module order 0", 'or')
+my_plot(x0, title="Module order 0", col='or')
 
 # %% Modules of Order 0
 sig00 = 200
@@ -76,7 +98,7 @@ Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
 p00 = np.zeros([1, 2])
 param_00 = (x00, p00)
 
-my_plot(x00, "Module order 00", '+r')
+my_plot(x00, title="Module order 00", col='+r')
 
 # %% Modules of Order 1
 sig1 = 30
@@ -94,7 +116,7 @@ R = np.asarray([rot.my_R(cth) for cth in th])
 (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
 param_1 = ((x1, R), (p1, PR))
 
-my_plot(x1, "Module order 1", 'og')
+my_plot(x1, ellipse=C, title="Module order 1", col='g')
 
 # %% Full model
 Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
