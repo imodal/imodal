@@ -1,3 +1,12 @@
+"""
+Shooting 
+--------
+"""
+
+####################################################################
+# Setup
+# ^^^^^
+
 import os.path
 
 path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'results' + os.path.sep
@@ -12,7 +21,9 @@ from src.DeformationModules.SilentLandmark import SilentLandmark
 import src.Forward.Shooting as shoot
 import src.Utilities.Rotation as rot
 
-# %%
+#################################################################
+# create the data set
+
 xmin, xmax = -5, 5
 ymin, ymax = -15, 15
 nx, ny = 10, 30
@@ -28,17 +39,22 @@ Z_c = np.concatenate([np.array([X0, np.zeros([nx]) + ymin]).transpose(),
                       np.array([np.flip(X0), np.zeros([nx]) + ymax]).transpose(),
                       np.array([np.zeros([ny]) + xmin, np.flip(Y0)]).transpose()])
 
-# %%
 plt.plot(Z[:, 0], Z[:, 1], '.')
 plt.plot(Z_c[:, 0], Z_c[:, 1], '-')
 plt.axis('equal')
 plt.show()
 
-# %%
+####################################################################
+# Modules
+# ^^^^^^^
+
 x1 = Z.copy()
 xs = Z_c.copy()
 
-# %% parameter for module of order 1
+####################################################################
+# parameter for module of order 1
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 th = 0. * np.pi
 th = th * np.ones(x1.shape[0])
 R = np.asarray([rot.my_R(cth) for cth in th])
@@ -176,6 +192,4 @@ for i in range(N + 1):
     plt.plot(xs_i[:, 0], xs_i[:, 1], '-g', linewidth=2)
     plt.axis('equal')
     plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-    #    plt.axis('off')
     plt.show()
-    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')

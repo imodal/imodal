@@ -1,11 +1,16 @@
 """
 Basipetal growth
+----------------
+
+This example shows how to perform a registration using a geodesic shooting with the implicit modules. The method allows us to define a non-uniform cost to model the growth of a leaf starting from the base.
+
+To see another type of growth: :ref:`acropetal <sphx_glr__auto_examples_Leaf_plot_matching_acro.py>` or  :ref:`??? <sphx_glr__auto_examples_Leaf_plot_matching_???.py>`
 """
 
 
 ################################################################################
 # Setup
-# -----
+# ^^^^^
 
 import pickle
 
@@ -36,7 +41,7 @@ maxiter = 100
 lam_var = 40.
 sig_var = [30., 3.]
 
-######################################################################################################
+#########################################################################################
 # Let us define the data attachment term with a varifold like cost function.
 
 def attach_fun(xsf, xst):
@@ -51,7 +56,7 @@ coeffs = [0.01, 1, 0.01]
 
 ###################################################################################
 # Load data
-# ---------
+# ~~~~~~~~~
 # The source shape is a young leaf. It is segmented from the following image
 with open('./data/basi1b.pkl', 'rb') as f:
     img, lx = pickle.load(f)
@@ -89,11 +94,11 @@ xst = nlxt[nlxt[:, 2] == 2, 0:2]
 
 ####################################################################################
 # Modules definitions
-# -------------------
+# ^^^^^^^^^^^^^^^^^^^
 
 ####################################################################################
 # Silent Module
-# ^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~
 # This module is the shape to be transported
 
 xs = nlx[nlx[:, 2] == 2, 0:2]
@@ -106,7 +111,7 @@ if (flag_show):
 
 #####################################################################################
 # Modules of Order 0
-# ^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~
 # The first module of order 0 corresponds to ...
 sig0 = 15.
 x0 = nlx[nlx[:, 2] == 1, 0:2]
@@ -120,8 +125,8 @@ if (flag_show):
 
 ######################################################################################
 # The second modules of order 0 ...
-#sig00 = 200.
 
+sig00 = 200.
 x00 = np.array([[0., 0.]])
 Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, coeffs[0], nu)
 p00 = np.zeros([1, 2])
@@ -133,26 +138,22 @@ if (flag_show):
 
 #######################################################################################
 # Modules of order 1
-# ^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~
 # The module of order 1 ... blah blah
 
 sig1 = 30.
-
 x1 = nlx[nlx[:, 2] == 1, 0:2]
 C = np.zeros((x1.shape[0], 2, 1))
 K, L = 10, height_source
 a, b = -2 / L ** 3, 3 / L ** 2
 
 #######################################################################################
-# The matrix C here stores the eigen values of 2-tensors ... blah blah
+# The matrix C below stores the eigen values of 2-tensors located at position `x1`. Blah blah...
 C[:, 1, 0] = (K * (a * (L - x1[:, 1] + Dy) ** 3 + b * (L - x1[:, 1] + Dy) ** 2))
 C[:, 0, 0] = 1. * C[:, 1, 0]
-
 Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, coeffs[2], C, nu)
-
 th = 0 * np.pi * np.ones(x1.shape[0])
 R = np.asarray([rot.my_R(cth) for cth in th])
-
 (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
 param_1 = ((x1, R), (p1, PR))
 
@@ -161,7 +162,7 @@ if (flag_show):
 
 ######################################################################################
 # The full model definition
-# -------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^^
 # We gather here the modules defined above. Blah blah...
 
 if name_exp == 'basi_pure_nonparametric':
@@ -181,7 +182,7 @@ P0 = opti.fill_Vector_from_GD(Module.GD)
 
 ######################################################################################
 # Optimization process
-# --------------------
+# ~~~~~~~~~~~~~~~~~~~~
 
 args = (Module, xst, attach_fun, N, 1e-7)
 
@@ -210,10 +211,10 @@ Modules_list = shoot.shooting_traj(Module, N)
 
 ######################################################################################
 # Results
-# -------
+# ^^^^^^^
 #
 # A first visualization
-# ^^^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~~~~~
 xst_c = my_close(xst)
 xs_c = my_close(xs)
 if (flag_show):
@@ -236,7 +237,7 @@ if (flag_show):
 
 #########################################################################################
 # Plot the deformation grid
-# ^^^^^^^^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Create the grid ...
 
@@ -250,19 +251,19 @@ nxgrid, nygrid = (2 * hxgrid + 1, 2 * hygrid + 1)  # create a grid for visualisa
 (nxgrid, nygrid) = xx.shape
 grid_points = np.asarray([xx.flatten(), xy.flatten()]).transpose()
 
-###################################################################################################
+#########################################################################################
 # ... add it as a silent module to flow it
 Sil_grid = defmodsil.SilentLandmark(grid_points.shape[0], dim)
 param_grid = (grid_points, np.zeros(grid_points.shape))
 Sil_grid.GD.fill_cot_from_param(param_grid)
 Mod_tot = comb_mod.CompoundModules([Sil_grid, Module_optimized])
 
-#####################################################################################################
+#######################################################################################
 # ... and perform the shooting
 
 Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
 
-#####################################################################################################
+########################################################################################
 # Plot with grid to show the deformation
 
 xs_c = my_close(xs)

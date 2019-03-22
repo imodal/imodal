@@ -1,20 +1,26 @@
-.. implicitModules documentation master file, created by
-   sphinx-quickstart on Fri Mar 22 16:16:21 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
+===========================================
 Welcome to implicitModules's documentation!
 ===========================================
+
+Presentation of the implicitModule library.
+
+Table of content
+================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Implicit Modules
 
+   modules/index
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorial
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   _auto_examples/index
+

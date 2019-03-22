@@ -1,3 +1,7 @@
+"""
+A first shooting example
+------------------------
+"""
 import pickle
 
 import matplotlib.pyplot as plt

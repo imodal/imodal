@@ -1,11 +1,15 @@
 """
 Acropetal growth
+----------------
+This example shows how to perform a registration using a geodesic shooting with the implicit modules. The method allows us to define a non-uniform cost to model the growth of a leaf starting from the upper part of the leaf.
+
+To see another type of growth: :ref:`basipetal <sphx_glr__auto_examples_Leaf_plot_matching_basi.py>` or  :ref:`??? <sphx_glr__auto_examples_Leaf_plot_matching_???.py>`
 """
 
 
 ################################################################################
 # Setup
-# -----
+# ^^^^^
 
 import pickle
 import matplotlib.pyplot as plt
@@ -36,7 +40,7 @@ maxiter = 2
 lam_var = 40.
 sig_var = [50., 10.]
 
-######################################################################################################
+########################################################################################
 # Let us define the data attachment term with a varifold like cost function.
 
 #def attach_fun(xsf, xst):
@@ -54,7 +58,7 @@ coeffs =[0.01, 100, 0.01]
 
 ###################################################################################
 # Load data
-# ---------
+# ^^^^^^^^^
 # The source shape is segmented from the following image
 #
 with open('./data/basi2b.pkl', 'rb') as f:
@@ -92,11 +96,11 @@ xst = nlxt[nlxt[:, 2] == 2, 0:2]
 
 ####################################################################################
 # Modules definitions
-# -------------------
+# ^^^^^^^^^^^^^^^^^^^
 
 ####################################################################################
 # Silent Module
-# ^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~
 # This module is the shape to be transported
 #
 
@@ -109,7 +113,7 @@ if(flag_show):
 
 #####################################################################################
 # Modules of Order 0
-# ^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~
 # The first module of order 0 corresponds to ...
 
 sig0 = 10.
@@ -136,7 +140,7 @@ if(flag_show):
 
 #######################################################################################
 # Modules of order 1
-# ^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~
 # The module of order 1 ... blah blah
 
 sig1 = 60.
@@ -164,7 +168,7 @@ if(flag_show):
 
 ######################################################################################
 # The full model definition
-# -------------------------
+# ^^^^^^^^^^^^^^^^^^^^^^^^^
 # We gather here the modules defined above. Blah blah...
 
 Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
@@ -173,7 +177,7 @@ P0 = opti.fill_Vector_from_GD(Module.GD)
 
 ######################################################################################
 # Optimization process
-# --------------------
+# ~~~~~~~~~~~~~~~~~~~~
 
 args = (Module, xst, attach_fun, N, 1e-7)
 
@@ -202,7 +206,7 @@ Modules_list = shoot.shooting_traj(Module, N)
 
 ######################################################################################
 # Results
-# -------
+# ^^^^^^^
 #
 
 xst_c = my_close(xst)
@@ -227,7 +231,7 @@ for i in range(N + 1):
 
 #########################################################################################
 # Plot the deformation grid
-# ^^^^^^^^^^^^^^^^^^^^^^^^^
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Create the grid ...
 
@@ -250,11 +254,11 @@ Sil_grid.GD.fill_cot_from_param(param_grid)
 Mod_tot = comb_mod.CompoundModules([Sil_grid, Module_optimized])
 
 
-#####################################################################################################
+#########################################################################################
 # ... and perform the shooting
 Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
 
-#####################################################################################################
+#########################################################################################
 # Plot with grid to show the deformation
 
 
