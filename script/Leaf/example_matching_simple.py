@@ -13,36 +13,8 @@ import src.DeformationModules.SilentLandmark as defmodsil
 import src.Forward.Shooting as shoot
 import src.Optimisation.ScipyOpti as opti
 from src.Utilities import Rotation as rot
-from src.Utilities.visualisation import my_close
+from src.Utilities.Visualisation import my_close, my_plot
 
-
-# helper function
-def my_plot(x, ellipse=[], title="", col='*b'):
-    _, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-    
-    if ellipse == []:
-        ax.plot(x[:, 0], x[:, 1], col)
-    
-    else:
-        ells = [Ellipse(xy=x[i, :],
-                        width=ellipse[i, 0, 0] * .3, height=ellipse[i, 1, 0] * .3,
-                        angle=0)
-                for i in range(x.shape[0])]
-        
-        for e in ells:
-            ax.add_artist(e)
-            e.set_clip_box(ax.bbox)
-            e.set_alpha(1)
-            e.set_facecolor('g')
-
-    
-    m, M = np.min(x, axis=0), np.max(x, axis=0)
-    
-    ax.set_xlim(m[0] - (M[0] - m[0]) * .2, M[0] + (M[0] - m[0] ) * .2)
-    ax.set_ylim(m[1] - (M[1] - m[1]) * .2, M[1] + (M[1] - m[1] ) * .2)
-    
-    plt.title(title)
-    plt.show()
 
 
 # Source

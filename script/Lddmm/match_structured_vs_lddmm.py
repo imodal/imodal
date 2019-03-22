@@ -9,7 +9,7 @@ import scipy.optimize
 # %%
 import src.Optimisation.ScipyOpti as opti
 import src.Utilities.Rotation as rot
-from src.Utilities.visualisation import my_close
+from src.Utilities.Visualisation import my_close
 
 from src.DeformationModules.Combination import CompoundModules
 from src.DeformationModules.ElasticOrder0 import ElasticOrder0

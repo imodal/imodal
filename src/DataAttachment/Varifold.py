@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.Utilities.visualisation import my_close
+from src.Utilities.Visualisation import my_close
 
 
 def my_dot_varifold(x, y, sig):

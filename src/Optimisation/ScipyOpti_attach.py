@@ -81,8 +81,8 @@ def fun(P0, *args):
     (varcost, dxvarcost) = attach_fun(xsf, xst)
     
     hamval = HamDer.Ham(ModTraj[0])
-    
-    print("ham     = {0:10.3e}".format(hamval))
-    print("varcost = {0:10.3e}".format(varcost))
-    print("totener = {0:10.3e}".format(hamval + varcost))
+
+    print("Energy = {0:10.3e}".format(hamval + varcost), end=' ; ')
+    print("Hamiltonian = {0:10.3e}".format(hamval), end=' ; ')
+    print("Data Attachment = {0:10.3e}".format(varcost), end='\n')
     return hamval + varcost

@@ -12,7 +12,7 @@ import src.Forward.Shooting as shoot
 from src.Optimisation import ScipyOpti as opti
 from src.Optimisation import ScipyOpti_attach as opti_att
 from src.Utilities import Rotation as rot
-from src.Utilities.visualisation import my_close
+from src.Utilities.Visualisation import my_close
 
 # %%  source
 
