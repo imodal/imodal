@@ -4,7 +4,7 @@ Basipetal growth
 
 This example shows how to perform a registration using a geodesic shooting with the implicit modules. The method allows us to define a non-uniform cost to model the growth of a leaf starting from the base.
 
-To see another type of growth: :ref:`acropetal <sphx_glr__auto_examples_Leaf_plot_matching_acro.py>` or  :ref:`??? <sphx_glr__auto_examples_Leaf_plot_matching_???.py>`
+To see another type of growth: :ref:`acropetal <sphx_glr__auto_examples_Leaf_plot_matching_acro.py>` or  :ref:`diffuse <sphx_glr__auto_examples_Leaf_plot_matching_diffuse.py>`
 """
 
 
