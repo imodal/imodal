@@ -25,17 +25,8 @@ import src.Forward.Shooting as shoot
 import src.Optimisation.ScipyOpti_attach as opti
 import src.DataAttachment.Varifold as var
 from src.Utilities import Rotation as rot
-from src.Utilities.visualisation import my_close
+from src.Utilities.Visualisation import my_close, my_plot
 
-
-# helper function
-def my_plot(x, title="", col='*b'):
-    plt.figure()
-    plt.plot(x[:, 0], x[:, 1], col)
-    plt.title(title)
-    plt.axis('equal')
-    plt.show()
-    
 
 #name_exp = 'diffuse_pure_parametric'
 #name_exp = 'diffuse_pure_nonparametric'
@@ -92,7 +83,7 @@ nlx[:, 0] = Dx+scale * (nlx[:, 0] - np.mean(nlx[:, 0]))
 ##################################################################################
 # The target shape is ... blah blah
 
-with open(path_data + 'diffuset.pkl', 'rb') as f:
+with open('./data/diffuset.pkl', 'rb') as f:
     _, lxt = pickle.load(f)
 
 nlxt = np.asarray(lxt).astype(np.float32)
@@ -118,7 +109,7 @@ Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
 ps = np.zeros(xs.shape)
 param_sil = (xs, ps)
 if(flag_show):
-    my_plot(xs, "Silent Module", '*b')
+    my_plot(xs, title="Silent Module", col='*b')
 
 #####################################################################################
 # Modules of Order 0
@@ -128,12 +119,12 @@ if(flag_show):
 sig0 = 15.
 x0 = nlx[nlx[:, 2] == 1, 0:2]
 x0 = np.concatenate((x0, xs))
-Model0 = defmod0.ElasticOrderO(sig0, x0.shape[0], dim, coeffs[1], nu)
+Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, coeffs[1], nu)
 p0 = np.zeros(x0.shape)
 param_0 = (x0, p0)
 
 if(flag_show):
-    my_plot(x0, "Module order 0", 'or')
+    my_plot(x0, title="Module order 0", col='or')
 
 ######################################################################################
 # The second modules of order 0 ...
@@ -141,12 +132,12 @@ if(flag_show):
 
 sig00 = 300.
 x00 = np.array([[0., 0.]])
-Model00 = defmod0.ElasticOrderO(sig00, x00.shape[0], dim, coeffs[0], nu)
+Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, coeffs[0], nu)
 p00 = np.zeros([1, 2])
 param_00 = (x00, p00)
 
 if(flag_show):
-    my_plot(x00, "Module order 00", '+r')
+    my_plot(x00, title="Module order 00", col='+r')
 
 #######################################################################################
 # Modules of order 1
@@ -174,7 +165,7 @@ R = np.asarray([rot.my_R(cth) for cth in th])
 param_1 = ((x1, R), (p1, PR))
 
 if(flag_show):
-    my_plot(x1, "Module order 1", 'og')
+    my_plot(x1, ellipse=C, title="Module order 1", col='og')
 
 ######################################################################################
 # The full model definition
