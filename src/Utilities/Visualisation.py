@@ -42,6 +42,9 @@ def my_plot(x, ellipse=[], angles=[], title="", col='*b'):
         ax.plot(x[:, 0], x[:, 1], col)
     
     else:
+        if angles == []:
+            angles = np.zeros([x.shape[0], 1])
+            
         ells = [Ellipse(xy=x[i, :],
                         width=ellipse[i, 0, 0] * .3, height=ellipse[i, 1, 0] * .3,
                         angle=np.rad2deg(angles[i]))
