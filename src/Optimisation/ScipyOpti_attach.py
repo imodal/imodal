@@ -69,7 +69,7 @@ def jac(P0, *args):
     n = dP.shape[0]
     n = int(0.5 * n)
     # n = np.prod(xst.shape)
-    # dP[:n] = 0.
+    dP[:n] = 0.
     return dP
 
 
