@@ -23,9 +23,9 @@ def my_plot(x, title="", col='*b'):
     plt.axis('equal')
     plt.show()
     
-name_exp = 'basi_pure_parametric'
+#name_exp = 'basi_pure_parametric'
 #name_exp = 'basi_pure_nonparametric'
-#name_exp = 'basi_semi_parametric'
+name_exp = 'basi_semi_parametric'
 
 generate_variation_target = False
 use_target_variation = False
@@ -35,7 +35,7 @@ flag_show = False
 nu = 0.001
 dim = 2
 N=10
-maxiter = 100
+maxiter = 300
  
 lam_var = 40.
 sig_var = [50., 10.]
@@ -52,7 +52,7 @@ def attach_fun(xsf, xst):
     return (lam_var * costvar, lam_var * dcostvar )
                    
 
-coeffs =[0.01, 1, 0.01]
+coeffs =[0.01, 10, 0.01]
 coeffs_str = '0_01__1__0_01'
 #coeffs =[100, 0.1,100]
 #coeffs_str = '100__0_1__100'
@@ -122,7 +122,7 @@ if(flag_show):
 sig01 = 2.
 x01 = xs.copy()
 #x0 = np.concatenate((x0, xs))
-Model01 = defmod0.ElasticOrder0(sig0, x01.shape[0], dim, coeffs[1], nu)
+Model01 = defmod0.ElasticOrder0(sig01, x01.shape[0], dim, coeffs[1], nu)
 p01 = np.zeros(xs.shape)
 param_01 = (x01, p01)
 
@@ -177,8 +177,10 @@ elif name_exp == 'basi_pure_parametric':
     Module = comb_mod.CompoundModules([Sil, Model00, Model1])
     Module.GD.fill_cot_from_param([param_sil, param_00, param_1])
 elif name_exp == 'basi_semi_parametric':
-    Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model01, Model1])
-    Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_01, param_1])
+    Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+    Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
+    #Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model01, Model1])
+    #Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_01, param_1])
 else:
     print('unknown experiment type')
 
@@ -190,7 +192,7 @@ P0 = opti.fill_Vector_from_GD(Module.GD)
 
 args = (Module, xst, attach_fun, N, 1e-7)
 
-res = scipy.optimize.minimize(opti.fun, P1,
+res = scipy.optimize.minimize(opti.fun, P0,
                               args=args,
                               method='L-BFGS-B',
                               jac=opti.jac,
@@ -356,7 +358,7 @@ if generate_variation_target:
 
 
 # %% Shooting from controls
-indi_modules = [0, 1, 4]
+indi_modules = [0, 3]
 
 Contlist = []
 for i in range(len(Modules_list)):
@@ -395,7 +397,7 @@ plt.axis([xmin, xmax, ymin-40, ymax])
 plt.axis('off')
 plt.tight_layout()
 plt.show()
-plt.savefig(path_fig + name_tot + 'follow_controls' + '.pdf', bbox_inches = 'tight')
+#plt.savefig(path_fig + name_tot + 'follow_controls' + '.pdf', bbox_inches = 'tight')
 
 # %% Visualisation
 xst_c = my_close(xst)
