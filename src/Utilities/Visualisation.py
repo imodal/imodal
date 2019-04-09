@@ -35,7 +35,7 @@ def my_plot4(Mod0, Mod1, Cot, fig, nx, ny, name, i):
 
 
 # helper function
-def my_plot(x, ellipse=[], title="", col='*b'):
+def my_plot(x, ellipse=[], angles=[], title="", col='*b'):
     _, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     
     if ellipse == []:
@@ -44,7 +44,7 @@ def my_plot(x, ellipse=[], title="", col='*b'):
     else:
         ells = [Ellipse(xy=x[i, :],
                         width=ellipse[i, 0, 0] * .3, height=ellipse[i, 1, 0] * .3,
-                        angle=0)
+                        angle=np.rad2deg(angles[i]))
                 for i in range(x.shape[0])]
         
         for e in ells:
