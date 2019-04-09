@@ -39,7 +39,7 @@ N = 10
 maxiter = 400
 
 lam_var = 40.
-sig_var = [30., 3.]
+sig_var = [50., 10.]
 
 #########################################################################################
 # Let us define the data attachment term with a varifold like cost function.
@@ -258,7 +258,7 @@ res = scipy.optimize.minimize(opti.fun, P0,
                                   'ftol': 1.e-09,
                                   'gtol': 1e-03,
                                   'eps': 1e-08,
-                                  'maxfun': 100,
+                                  'maxfun': 500,
                                   'maxiter': maxiter,
                                   'iprint': 1,
                                   'maxls': 25
