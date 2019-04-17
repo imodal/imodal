@@ -24,13 +24,14 @@ def my_plot(x, title="", col='*b'):
     plt.show()
     
 #name_exp = 'basi_pure_parametric'
-#name_exp = 'basi_pure_nonparametric'
-name_exp = 'basi_semi_parametric'
+name_exp = 'basi_pure_nonparametric'
+#name_exp = 'basi_semi_parametric'
 
 generate_variation_target = False
 use_target_variation = False
 
 flag_show = False
+flag_save = True
 #  common options
 nu = 0.001
 dim = 2
@@ -130,7 +131,7 @@ if(flag_show):
     my_plot(x01, "Module order 0", 'or')
 
 # %% Modules of Order 0
-sig00 = 200.
+sig00 = 2000.
 x00 = np.array([[0., 0.]])
 Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, coeffs[0], nu)
 p00 = np.zeros([1, 2])
@@ -146,6 +147,8 @@ x1 = nlx[nlx[:, 2] == 1, 0:2]
 x11 = x1.copy()
 x11[:,0] *= -1
 x1 = np.concatenate((x1, x11))
+
+
 
 
 C = np.zeros((x1.shape[0], 2, 1))
@@ -261,12 +264,13 @@ Sil_grid.GD.fill_cot_from_param(param_grid)
 
 Mod_tot = comb_mod.CompoundModules([Sil_grid, Module_optimized])
 
+path_fig = '/Network/Servers/ldap.ann.jussieu.fr/Volumes/DATA/users/thesards/gris/Results/DeformationModule/Implicit/'
 # %%
 Modlist_opti_tot_grid = shoot.shooting_traj(Mod_tot, N)
 # %% Plot with grid
 xs_c = my_close(xs)
 xst_c = my_close(xst)
-if(flag_show):
+if(flag_save):
     for i in range(N + 1):
         plt.figure()
         xgrid = Modlist_opti_tot_grid[2 * i].GD.GD_list[0].GD
@@ -281,12 +285,13 @@ if(flag_show):
         plt.plot(xs_ic[:, 0], xs_ic[:, 1], '-g', linewidth=2)
         plt.plot(xs_c[:, 0], xs_c[:, 1], '-b', linewidth=1)
         plt.axis('equal')
-        # plt.axis([-10,10,-10,55])
-        # plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
-        # plt.axis('off')
-        plt.show()
-    # plt.savefig(path_res + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
+        plt.axis([-60,60,-10,110])
+        #plt.axis([xfigmin, xfigmax, yfigmin, yfigmax])
+        plt.axis('off')
+        #plt.show()
+        plt.savefig(path_fig + name_exp + '_t_' + str(i) + '.png', format='png', bbox_inches='tight')
 #%% save figure for last time
+print(aa)
 i=N
 xlength = 8
 ylength = 13
