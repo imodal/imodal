@@ -17,7 +17,7 @@ class ZeroField(ab.StructuredField):
         return v
     
     def copy_full(self):
-        v = SZeroField(self.dim)
+        v = ZeroField(self.dim)
         return v
     
     def fill_fieldparam(self, param):
