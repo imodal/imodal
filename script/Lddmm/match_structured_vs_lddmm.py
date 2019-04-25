@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 # %%
-import src.Optimisation.ScipyOpti as opti
-import src.Utilities.Rotation as rot
-from src.Utilities.Visualisation import my_close
+import implicitmodules.numpy.Optimisation.ScipyOpti as opti
+import implicitmodules.numpy.Utilities.Rotation as rot
+from implicitmodules.numpy.Utilities.Visualisation import my_close
 
-from src.DeformationModules.Combination import CompoundModules
-from src.DeformationModules.ElasticOrder0 import ElasticOrder0
-from src.DeformationModules.ElasticOrder1 import ElasticOrder1
-from src.DeformationModules.SilentLandmark import SilentLandmark
+from implicitmodules.numpy.DeformationModules.Combination import CompoundModules
+from implicitmodules.numpy.DeformationModules.ElasticOrder0 import ElasticOrder0
+from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
+from implicitmodules.numpy.DeformationModules.SilentLandmark import SilentLandmark
 
-import src.Forward.Shooting as shoot
+import implicitmodules.numpy.Forward.Shooting as shoot
 
 
 # %%

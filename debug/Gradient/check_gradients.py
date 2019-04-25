@@ -4,15 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 
-import src.DeformationModules.Combination as comb_mod
-import src.DeformationModules.ElasticOrder0 as defmod0
-import src.DeformationModules.ElasticOrder1 as defmod1
-import src.DeformationModules.SilentLandmark as defmodsil
-import src.Forward.Shooting as shoot
-from src.Optimisation import ScipyOpti as opti
-from src.Optimisation import ScipyOpti_attach as opti_att
-from src.Utilities import Rotation as rot
-from src.Utilities.Visualisation import my_close
+import implicitmodules.numpy.DeformationModules.Combination as comb_mod
+import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
+import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
+import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
+import implicitmodules.numpy.Forward.Shooting as shoot
+from implicitmodules.numpy.Optimisation import ScipyOpti as opti, ScipyOpti_attach as opti_att
+from implicitmodules.numpy.Utilities import Rotation as rot
+from implicitmodules.numpy.Utilities.Visualisation import my_close
 
 # %%  source
 
@@ -527,7 +526,7 @@ for i in range(5):
         co_init_cop = opti_att.fun(P0_cop, *args_cop)
         grad_man_x1[i, j] = (co_init_cop - co_init) / eps
 # %%
-import src.Forward.Hamiltonianderivatives as HamDer
+import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
 
 Mod_el.GD.fill_cot_from_param(param)
 Mod_el.update()
@@ -710,7 +709,7 @@ print(grad[dim0:dim0 + 20])
 print(np.reshape(grad_man_x1[:5, :], -1) - grad[dim0:dim0 + 20])
 
 # %%
-import src.Forward.Hamiltonianderivatives as HamDer
+import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
 
 Mod_el_init.GD.fill_cot_from_param(param)
 Mod_el_init.update()

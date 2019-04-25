@@ -1,11 +1,13 @@
+import os.path
 import sys
-sys.path.append("../../../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import torch
 
-import implicitmodules.torch as dm
+import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -15,16 +17,16 @@ class TestHamiltonian(unittest.TestCase):
         self.sigma = 0.5
         self.gd = 100.*torch.rand(self.nb_pts, 2).view(-1)
         self.mom = 100.*torch.rand_like(self.gd).view(-1)
-        self.landmarks = dm.manifold.Landmarks(2, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.controls = 100.*torch.rand_like(self.gd)
 
-        self.trans = dm.deformationmodules.Translations(self.landmarks, self.sigma)
+        self.trans = im.deformationmodules.Translations(self.landmarks, self.sigma)
         self.trans.fill_controls(self.controls)
 
-        self.h = dm.hamiltonian.Hamiltonian([self.trans])
+        self.h = im.hamiltonian.Hamiltonian([self.trans])
 
     def test_good_init(self):
-        self.assertIsInstance(self.h.module, dm.deformationmodules.DeformationModule)
+        self.assertIsInstance(self.h.module, im.deformationmodules.DeformationModule)
 
     def test_apply_mom(self):
         self.assertIsInstance(self.h.apply_mom(), torch.Tensor)
@@ -99,21 +101,21 @@ class TestHamiltonianCompound(unittest.TestCase):
         self.mom_silent = 100.*torch.rand_like(self.gd_silent).view(-1)
         self.gd = [self.gd_trans, self.gd_silent]
         self.mom = [self.mom_trans, self.mom_silent]
-        
-        self.landmarks_trans = dm.manifold.Landmarks(2, self.nb_pts_trans, gd=self.gd_trans, cotan=self.mom_trans)
-        self.landmarks_silent = dm.manifold.Landmarks(2, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
+
+        self.landmarks_trans = im.manifold.Landmarks(2, self.nb_pts_trans, gd=self.gd_trans, cotan=self.mom_trans)
+        self.landmarks_silent = im.manifold.Landmarks(2, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
         self.controls_trans = 100.*torch.rand_like(self.gd_trans)
         self.controls_silent = torch.tensor([])
         self.controls = [self.controls_trans, self.controls_silent]
 
-        self.trans = dm.deformationmodules.Translations(self.landmarks_trans, self.sigma)
+        self.trans = im.deformationmodules.Translations(self.landmarks_trans, self.sigma)
         self.trans.fill_controls(self.controls[0])
-        self.silent = dm.deformationmodules.SilentPoints(self.landmarks_silent)
+        self.silent = im.deformationmodules.SilentPoints(self.landmarks_silent)
 
-        self.h = dm.hamiltonian.Hamiltonian([self.trans, self.silent])
+        self.h = im.hamiltonian.Hamiltonian([self.trans, self.silent])
 
     def test_good_init(self):
-        self.assertIsInstance(self.h.module, dm.deformationmodules.DeformationModule)
+        self.assertIsInstance(self.h.module, im.deformationmodules.DeformationModule)
 
     def test_apply_mom(self):
         self.assertIsInstance(self.h.apply_mom(), torch.Tensor)
@@ -183,3 +185,6 @@ class TestHamiltonianCompound(unittest.TestCase):
 
         self.assertTrue(torch.autograd.gradcheck(geodesic_controls, (self.gd_trans, self.gd_silent, self.mom_trans, self.mom_silent), raise_exception=False))
 
+
+if __name__ == '__main__':
+    unittest.main()

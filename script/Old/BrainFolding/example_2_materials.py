@@ -16,7 +16,7 @@ import old.Forward.shooting as shoot
 # %%
 from old import DeformationModules, DeformationModules as comb_mod
 
-from src.Utilities import Rotation as rot
+from implicitmodules.numpy.Utilities import Rotation as rot
 
 path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
 os.makedirs(path_res, exist_ok=True)

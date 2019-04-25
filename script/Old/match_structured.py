@@ -3,17 +3,17 @@ import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.optimize
-
 import old.Backward.ScipyOptimise as opti
 import old.Forward.shooting as shoot
+import scipy.optimize
 from old import DeformationModules as comb_mod
 from old.DeformationModules.ElasticOrder0 import ElasticOrderO
 from old.DeformationModules.ElasticOrder1 import ElasticOrder1
 from old.DeformationModules.SilentLandmark import SilentLandmark
-from src.Utilities import Rotation as rot
+
+from implicitmodules.numpy.Utilities import Rotation as rot
 # %%
-from src.Utilities.Visualisation import my_close
+from implicitmodules.numpy.Utilities.Visualisation import my_close
 
 path_res = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + 'Results' + os.path.sep
 os.makedirs(path_res, exist_ok=True)

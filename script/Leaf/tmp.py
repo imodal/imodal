@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 
-import src.DeformationModules.Combination as comb_mod
-import src.DeformationModules.GlobalTranslation as globtrans
-import src.DeformationModules.GlobalRotation as globrot
-import src.DeformationModules.ElasticOrder0 as defmod0
-import src.DeformationModules.ElasticOrder1 as defmod1
-import src.DeformationModules.SilentLandmark as defmodsil
-import src.Forward.Shooting as shoot
-import src.Optimisation.ScipyOpti_attach as opti
-import src.DataAttachment.Varifold as var
-from src.Utilities import Rotation as rot
-from src.Utilities.Visualisation import my_close
+import implicitmodules.numpy.DataAttachment.Varifold as var
+import implicitmodules.numpy.DeformationModules.Combination as comb_mod
+import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
+import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
+import implicitmodules.numpy.DeformationModules.GlobalRotation as globrot
+import implicitmodules.numpy.DeformationModules.GlobalTranslation as globtrans
+import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
+import implicitmodules.numpy.Forward.Shooting as shoot
+import implicitmodules.numpy.Optimisation.ScipyOpti_attach as opti
+from implicitmodules.numpy.Utilities import Rotation as rot
+from implicitmodules.numpy.Utilities.Visualisation import my_close
 
 
 # helper function

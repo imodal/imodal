@@ -1,14 +1,14 @@
 import pickle
 
 import numpy as np
-import src.Forward.shooting as shoot
-import src.data_attachment.varifold as var
+import numpy.Forward.shooting as shoot
+import numpy.data_attachment.varifold as var
 
-import src.DeformationModules.Combination as comb_mod
-import src.DeformationModules.ElasticOrder0 as defmod0
-import src.DeformationModules.ElasticOrder1 as defmod1
-import src.DeformationModules.SilentLandmark as defmodsil
-from src.Utilities import Rotation as rot
+import implicitmodules.numpy.DeformationModules.Combination as comb_mod
+import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
+import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
+import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
+from implicitmodules.numpy.Utilities import Rotation as rot
 
 # %%
 # path_res = "/home/barbaragris/Results/ImplicitModules/"

@@ -1,11 +1,13 @@
+import os.path
 import sys
-sys.path.append("../../../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import torch
 
-import implicitmodules.torch as dm
+import implicitmodules.torch as im
 
 class TestKernels(unittest.TestCase):
     def setUp(self):
@@ -16,16 +18,16 @@ class TestKernels(unittest.TestCase):
         x = torch.rand(m, 2)
         y = torch.rand(m, 2)
 
-        self.assertIsInstance(dm.kernels.scal(x, y), torch.Tensor)
+        self.assertIsInstance(im.kernels.scal(x, y), torch.Tensor)
         self.assertTrue(torch.allclose(
-            dm.kernels.scal(x, y), torch.dot(x.view(-1), y.view(-1))))
+            im.kernels.scal(x, y), torch.dot(x.view(-1), y.view(-1))))
 
     def test_distancematrix(self):
         m = 10
         x = torch.rand(m, 2)
         y = torch.rand(m, 2)
 
-        dist_matrix = dm.kernels.distances(x, y)
+        dist_matrix = im.kernels.distances(x, y)
         self.assertIsInstance(dist_matrix, torch.Tensor)
         self.assertEqual(dist_matrix.shape, torch.Size([m, m]))
         self.assertTrue(torch.allclose(dist_matrix[1, 2], torch.dist(x[1], y[2])))
@@ -35,7 +37,7 @@ class TestKernels(unittest.TestCase):
         x = torch.rand(m, 2)
         y = torch.rand(m, 2)
 
-        sqdist_matrix = dm.kernels.sqdistances(x, y)
+        sqdist_matrix = im.kernels.sqdistances(x, y)
         self.assertIsInstance(sqdist_matrix, torch.Tensor)
         self.assertEqual(sqdist_matrix.shape, torch.Size([m, m]))
         self.assertTrue(torch.allclose(sqdist_matrix[1, 2], torch.dist(x[1], y[2])**2))
@@ -44,7 +46,7 @@ class TestKernels(unittest.TestCase):
         m = 10
         x = torch.rand(m, 2)
 
-        kxx_matrix = dm.kernels.K_xx(x, 1.)
+        kxx_matrix = im.kernels.K_xx(x, 1.)
         self.assertIsInstance(kxx_matrix, torch.Tensor)
         self.assertEqual(kxx_matrix.shape, torch.Size([m, m]))
 
@@ -54,6 +56,10 @@ class TestKernels(unittest.TestCase):
         x = torch.rand(m, 2)
         y = torch.rand(n, 2)
 
-        kxy_matrix = dm.kernels.K_xy(x, y, 1.)
+        kxy_matrix = im.kernels.K_xy(x, y, 1.)
         self.assertIsInstance(kxy_matrix, torch.Tensor)
         self.assertEqual(kxy_matrix.shape, torch.Size([m, n]))
+
+
+if __name__ == '__main__':
+    unittest.main()

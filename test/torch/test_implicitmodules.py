@@ -1,11 +1,13 @@
+import os.path
 import sys
-sys.path.append("../../../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import torch
 
-import implicitmodules.torch as dm
+import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -18,8 +20,8 @@ class TestImplicitModule0(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = dm.deformationmodules.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-        self.implicit = dm.implicitmodules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
+        self.landmarks = im.deformationmodules.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.implicit = im.implicitmodules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
 
     def test_call(self):
         points = torch.rand(100, self.dim)
@@ -35,7 +37,7 @@ class TestImplicitModule0(unittest.TestCase):
         self.assertEqual(torch.all(torch.eq(result, torch.zeros_like(result))), True)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.implicit.field_generator(), dm.structuredfield.StructuredField)
+        self.assertIsInstance(self.implicit.field_generator(), im.structuredfield.StructuredField)
 
     def test_cost(self):
         cost = self.implicit.cost()
@@ -96,7 +98,7 @@ class TestImplicitModule0(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.implicit.fill_controls(torch.zeros_like(self.implicit.controls, requires_grad=True))
-        h = dm.hamiltonian.Hamiltonian([self.implicit])
+        h = im.hamiltonian.Hamiltonian([self.implicit])
         h.geodesic_controls()
 
         [d_controls] = torch.autograd.grad(h(), [self.implicit.controls])
@@ -112,14 +114,14 @@ class TestImplicitModule1(unittest.TestCase):
         self.gd = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
         self.tan = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
         self.cotan = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
-        self.stiefel = dm.manifold.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        self.stiefel = im.manifold.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
         self.dim_controls = 2
         self.controls = torch.rand(self.dim_controls)
         self.C = torch.rand(self.nb_pts, self.dim, self.dim_controls)
         self.nu = 1e-3
         self.sigma = 1.0
 
-        self.implicit = dm.implicitmodules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
+        self.implicit = im.implicitmodules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
         self.implicit.fill_controls(self.controls)
 
     def test_call(self):
@@ -130,7 +132,7 @@ class TestImplicitModule1(unittest.TestCase):
         self.assertEqual(speed.shape, points.shape)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.implicit.field_generator(), dm.structuredfield.StructuredField_p)
+        self.assertIsInstance(self.implicit.field_generator(), im.structuredfield.StructuredField_p)
 
     def test_cost(self):
         cost = self.implicit.cost()
@@ -174,7 +176,7 @@ class TestImplicitModule1(unittest.TestCase):
     # TODO: Gradcheck
     def test_hamiltonian_control_grad_zero(self):
         self.implicit.fill_controls(torch.zeros_like(self.implicit.controls, requires_grad=True))
-        h = dm.hamiltonian.Hamiltonian([self.implicit])
+        h = im.hamiltonian.Hamiltonian([self.implicit])
         h.geodesic_controls()
         h.module[0].fill_controls(h.module[0].controls.requires_grad_())
 
@@ -199,4 +201,6 @@ class TestImplicitModule1(unittest.TestCase):
 
         self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (self.gd[0], self.gd[1], self.cotan[0], self.cotan[1]), raise_exception=False))
 
-    
+
+if __name__ == '__main__':
+    unittest.main()
