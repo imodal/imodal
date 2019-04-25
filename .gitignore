@@ -34,6 +34,8 @@
 # Compiled python modules.
 *__pycache__*
 *.pyc
+*_auto_examples*
+*_build*
 
 # Setuptools distribution folder.
 /dist/

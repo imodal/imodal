@@ -6,7 +6,17 @@ test_ubuntu:
 
     script:
     - cd test
-    - python3 unit_tests.py
+    - python3 numpy/unit_tests.py
+    - python3 torch/test_deformationmodules.py
+    - python3 torch/test_hamiltonian.py
+    - python3 torch/test_implicitmodules.py
+    - python3 torch/test_kernels.py
+    - python3 torch/test_manifold.py
+    - python3 torch/test_manifold_stiefel.py
+    - python3 torch/test_sampling.py
+    - python3 torch/test_shooting.py
+    - python3 torch/test_usefulfunctions.py
+
 
     tags:
     - python3
