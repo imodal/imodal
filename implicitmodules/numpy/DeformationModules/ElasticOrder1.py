@@ -82,10 +82,11 @@ class ElasticOrder1(ab.DeformationModule):
     def Amh_curr(self, h):
         R = self.GD.get_R()
         eta = fun_eta.my_eta()
-        out = np.asarray([np.tensordot(np.dot(R[i],
-                                              np.dot(np.diag(np.dot(self.C[i], h)),
-                                                     R[i].transpose())), eta, axes=2) for i in range(self.N_pts)])
-        return out
+        return np.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.C, h, np.tile(np.eye(self.dim), [self.N_pts, 1, 1]), np.swapaxes(R, 1, 2), eta)
+        # out = np.asarray([np.tensordot(np.dot(R[i],
+        #                                       np.dot(np.diag(np.dot(self.C[i], h)),
+        #                                              R[i].transpose())), eta, axes=2) for i in range(self.N_pts)])
+        # return out
     
     def AmKiAm_curr(self):
         lam = np.zeros((self.dimcont, self.dimR * self.N_pts))

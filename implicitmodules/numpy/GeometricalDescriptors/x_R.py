@@ -77,8 +77,10 @@ class GD_xR(ab.GeometricalDescriptors):
         v0.fill_fieldparam((x, px))
         
         vm = stru_fiem.StructuredField_m(sig, self.N_pts, self.dim)
-        P = np.asarray([np.dot(pR[i], R[i].transpose())
-                        for i in range(x.shape[0])])
+        # TODO: remove loop
+        # P = np.asarray([np.dot(pR[i], R[i].transpose())
+        #                 for i in range(x.shape[0])])
+        P = np.einsum('nik, nkj->nij', pR, R.swapaxes(1, 2))
         vm.fill_fieldparam((x, P))
         
         return stru_fie_sum.Summed_field([v0, vm])
@@ -89,7 +91,9 @@ class GD_xR(ab.GeometricalDescriptors):
         vx = v.Apply(pts, 0)
         dvx = v.Apply(pts, 1)
         S = (dvx - np.swapaxes(dvx, 1, 2)) / 2
-        vR = np.asarray([np.dot(S[i], R[i]) for i in range(pts.shape[0])])
+        # TODO: remove loop
+        #vR = np.asarray([np.dot(S[i], R[i]) for i in range(pts.shape[0])])
+        vR = np.einsum('nik, nkj->nij', S, R)
         out = self.copy_full()
         out.fill_zero_cotan()
         out.tan = (vx.copy(), vR.copy())
@@ -109,15 +113,14 @@ class GD_xR(ab.GeometricalDescriptors):
         
         skew_dvx = (dvx - np.swapaxes(dvx, 1, 2)) / 2
         skew_ddvx = (ddvx - np.swapaxes(ddvx, 1, 2)) / 2
-        
-        dx = np.asarray([np.dot(px[i], dvx[i]) + np.tensordot(pR[i],
-                                                              np.swapaxes(
-                                                                  np.tensordot(R[i], skew_ddvx[i], axes=([0], [1])),
-                                                                  0, 1))
-                         for i in range(x.shape[0])])
-        
-        dR = np.asarray([np.dot(-skew_dvx[i], pR[i])
-                         for i in range(x.shape[0])])
+
+        # TODO: remove loop
+        dx = np.asarray([np.dot(px[i], dvx[i]) + np.tensordot(pR[i], np.swapaxes(np.tensordot(R[i], skew_ddvx[i], axes=([0], [1])), 0, 1)) for i in range(x.shape[0])])
+
+        # TODO: remove loop
+        # dR = np.asarray([np.dot(-skew_dvx[i], pR[i])
+        #                  for i in range(x.shape[0])])
+        dR = np.einsum('nik, nkj->nij', -skew_dvx, pR)
         
         GD = self.copy()
         GD.fill_zero_tan()
@@ -129,8 +132,10 @@ class GD_xR(ab.GeometricalDescriptors):
         vx, vR = vGD.tan
         px, pR = self.get_mom()
         out = np.dot(px.flatten(), vx.flatten())
-        out += np.sum([np.tensordot(pR[i], vR[i]) for i in range(vR.shape[0])])
-        return out
+        # TODO: remove loop
+        return out + np.einsum('nij, nij->', pR, vR)
+        # out += np.sum([np.tensordot(pR[i], vR[i]) for i in range(vR.shape[0])])
+        # return out
     
     def add_GD(self, GDCot):
         x, R = self.GD

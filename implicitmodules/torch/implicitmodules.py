@@ -167,8 +167,6 @@ class ImplicitModule1(DeformationModule):
         R = self.__manifold.gd[1].view(-1, 2, 2)
 
         return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.__C, h, torch.eye(self.__manifold.dim).repeat(self.__manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta())
-        # TODO: Remove this loop
-        #return torch.stack([torch.tensordot(torch.mm(R[i], torch.mm(torch.diag(torch.tensordot(self.__C[i], h, dims=1)), R[i].t())), eta(), dims=2) for i in range(self.__manifold.nb_pts)])
 
     def __compute_sks(self):
         self.__sks = compute_sks(self.__manifold.gd[0].view(-1, self.__manifold.dim), self.sigma, 1) + self.__nu * torch.eye(3 * self.__manifold.nb_pts)
