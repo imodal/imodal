@@ -4,9 +4,7 @@ from implicitmodules.numpy.Utilities import FunctionsEta as fun_eta
 
 
 def my_xmy(x, y):
-    X = np.array([x])
-    Y = y[:, np.newaxis]; np.expand_dims(y, 1)
-    return (X - Y).reshape(-1, 2)
+    return (np.expand_dims(x, axis=1) - np.expand_dims(y, axis=0)).reshape(-1, 2)
 
 
 def my_vker(x, k, sig):  # tested
@@ -39,19 +37,22 @@ def my_vker(x, k, sig):  # tested
     return r
 
 
-def my_K(x, sigma, k):
+def my_K(x, y, sigma, k):
     """ vectorized version of my_K(x,y,sig,k,l) for x (N,2) and k=l
     as need by SKS
     """
     
     N = x.shape[0]
+    M = y.shape[0]
     if (k == 0):
-        return np.moveaxis(np.einsum('ij, kl->ijkl', my_vker(my_xmy(x, x), 0, sigma).reshape(N, N), np.eye(2)), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(2*N, 2*N)
+        return np.moveaxis(np.einsum('ij, kl->ijkl', my_vker(my_xmy(x, y), 0, sigma).reshape(N, N), np.eye(2)), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(2*M, 2*N)
+
     elif (k == 1):
         t = np.tensordot(-my_vker(my_xmy(x, x), 2, sigma), np.eye(2), axes=0)
         K = fun_eta.my_Keta(np.swapaxes(t, 2, 3))
         K = np.tensordot(K, fun_eta.my_eta(), axes=([1, 2], [0, 1]))
-        return np.moveaxis(K.reshape(N, N, 3, 3), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(3*N, 3*N)
+        return np.moveaxis(K.reshape(N, M, 3, 3), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(3*N, 3*N)
+
     else:
         raise NotImplementedError
 

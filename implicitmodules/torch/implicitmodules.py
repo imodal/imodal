@@ -52,7 +52,7 @@ class ImplicitModule0(DeformationModule):
     controls = property(__get_controls, fill_controls)
 
     def fill_controls_zero(self):
-        self.__controls = torch.zeros(self.__dim_controls, requires_grad=True)
+        self.__controls = torch.zeros(self.__dim_controls)
 
     def __call__(self, points):
         """Applies the generated vector field on given points."""
@@ -94,9 +94,9 @@ class ImplicitModule1(DeformationModule):
         self.__controls = torch.zeros(self.__dim_controls)
 
     @classmethod
-    def build_and_fill(cls, dim, nb_pts, sigma, nu, gd=None, tan=None, cotan=None):
+    def build_and_fill(cls, dim, nb_pts, C, sigma, nu, gd=None, tan=None, cotan=None, coeff=1.):
         """Builds the Translations deformation module from tensors."""
-        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma)
+        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), C, sigma, nu, coeff)
 
     @property
     def manifold(self):
