@@ -65,10 +65,14 @@ class AABB:
         return (self.__xmax - self.__xmin)*(self.ymax - self.ymin)
 
     def squared(self):
-        self.__xmin = min(self.__xmin, self.__ymin)
-        self.__ymin = min(self.__xmin, self.__ymin)
-        self.__xmax = max(self.__xmax, self.__ymax)
-        self.__ymax = max(self.__xmax, self.__ymax)
+        xmiddle = (self.__xmin + self.__xmax) / 2
+        ymiddle = (self.__ymin + self.__ymax) / 2
+    
+        diam = max(torch.abs(self.__xmin - self.__xmax) / 2, torch.abs(self.__ymin - self.__ymax) / 2)
+        self.__xmin = xmiddle - diam
+        self.__ymin = ymiddle - diam
+        self.__xmax = xmiddle + diam
+        self.__ymax = ymiddle + diam
 
 
 def flatten_tensor_list(l, out_list=[]):
