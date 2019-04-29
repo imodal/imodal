@@ -6,4 +6,5 @@ This is working in progress.
 
 - B. Charlier
 - B. Gris
+- L. Lacroix
 - A. Trouvé
