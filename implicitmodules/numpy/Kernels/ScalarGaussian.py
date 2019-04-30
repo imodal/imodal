@@ -3,36 +3,8 @@ import numpy as np
 from implicitmodules.numpy.Utilities import FunctionsEta as fun_eta
 
 
-def my_tensordotaxes0(x, y):
-    """ we assume here that y is (N,d)
-    """
-    
-    if len(x.shape) == 2:
-        dx = x.shape[1]
-        dy = y.shape[1]
-        
-        z = np.empty((x.shape[0], dx, dy))
-        for i in range(dx):
-            for j in range(dy):
-                z[:, i, j] = x[:, i] * y[:, j]
-    elif len(x.shape) == 3:
-        (dx, dpx, dy) = x.shape[1], x.shape[2], y.shape[1]
-        z = np.empty((x.shape[0], dx, dpx, dy))
-        for i in range(dx):
-            for ip in range(dpx):
-                for j in range(dy):
-                    z[:, i, ip, j] = x[:, i, ip] * y[:, j]
-    return z
-
-
 def my_xmy(x, y):
-    (n, d) = x.shape
-    (m, d) = y.shape
-    xmy = np.empty((n * m, d))
-    for i in range(d):
-        xmy[:, i] = (np.tile(x[:, i].reshape((n, 1)), (1, m)) -
-                     np.tile(y[:, i].reshape((1, m)), (n, 1))).flatten()
-    return xmy
+    return (np.expand_dims(x, axis=1) - np.expand_dims(y, axis=0)).reshape(-1, 2)
 
 
 def my_vker(x, k, sig):  # tested
@@ -52,22 +24,20 @@ def my_vker(x, k, sig):  # tested
     elif k == 2:
         th = np.tile(h.reshape((x.shape[0], 1, 1)), (1, 2, 2))
         tI = np.tile(np.eye(2), (x.shape[0], 1, 1))
-        r = th * (-tI + my_tensordotaxes0(x, x)) / sig ** 2
+        r = th * (-tI + np.einsum('ki, kj->kij', x, x)) / sig ** 2
     elif k == 3:
         th = np.tile(h.reshape((x.shape[0], 1, 1)), (1, 2, 2))
         tI = np.tile(np.eye(2), (x.shape[0], 1, 1))
-        r = th * (-tI + my_tensordotaxes0(x, x))
+        r = th * (-tI + np.einsum('ki, kj->kij', x, x))
         tth = np.tile(h.reshape((x.shape[0], 1, 1, 1)), (1, 2, 2, 2))
-        r = -my_tensordotaxes0(r, x) + \
-            tth * (np.swapaxes(np.tensordot(x, np.eye(2), axes=0), 1, 2)
-                   + np.tensordot(x, np.eye(2), axes=0))
+        r = -np.einsum('kij, kl->kijl', r, x) + \
+            tth * (np.swapaxes(np.tensordot(x, np.eye(2), axes=0), 1, 2) + \
+                   np.tensordot(x, np.eye(2), axes=0))
         r = r / sig ** 3
     return r
-    
-    # Main kernel dot product
 
 
-def my_K(x, y, sig, k):  # tested
+def my_K(x, y, sigma, k):
     """ vectorized version of my_K(x,y,sig,k,l) for x (N,2) and k=l
     as need by SKS
     """
@@ -75,21 +45,14 @@ def my_K(x, y, sig, k):  # tested
     N = x.shape[0]
     M = y.shape[0]
     if (k == 0):
-        K = np.zeros((N * M, 2, 2))
-        r = my_vker(my_xmy(x, x), 0, sig)
-        K[:, 0, 0], K[:, 1, 1] = r, r
-        fK = K.flatten()
-        K = np.zeros((2 * N, 2 * M))
-        for i in range(2):
-            for j in range(2):
-                K[i::2, j::2] = fK[(j + 2 * i)::4].reshape((N, M))
+        return np.moveaxis(np.einsum('ij, kl->ijkl', my_vker(my_xmy(x, y), 0, sigma).reshape(N, N), np.eye(2)), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(2*M, 2*N)
+
     elif (k == 1):
-        t = np.tensordot(-my_vker(my_xmy(x, x), 2, sig), np.eye(2), axes=0)
+        t = np.tensordot(-my_vker(my_xmy(x, x), 2, sigma), np.eye(2), axes=0)
         K = fun_eta.my_Keta(np.swapaxes(t, 2, 3))
         K = np.tensordot(K, fun_eta.my_eta(), axes=([1, 2], [0, 1]))
-        fK = K.flatten()
-        K = np.zeros((3 * N, 3 * M))
-        for i in range(3):
-            for j in range(3):
-                K[i::3, j::3] = fK[(j + 3 * i)::9].reshape((N, M))
-    return K
+        return np.moveaxis(K.reshape(N, M, 3, 3), [0, 1, 2, 3], [0, 2, 1, 3]).reshape(3*N, 3*N)
+
+    else:
+        raise NotImplementedError
+
