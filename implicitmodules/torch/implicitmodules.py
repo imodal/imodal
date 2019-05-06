@@ -86,7 +86,7 @@ class ImplicitModule1(DeformationModule):
         assert isinstance(manifold, Stiefel)
         super().__init__()
         self.__manifold = manifold
-        self.__C = C.clone()
+        self.__C = C
         self.__sigma = sigma
         self.__nu = nu
         self.__coeff = coeff
@@ -101,6 +101,10 @@ class ImplicitModule1(DeformationModule):
     @property
     def manifold(self):
         return self.__manifold
+
+    @property
+    def C(self):
+        return self.__C
 
     @property
     def coeff(self):

@@ -1,3 +1,5 @@
+import copy
+
 import torch
 import torch.optim
 
@@ -8,48 +10,6 @@ from .manifold import Landmarks
 from .sampling import sample_from_greyscale, deformed_intensities
 from .shooting import shoot
 from .usefulfunctions import grid2vec, vec2grid, close_shape
-
-
-def fidelity(a, b):
-    """Energy Distance between two sampled probability measures."""
-    x_i, a_i = a
-    y_j, b_j = b
-    K_xx = -distances(x_i, x_i)
-    K_xy = -distances(x_i, y_j)
-    K_yy = -distances(y_j, y_j)
-    cost = .5*scal(a_i, torch.mm(K_xx, a_i.view(-1, 1))) - scal(a_i, torch.mm(K_xy, b_j.view(-1, 1))) + .5*scal(b_j, torch.mm(K_yy, b_j.view(-1, 1)))
-    return cost
-
-
-def L2_norm_fidelity(a, b):
-    return torch.dist(a, b)
-
-
-def cost_varifold(x, y, sigma):
-    def dot_varifold(x, y, sigma):
-        cx, cy = close_shape(x), close_shape(y)
-        nx, ny = x.shape[0], y.shape[0]
-
-        vx, vy = cx[1:nx + 1, :] - x, cy[1:ny + 1, :] - y
-        mx, my = (cx[1:nx + 1, :] + x) / 2, (cy[1:ny + 1, :] + y) / 2
-
-        xy = torch.tensordot(torch.transpose(torch.tensordot(mx, my, dims=0), 1, 2), torch.eye(2))
-
-        d2 = torch.sum(mx * mx, dim=1).reshape(nx, 1).repeat(1, ny) + torch.sum(my * my, dim=1).repeat(nx, 1) - 2 * xy
-
-        kxy = torch.exp(-d2 / (2 * sigma ** 2))
-
-        vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2)) ** 2
-
-        nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
-        nvy = torch.sqrt(torch.sum(vy * vy, dim=1))
-
-        mask = vxvy > 0
-
-        cost = torch.sum(kxy[mask] * vxvy[mask] / (torch.tensordot(nvx, nvy, dims=0)[mask]))
-        return cost
-
-    return dot_varifold(x, x, sigma) + dot_varifold(y, y, sigma) - 2 * dot_varifold(x, y, sigma)
 
 
 class Model():
@@ -106,12 +66,13 @@ class Model():
 
 
 class ModelCompound(Model):
-    def __init__(self, modules, fixed, attachement):
+    def __init__(self, modules, fixed, attachement, parameters=[]):
         super().__init__(attachement)
         self.__modules = modules
         self.__fixed = fixed
 
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
+        self.__init_parameters = copy.copy(parameters)
 
         self.__parameters = []
 
@@ -119,6 +80,8 @@ class ModelCompound(Model):
             self.__parameters.extend(self.__init_manifold[i].unroll_cotan())
             if(not self.__fixed[i]):
                 self.__parameters.extend(self.__init_manifold[i].unroll_gd())
+
+        self.__parameters.extend(parameters)
 
     @property
     def modules(self):
@@ -131,6 +94,10 @@ class ModelCompound(Model):
     @property
     def init_manifold(self):
         return self.__init_manifold
+
+    @property
+    def init_parameters(self):
+        return self.__init_parameters
 
     @property
     def parameters(self):
@@ -158,13 +125,13 @@ class ModelCompound(Model):
 
 
 class ModelCompoundWithPointsRegistration(ModelCompound):
-    def __init__(self, source, module_list, fixed, attachement):
+    def __init__(self, source, module_list, fixed, attachement, parameters=[]):
         self.alpha = source[1]
 
         module_list.insert(0, SilentPoints(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
         fixed.insert(0, True)
 
-        super().__init__(module_list, fixed, attachement)
+        super().__init__(module_list, fixed, attachement, parameters=parameters)
 
     def compute(self, target):
         compound = CompoundModule(self.modules)
@@ -181,11 +148,11 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
 
 
 class ModelCompoundImageRegistration(ModelCompound):
-    def __init__(self, source_image, modules, fixed, lossFunc, img_transform=lambda x: x):
+    def __init__(self, source_image, modules, fixed, lossFunc, img_transform=lambda x: x, parameters=[]):
         self.__frame_res = source_image.shape
         self.__source = sample_from_greyscale(source_image.clone(), 0., centered=False, normalise_weights=False, normalise_position=False)
         self.__img_transform = img_transform
-        super().__init__(modules, fixed, lossFunc)
+        super().__init__(modules, fixed, lossFunc, parameters=parameters)
 
     def transform_target(self, target):
         return self.__img_transform(target)
