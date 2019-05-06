@@ -105,8 +105,13 @@ class ElasticOrder0(ab.DeformationModule):
     
     def DerCost_curr(self):
         vs = self.field_generator_curr()
-        out = self.p_Ximv_curr(vs, 1)
-        out.mult_cotan_scal(self.coeff)
+        #out = self.p_Ximv_curr(vs, 1)
+        #out.mult_cotan_scal(self.coeff)
+        
+        dersupp = vs.pairing(vs, 1)
+        out = self.GD.copy_full()
+        out.fill_zero_tan()
+        out.cotan = self.coeff * dersupp.cotan
         
         return out
     
@@ -128,9 +133,10 @@ class ElasticOrder0(ab.DeformationModule):
         """
         
         vsr = GDCot.Cot_to_Vs(self.sig)
-        vl = self.field_generator_curr
+        vl = self.field_generator_curr()
         supp_out = vl.pairing(vsr, j)
         out = self.GD.copy_full()
+        out.fill_zero_tan()
         out.cotan = supp_out.cotan.copy()
         return out
     
