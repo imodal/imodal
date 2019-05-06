@@ -58,3 +58,31 @@ class StructuredField_p(ab.StructuredField):
                            P, axes=([2, 3, 4], [1, 0, 2]))
         
         return djv
+
+
+        
+    def pairing(self, vs, j):
+        """
+        Applies the linear form vs to self.
+        If j=1, it returns the derivative wrt self.support. It returns a 
+           SupportPoint with value and cotan filled
+        """
+        x = self.support.get_value()
+        P = self.mom       
+        if j == 0:
+            out = 0.
+            dvx = vs.Apply(x, j + 1)
+            dvx = (dvx + np.swapaxes(dvx, 1, 2)) / 2
+            # TODO: remove loop
+            out += np.sum(np.asarray([np.tensordot(P[i], dvx[i])
+                                      for i in range(x.shape[0])]))
+        elif j == 1:
+            out = self.support.copy_full()
+            out.fill_zero_cotan()
+            ddvx = vs.Apply(x, j + 1)
+            ddvx = (ddvx + np.swapaxes(ddvx, 1, 2)) / 2
+            der = np.einsum('kij, kijl->kl', P, ddvx)
+
+            out.cotan = der.copy()
+
+        return out

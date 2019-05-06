@@ -128,41 +128,36 @@ class ElasticOrder0(ab.DeformationModule):
         """
         
         vsr = GDCot.Cot_to_Vs(self.sig)
-        out = self.p_Ximv_curr(vsr, j)
-        
-        """
-        if j==0:
-            out = innerprod
-        if j==1:
-            out = self.GD.copy()
-            out.Cot['0'] = [ (innerprod['0'][0][1], np.zeros([self.N_pts,self.dim]) )]
-        """
+        vl = self.field_generator_curr
+        supp_out = vl.pairing(vsr, j)
+        out = self.GD.copy_full()
+        out.cotan = supp_out.cotan.copy()
         return out
     
-    def p_Ximv_curr(self, vs, j):
-        """
-        Put in Module because it uses the link between GD and support 
-        of vector fields      
-        """
-        GD_cont = self.GD.copy_full()
-        GD_cont.cotan = self.Cont.copy()
-        
-        if j == 0:
-            out = 0.
-            x = GD_cont.GD.copy()
-            p = GD_cont.cotan.copy()
-            vx = vs.Apply(x, j)
-            out += np.sum(np.asarray([np.dot(p[i], vx[i])
-                                      for i in range(x.shape[0])]))
-        
-        elif j == 1:
-            out = self.GD.copy_full()
-            out.fill_zero_cotan()
-            out.fill_zero_tan()
-            x = GD_cont.GD.copy()
-            p = GD_cont.cotan.copy()
-            vx = vs.Apply(x, j)
-            der = np.asarray([np.dot(p[i], vx[i]) for i in range(x.shape[0])])
-            out.cotan = der.copy()
-        
-        return out
+#    def p_Ximv_curr(self, vs, j):
+#        """
+#        Put in Module because it uses the link between GD and support 
+#        of vector fields      
+#        """
+#        GD_cont = self.GD.copy_full()
+#        GD_cont.cotan = self.Cont.copy()
+#        
+#        if j == 0:
+#            out = 0.
+#            x = GD_cont.GD.copy()
+#            p = GD_cont.cotan.copy()
+#            vx = vs.Apply(x, j)
+#            out += np.sum(np.asarray([np.dot(p[i], vx[i])
+#                                      for i in range(x.shape[0])]))
+#        
+#        elif j == 1:
+#            out = self.GD.copy_full()
+#            out.fill_zero_cotan()
+#            out.fill_zero_tan()
+#            x = GD_cont.GD.copy()
+#            p = GD_cont.cotan.copy()
+#            vx = vs.Apply(x, j)
+#            der = np.asarray([np.dot(p[i], vx[i]) for i in range(x.shape[0])])
+#            out.cotan = der.copy()
+#        
+#        return out

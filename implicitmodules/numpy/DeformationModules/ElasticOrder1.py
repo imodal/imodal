@@ -129,9 +129,9 @@ class ElasticOrder1(ab.DeformationModule):
         R = self.GD.get_R()
         v = self.field_generator_curr()
 
-        # der = self.my_pSmV(v.dic,v.dic,1)
-        der = self.p_Ximv_curr(v, 1)
-        cotx = -self.coeff * der.cotan[0]
+        #der = self.p_Ximv_curr(v, 1)
+        dersupp = v.pairing(v, 1)
+        cotx = -self.coeff * dersupp.cotan
 
         tP = self.coeff * self.Mom
 
@@ -155,11 +155,14 @@ class ElasticOrder1(ab.DeformationModule):
             out = self.p_Ximv_curr(vsr, j)
         if j == 1:
             
+            v_curr = self.field_generator_curr()
             vsr = GDCot.Cot_to_Vs(self.sig)
     
             # der wrt x as support of generated vector field by self
-            der0 = self.p_Ximv_curr(vsr, j)
-    
+            der0supp = v_curr.pairing(vsr, j)            
+            derx = der0supp.cotan.copy()
+            
+            
             x = self.GD.get_points()
             R = self.GD.get_R()
     
@@ -172,19 +175,14 @@ class ElasticOrder1(ab.DeformationModule):
     
             tVs = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
             tVs.fill_fieldparam((x.copy(), tP.copy()))
-    
-            der1 = self.p_Ximv_curr(tVs, 1)
-            der1.mult_cotan_scal(-1)
-    
-            # artifial module in order to use p_Ximv_curr : needs to be changed 
-            Mod_t = self.copy()
-            Mod_t.GD = self.GD.copy_full()
-            Mod_t.Mom = tP.copy()
-            der2 = Mod_t.p_Ximv_curr(self.field_generator_curr(), 1)
-            der2.mult_cotan_scal(-1)
-    
-            der0.add_cotan(der1)
-            der0.add_cotan(der2)
+            
+            der1supp = v_curr.pairing(tVs, 1)
+            derx = derx - der1supp.cotan.copy()
+            
+            vsl2 = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
+            vsl2.fill_fieldparam((x.copy(), tP.copy()))
+            der2supp = vsl2.pairing(self.field_generator_curr(), 1)
+            derx = derx - der2supp.cotan.copy()
     
             cotR = 2. * np.einsum('kul, kli, kij, kj, kiv->kuv', tP, R, self.C, np.tile(self.Cont, [x.shape[0], 1]), np.tile(np.eye(2), [x.shape[0], 1, 1]))
     
@@ -192,39 +190,7 @@ class ElasticOrder1(ab.DeformationModule):
             out.fill_zero_tan()
             out.fill_zero_cotan()
     
-            cotx0, cotR0 = der0.cotan
-            out.cotan = (cotx0.copy(), cotR.copy())
-
-        return out
-
-    def p_Ximv_curr(self, vs, j):
-        """
-        Put in Module because it uses the link between GD and support 
-        of vector fields      
-        The derivative is done wrt to the support of the generated field
-        which are the points of self.GD
-        """
-        v_curr = self.field_generator_curr()
-        x = v_curr.support
-        P = v_curr.mom
-
-        if j == 0:
-            out = 0.
-            dvx = vs.Apply(x, j + 1)
-            dvx = (dvx + np.swapaxes(dvx, 1, 2)) / 2
-            # TODO: remove loop
-            out += np.sum(np.asarray([np.tensordot(P[i], dvx[i])
-                                      for i in range(x.shape[0])]))
-
-        elif j == 1:
-            out = self.GD.copy_full()
-            out.fill_zero_tan()
-            out.fill_zero_cotan()
-            ddvx = vs.Apply(x, j + 1)
-            ddvx = (ddvx + np.swapaxes(ddvx, 1, 2)) / 2
-            der = np.einsum('kij, kijl->kl', P, ddvx)
-
-            out.cotan = (der.copy(), np.zeros([self.N_pts, self.dim, self.dim]))
+            out.cotan = (derx.copy(), cotR.copy())
 
         return out
 

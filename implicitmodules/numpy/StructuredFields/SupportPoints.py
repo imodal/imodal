@@ -24,7 +24,8 @@ class SupportPoints(ab.SupportAbstract):
             supp.cotan = self.cotan.copy()
         return supp
         
-        
+    def fill_zero_cotan(self):
+         self.cotan = np.zeros([self.N_pts, self.dim])
         
     def fill_value(self, val):
         self.value = val.copy()

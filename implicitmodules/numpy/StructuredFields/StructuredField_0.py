@@ -61,7 +61,27 @@ class StructuredField_0(ab.StructuredField):
         return djv
 
         
+    def pairing(self, vs, j):
+        """
+        Applies the linear form vs to self.
+        If j=1, it returns the derivative wrt self.support. It returns a 
+           SupportPoint with value and cotan filled
+        """
+        
+        if j == 0:
+            out = 0.
+            x = self.support.get_value()
+            p = self.mom
+            vx = vs.Apply(x, j)
+            out += np.sum(np.asarray([np.dot(p[i], vx[i])
+                                      for i in range(x.shape[0])]))
+        elif j == 1:
+            out = self.support.copy_full()
+            out.fill_zero_cotan()
+            x = self.support.get_value()
+            p = self.mom
+            vx = vs.Apply(x, j)
+            der = np.asarray([np.dot(p[i], vx[i]) for i in range(x.shape[0])])
+            out.cotan = der.copy()
 
-
-
-
+        return out
