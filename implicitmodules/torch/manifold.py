@@ -321,9 +321,6 @@ class Stiefel(Manifold):
     def inner_prod_field(self, field):
         man = self.action(field)
 
-        # TODO: Remove this loop
-        # out = torch.dot(self.cotan[0].view(-1), man.tan[0].view(-1))
-        # return out + sum([torch.tensordot(self.cotan[1].view(-1, self.__dim, self.__dim)[i], man.tan[1].view(-1, self.__dim, self.__dim)[i]) for i in range(self.__mat_shape[0])])
         return torch.dot(self.cotan[0].view(-1), man.tan[0].view(-1)) + torch.einsum('nij, nij->', self.cotan[1].view(-1, self.__dim, self.__dim), man.tan[1].view(-1, self.__dim, self.__dim))
 
     def action(self, field):
@@ -332,8 +329,6 @@ class Stiefel(Manifold):
         d_vx = field(self.__gd[0].view(-1, self.__dim), k=1)
 
         S = 0.5 * (d_vx - torch.transpose(d_vx, 1, 2))
-        # TODO: Remove this loop
-        #vr = torch.stack([torch.mm(S[i], self.__gd[1].view(-1, self.__dim, self.__dim)[i]) for i in range(self.__nb_pts)])
         vr = torch.einsum('nik, nkj->nij', S, self.__gd[1].view(-1, self.__dim, self.__dim))
 
         return Stiefel(self.__dim, self.__nb_pts, gd=self.__gd, tan=(vx.view(-1), vr.view(-1)))
