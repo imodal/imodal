@@ -11,6 +11,30 @@ class StructuredField:
         raise NotImplementedError
 
 
+class StructuredField_Null(StructuredField):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, points, k=0):
+        return torch.zeros([points.shape[0]] + [2]*(k+1))
+
+
+class ConstantField(StructuredField):
+    def __init__(self, moments):
+        super().__init__()
+        self.__moments = moments
+
+    @property
+    def moments(self):
+        return self.__moments
+
+    def __call__(self, points, k=0):
+        if k == 0:
+            return self.__moments.repeat(points.shape[0], 1)
+        else:
+            return torch.zeros([points.shape[0]] + [2]*(k+1))
+
+
 class SupportStructuredField(StructuredField):
     def __init__(self, support, moments):
         super().__init__()
@@ -24,14 +48,6 @@ class SupportStructuredField(StructuredField):
     @property
     def moments(self):
         return self.__moments
-
-
-class StructuredField_Null(StructuredField):
-    def __init__(self):
-        super().__init__()
-
-    def __call__(self, points, k=0):
-        return torch.zeros([points.shape[0]] + [2]*(k+1))
 
 
 class StructuredField_0(SupportStructuredField):

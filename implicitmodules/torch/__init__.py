@@ -9,6 +9,7 @@ from . import sampling
 from . import shooting
 from . import structuredfield
 from . import usefulfunctions
+from . import globalmodules
 
 __version__ = "0.0.2"
 

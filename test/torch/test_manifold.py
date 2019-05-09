@@ -313,9 +313,9 @@ class TestCompoundManifold(unittest.TestCase):
 
     def test_gradcheck_action(self):
         def action(gd0, gd1, controls0, controls1):
-            module0 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd0)
+            module0 = im.deformationmodules.Translations.build_from_points(2, self.nb_pts0, 1., gd=gd0)
             module0.fill_controls(controls0)
-            module1 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd1)
+            module1 = im.deformationmodules.Translations.build_from_points(2, self.nb_pts1, 1., gd=gd1)
             module1.fill_controls(controls1)
     
             man = self.compound.action(im.deformationmodules.CompoundModule([module0, module1]))
@@ -333,9 +333,9 @@ class TestCompoundManifold(unittest.TestCase):
         def inner_prod_field(*tensors):
             gd = tensors[:2]
             controls = tensors[2:]
-            module0 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd[0])
+            module0 = im.deformationmodules.Translations.build_from_points(2, self.nb_pts0, 1., gd=gd[0])
             module0.fill_controls(controls[0])
-            module1 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd[1])
+            module1 = im.deformationmodules.Translations.build_from_points(2, self.nb_pts1, 1., gd=gd[1])
             module1.fill_controls(controls[1])
 
             return self.compound.inner_prod_field(

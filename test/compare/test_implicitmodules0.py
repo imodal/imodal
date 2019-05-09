@@ -19,7 +19,7 @@ class TestCompareImplicitModules0(unittest.TestCase):
         self.p = 10.*np.random.rand(self.N, 2)
         self.controls = np.random.rand(self.N, 2)
 
-        self.implicit0_torch = ImplicitModule0.build_and_fill(2, self.N, self.sigma, 0.001, gd=torch.tensor(self.p).view(-1), cotan=torch.tensor(self.q).view(-1))
+        self.implicit0_torch = ImplicitModule0.build_from_points(2, self.N, self.sigma, 0.001, gd=torch.tensor(self.p).view(-1), cotan=torch.tensor(self.q).view(-1))
 
         self.implicit0_numpy = ElasticOrder0(self.sigma, self.N, 2, 1., 0.001)
         self.implicit0_numpy.GD.fill_cot_from_param((self.q, self.p))
