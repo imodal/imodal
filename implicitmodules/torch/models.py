@@ -103,10 +103,6 @@ class ModelCompound(Model):
     def parameters(self):
         return self.__parameters
 
-    @property
-    def shot(self):
-        return self.__shot
-
     def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=2, intermediate=False):
         x, y = torch.meshgrid([
             torch.linspace(grid_origin[0], grid_origin[0]+grid_size[0], grid_resolution[0]),
@@ -119,17 +115,29 @@ class ModelCompound(Model):
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
-        intermediate = shoot(Hamiltonian([grid_silent, *compound]), 10, "torch_euler")
+        intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), 10, "torch_euler")
 
-        return vec2grid(grid_landmarks.gd.view(-1, 2).detach(), grid_resolution[0], grid_resolution[1])
+        out = [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
+        return out
+        #return vec2grid(grid_landmarks.gd.view(-1, 2).detach(), grid_resolution[0], grid_resolution[1])
 
 
 class ModelCompoundWithPointsRegistration(ModelCompound):
     def __init__(self, source, module_list, fixed, attachement, parameters=[]):
-        self.alpha = source[1]
+        if isinstance(source, list):
+            self.__compound_fit = True
+            self.__compound_fit_size = len(source)
+            self.alpha = []
+            for i in range(self.__compound_fit_size):
+                self.alpha.insert(i, source[i][1])
+                module_list.insert(i, SilentPoints(Landmarks(2, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                fixed.insert(i, True)
 
-        module_list.insert(0, SilentPoints(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
-        fixed.insert(0, True)
+        else:
+            self.__compound_fit = False
+            self.alpha = source[1]
+            module_list.insert(0, SilentPoints(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
+            fixed.insert(0, True)
 
         super().__init__(module_list, fixed, attachement, parameters=parameters)
 
@@ -138,13 +146,25 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
         compound.manifold.fill(self.init_manifold)
         h = Hamiltonian(compound)
         shoot(h, 10, "torch_euler")
-        self.__shot_points = compound[0].manifold.gd.view(-1, 2)
         self.shot_manifold = compound.manifold.copy()
         self.deformation_cost = compound.cost()
-        self.attach = self.attachement((self.__shot_points, self.alpha), target)
+
+        if self.__compound_fit:
+            self.__shot_points = []
+            attach_list = []
+            for i in range(self.__compound_fit_size):
+                self.__shot_points.append(compound[i].manifold.gd.view(-1, 2))
+                attach_list.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), self.alpha[i]), target[i]))
+            self.attach = sum(attach_list)
+        else:
+            self.__shot_points = compound[0].manifold.gd.view(-1, 2)
+            self.attach = self.attachement((self.__shot_points, self.alpha), target)
 
     def __call__(self):
-        return self.__shot_points, self.alpha
+        if self.__compound_fit:
+            return list(zip(self.__shot_points, self.alpha))
+        else:
+            return (self.__shot_points, self.alpha)
 
 
 class ModelCompoundImageRegistration(ModelCompound):

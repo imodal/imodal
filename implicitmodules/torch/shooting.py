@@ -19,7 +19,6 @@ def shoot_euler(h, it):
     intermediate_controls = []
     for i in range(it):
         h.geodesic_controls()
-        # print(h.module.controls)
         l = [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()]
         delta = list(grad(h(), l, create_graph=True, allow_unused=True))
         for i in range(len(delta)):

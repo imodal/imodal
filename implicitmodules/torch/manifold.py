@@ -493,14 +493,16 @@ class CompoundManifold(Manifold):
 
     def roll_gd(self, l):
         """Unflattens the list into one suitable for fill_gd() or all *_gd() numerical operations."""
+        out = []
         for man in self.__manifold_list:
-            l.append(man.roll_gd(l))
-        return l
+            out.append(man.roll_gd(l))
+        return out
 
     def roll_cotan(self, l):
+        out = []
         for man in self.__manifold_list:
-            l.append(man.roll_cotan(l))
-        return l
+            out.append(man.roll_cotan(l))
+        return out
 
     def __get_gd(self):
         return [m.gd for m in self.__manifold_list]
