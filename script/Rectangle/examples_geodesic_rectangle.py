@@ -18,7 +18,7 @@ import numpy as np
 from implicitmodules.numpy.DeformationModules.Combination import CompoundModules
 from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
 from implicitmodules.numpy.DeformationModules.SilentLandmark import SilentLandmark
-import implicitmodules.numpy.Forward.Shooting as shoot
+import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
 import implicitmodules.numpy.Utilities.Rotation as rot
 
 #################################################################

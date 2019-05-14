@@ -1,12 +1,14 @@
+import os.path
 import sys
-sys.path.append("../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import numpy as np
 import torch
 
-from implicitmodules.numpy.GeometricalDescriptors.x_R import GD_xR
+from implicitmodules.numpy.Manifolds.Stiefel import Stiefel
 from implicitmodules.torch.manifold import Stiefel
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0 as n_StructuredField_0
 from implicitmodules.torch.structuredfield import StructuredField_0 as t_StructuredField_0
@@ -23,7 +25,7 @@ class TestCompareLandmarks(unittest.TestCase):
         self.cotan_R = np.random.rand(self.nb_pts, self.dim, self.dim)
 
         self.torch_landmarks = Stiefel(self.dim, self.nb_pts, gd=(torch.tensor(self.gd).view(-1), torch.tensor(self.gd_R).view(-1)), cotan=(torch.tensor(self.cotan).view(-1), torch.tensor(self.cotan_R).view(-1)))
-        self.numpy_landmarks = GD_xR(self.nb_pts, self.dim)
+        self.numpy_landmarks = Stiefel(self.nb_pts, self.dim)
         self.numpy_landmarks.fill_cot_from_param(((self.gd, self.gd_R), (self.cotan, self.cotan_R)))
 
     def test_inner_prod_field(self):
@@ -41,3 +43,6 @@ class TestCompareLandmarks(unittest.TestCase):
 
         self.assertTrue(np.allclose(torch_prod.detach().numpy(), numpy_prod))
 
+
+if __name__ == '__main__':
+    unittest.main()

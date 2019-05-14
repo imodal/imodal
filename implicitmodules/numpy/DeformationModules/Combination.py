@@ -1,5 +1,5 @@
 import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Combine  as GeoDescr_comb
+import implicitmodules.numpy.Manifolds.Compound  as GeoDescr_comb
 import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
 
 
@@ -12,7 +12,7 @@ class CompoundModules(ab.DeformationModule):  # tested
         self.cost = 0.
     
     def init_GD(self):  # tested
-        self.GD = GeoDescr_comb.Combine_GD([Modi.GD for Modi in self.ModList])
+        self.GD = GeoDescr_comb.CompoundManifold([Modi.GD for Modi in self.ModList])
     
     def init_Cont(self):  # tested
         self.Cont = [Modi.Cont for Modi in self.ModList]
@@ -71,7 +71,7 @@ class CompoundModules(ab.DeformationModule):  # tested
     
     def DerCost_curr(self):  # tested0
         derlist = [self.ModList[i].DerCost_curr() for i in range(self.NbMod)]
-        return GeoDescr_comb.Combine_GD(derlist)
+        return GeoDescr_comb.CompoundManifold(derlist)
     
     def cot_to_innerprod_curr(self, GDCot, j):  # tested0
         # vsr = GDCot.Cot_to_Vs(self.sig)
@@ -81,7 +81,7 @@ class CompoundModules(ab.DeformationModule):  # tested
             out = sum([self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)])
         if j == 1:
             derlist = [self.ModList[i].cot_to_innerprod_curr(GDCot, j) for i in range(self.NbMod)]
-            out = GeoDescr_comb.Combine_GD(derlist)
+            out = GeoDescr_comb.CompoundManifold(derlist)
         return out
     
     def p_Ximv_curr(self, vs, j):
@@ -89,5 +89,5 @@ class CompoundModules(ab.DeformationModule):  # tested
             out = sum([self.ModList[i].p_Ximv_curr(vs, j) for i in range(self.NbMod)])
         if j == 1:
             derlist = [self.ModList[i].p_Ximv_curr(vs, j) for i in range(self.NbMod)]
-            out = GeoDescr_comb.Combine_GD(derlist)
+            out = GeoDescr_comb.CompoundManifold(derlist)
         return out

@@ -22,7 +22,7 @@ import implicitmodules.numpy.DeformationModules.Combination as comb_mod
 import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
 import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
 import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
-import implicitmodules.numpy.Forward.Shooting as shoot
+import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
 import implicitmodules.numpy.Optimisation.ScipyOpti_attach as opti
 from implicitmodules.numpy.Utilities import Rotation as rot
 from implicitmodules.numpy.Utilities.Visualisation import my_close, my_plot

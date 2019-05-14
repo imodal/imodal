@@ -1,12 +1,14 @@
+import os.path
 import sys
-sys.path.append("../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import numpy as np
 import torch
 
-from implicitmodules.numpy.GeometricalDescriptors.Landmark import GD_landmark
+from implicitmodules.numpy.Manifolds.Landmark import GD_landmark
 from implicitmodules.torch.manifold import Landmarks
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0 as n_StructuredField_0
 from implicitmodules.torch.structuredfield import StructuredField_0 as t_StructuredField_0
@@ -39,3 +41,6 @@ class TestCompareLandmarks(unittest.TestCase):
 
         self.assertTrue(np.allclose(torch_prod.detach().numpy(), numpy_prod))
 
+
+if __name__ == '__main__':
+    unittest.main()

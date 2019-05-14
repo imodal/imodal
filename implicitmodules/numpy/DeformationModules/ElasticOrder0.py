@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import solve
 
 import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Landmark as GeoDescr
+import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
 from implicitmodules.numpy.Kernels import ScalarGaussian as ker
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0
 

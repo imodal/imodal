@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import solve
 
 import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.x_R as GeoDescr
+import implicitmodules.numpy.Manifolds.Stiefel as GeoDescr
 import implicitmodules.numpy.StructuredFields.StructuredField_p as stru_fiep
 from implicitmodules.numpy.Kernels import ScalarGaussian as ker
 from implicitmodules.numpy.Utilities import FunctionsEta as fun_eta
@@ -27,7 +27,7 @@ class ElasticOrder1(ab.DeformationModule):
         self.nu = nu
         self.dimR = 3
         self.dimcont = C.shape[2]
-        self.GD = GeoDescr.GD_xR(N_pts, dim)
+        self.GD = GeoDescr.Stiefel(N_pts, dim)
         self.SKS = np.zeros([self.N_pts * self.dimR, self.N_pts * self.dimR])
         self.Mom = np.zeros([self.N_pts, self.dim, self.dim])
         self.lam = np.zeros([self.N_pts * self.dimR])

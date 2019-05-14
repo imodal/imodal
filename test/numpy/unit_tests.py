@@ -20,7 +20,7 @@ class NumpyUnitTestCase(unittest.TestCase):
         import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
         import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
         import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
-        import implicitmodules.numpy.Forward.Shooting as shoot
+        import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
         import implicitmodules.numpy.Optimisation.ScipyOpti as opti
         from implicitmodules.numpy.Utilities import Rotation as rot
 
@@ -246,7 +246,7 @@ class NumpyUnitTestCase(unittest.TestCase):
         from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
         from implicitmodules.numpy.DeformationModules.SilentLandmark import SilentLandmark
         import implicitmodules.numpy.Utilities.Rotation as rot
-        import implicitmodules.numpy.Forward.Shooting as shoot
+        import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
         
         # %%
         xmin, xmax, ymin, ymax = -5, 5, -5, 5

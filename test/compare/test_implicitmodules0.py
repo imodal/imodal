@@ -1,5 +1,7 @@
+import os.path
 import sys
-sys.path.append("../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
@@ -54,3 +56,6 @@ class TestCompareImplicitModules0(unittest.TestCase):
 
         np.allclose(speed_torch.detach().numpy(), speed_numpy)
 
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 18 10:06:35 2019
-
-@author: gris
-"""
-
 import numpy as np
 
 import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Landmark as GeoDescr
+import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
 from implicitmodules.numpy.StructuredFields.ConstantField import ConstantField
 from implicitmodules.numpy.StructuredFields.LinearField import LinearField
 

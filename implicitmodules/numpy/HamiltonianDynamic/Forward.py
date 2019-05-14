@@ -1,4 +1,4 @@
-import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
+import implicitmodules.numpy.HamiltonianDynamic.Hamiltonianderivatives as HamDer
 
 
 def forward_step(Mod, step):
@@ -24,8 +24,7 @@ def forward_step(Mod, step):
 
 def forward_step_rk2(Mod, step):
     Mod1 = Mod.copy_full()
-    forward_step(Mod1, 0.5 * step)
-    
+    forward_step(Mod1, step / 2)
     Mod1.update()
     Mod1.GeodesicControls_curr(Mod1.GD)
     
@@ -33,9 +32,7 @@ def forward_step_rk2(Mod, step):
     dpH = HamDer.dpH(Mod1)
     
     dxH.mult_cotan_scal(step)
-    # dxH.mult_GD_scal(step)
     dpH.mult_tan_scal(step)
-    # dpH.mult_tan_scal(step)
     
     Mod.add_cotan(dxH)
     Mod.add_speedGD(dpH)
@@ -62,8 +59,8 @@ def shooting(Mod, N_int):
 def shooting_traj(Mod, N_int):
     """
     Supposes that Cot is filled
-    
     """
+    
     step = 1. / N_int
     Mod.update()
     Mod.GeodesicControls_curr(Mod.GD)

@@ -1,7 +1,7 @@
+import os.path
 import sys
-import time
 
-sys.path.append("../../")
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import torch
 
@@ -65,3 +65,5 @@ method_summary("torch_euler", 10, 1)
 for i in range(10):
     method_summary("rk4", i+1, 1)
 
+if __name__ == '__main__':
+    unittest.main()

@@ -1,7 +1,7 @@
 import numpy as np
 
 import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Landmark as GeoDescr
+import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
 from implicitmodules.numpy.StructuredFields.ConstantField import ConstantField
 
 

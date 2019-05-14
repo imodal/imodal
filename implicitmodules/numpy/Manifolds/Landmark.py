@@ -1,10 +1,10 @@
 import numpy as np
 
-import implicitmodules.numpy.GeometricalDescriptors.Abstract as ab
+import implicitmodules.numpy.Manifolds.Abstract as ab
 import implicitmodules.numpy.StructuredFields.StructuredField_0 as stru_fie
 
 
-class GD_landmark(ab.GeometricalDescriptors):
+class GD_landmark(ab.Manifold):
     def __init__(self, N_pts, dim):  #
         """
         The GD and Mom are arrays of size N_pts x dim.

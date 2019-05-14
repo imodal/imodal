@@ -1,4 +1,4 @@
-class GeometricalDescriptors(object):
+class Manifold(object):
     """
     Abstract class for geometrical descriptors, needs to have the 
       following methods:
