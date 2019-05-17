@@ -59,7 +59,7 @@ class GD_landmark(ab.Manifold):
         v.fill_fieldparam((self.GD, self.cotan))
         return v
 
-    def action(self, v):
+    def infinitesimal_action(self, v):
         """
         xi_m ()
         
@@ -74,7 +74,7 @@ class GD_landmark(ab.Manifold):
     def dCotDotV(self, vs):  #
         """
         Supposes that Cot has been filled
-        derivates (p action(m,v)) wrt m
+        derivates (p infinitesimal_action(m,v)) wrt m
         """
         x = self.get_points()
         p = self.get_mom()
@@ -88,7 +88,7 @@ class GD_landmark(ab.Manifold):
         return GD
     
     def inner_prod_v(self, v):  # tested
-        dGD = self.action(v)
+        dGD = self.infinitesimal_action(v)
         dpts = dGD.tan
         mom = self.get_mom()
         return np.dot(mom.flatten(), dpts.flatten())

@@ -83,7 +83,7 @@ class Stiefel(ab.Manifold):
         
         return stru_fie_sum.Summed_field([v0, vm])
 
-    def action(self, v):  #
+    def infinitesimal_action(self, v):  #
         pts = self.get_points()
         R = self.get_R()
         vx = v.Apply(pts, 0)
@@ -120,7 +120,7 @@ class Stiefel(ab.Manifold):
         return GD
     
     def inner_prod_v(self, v):  # 
-        vGD = self.action(v)
+        vGD = self.infinitesimal_action(v)
         vx, vR = vGD.tan
         px, pR = self.get_mom()
         out = np.dot(px.flatten(), vx.flatten())

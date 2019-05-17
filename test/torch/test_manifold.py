@@ -75,7 +75,7 @@ class TestLandmarks(unittest.TestCase):
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
-        man = landmarks.action(trans.field_generator())
+        man = landmarks.infinitesimal_action(trans.field_generator())
     
         self.assertIsInstance(man, im.manifold.Landmarks)
         self.assertEqual(man.gd.shape[0], 2*self.nb_pts)
@@ -152,7 +152,7 @@ class TestLandmarks(unittest.TestCase):
             landmarks.fill_gd(gd)
             module = im.deformationmodules.Translations(landmarks, 2.)
             module.fill_controls(controls)
-            man = landmarks.action(module.field_generator())
+            man = landmarks.infinitesimal_action(module.field_generator())
             return man.gd, man.tan, man.cotan
 
         self.gd.requires_grad_()
@@ -251,7 +251,7 @@ class TestCompoundManifold(unittest.TestCase):
         landmarks_mod = im.manifold.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
 
-        man = self.compound.action(trans.field_generator())
+        man = self.compound.infinitesimal_action(trans.field_generator())
 
         self.assertIsInstance(man, im.manifold.CompoundManifold)
         self.assertTrue(man.nb_manifold, self.compound.nb_manifold)
@@ -317,8 +317,8 @@ class TestCompoundManifold(unittest.TestCase):
             module0.fill_controls(controls0)
             module1 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd1)
             module1.fill_controls(controls1)
-    
-            man = self.compound.action(im.deformationmodules.CompoundModule([module0, module1]))
+
+            man = self.compound.infinitesimal_action(im.deformationmodules.CompoundModule([module0, module1]))
             return man.gd[0], man.gd[1], man.tan[0], man.tan[1], man.cotan[0], man.cotan[1]
 
         self.gd0.requires_grad_()

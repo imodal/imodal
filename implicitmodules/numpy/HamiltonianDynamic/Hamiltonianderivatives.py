@@ -29,7 +29,7 @@ def dpH(Mod):
     """
     
     v = Mod.field_generator_curr()
-    appli = Mod.GD.action(v)
+    appli = Mod.GD.infinitesimal_action(v)
     return appli
 
 

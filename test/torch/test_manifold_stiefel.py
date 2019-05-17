@@ -131,7 +131,7 @@ class TestStiefel(unittest.TestCase):
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
-        man = stiefel.action(trans.field_generator())
+        man = stiefel.infinitesimal_action(trans.field_generator())
     
         self.assertIsInstance(man, im.manifold.Stiefel)
 
@@ -217,7 +217,7 @@ class TestStiefel(unittest.TestCase):
             stiefel.fill_gd((gd_pts, gd_mat))
             module = im.implicitmodules.ImplicitModule1(stiefel, C, 1., 0.01)
             module.fill_controls(controls)
-            man = stiefel.action(module.field_generator())
+            man = stiefel.infinitesimal_action(module.field_generator())
             return man.gd[0], man.gd[1], man.tan[0], man.tan[1], man.cotan[0], man.cotan[1]
 
         self.gd_pts.requires_grad_()

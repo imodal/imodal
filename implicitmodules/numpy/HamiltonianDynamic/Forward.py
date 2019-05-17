@@ -84,7 +84,7 @@ def shooting_from_cont_traj(Mod, Contlist, N_int):
     step = 1. / N_int
     # print(Contlist[0])
     for i in range(N_int):
-        # speed = Mod.GD.action(Mod.field_generator_curr())
+        # speed = Mod.GD.infinitesimal_action(Mod.field_generator_curr())
         
         Modtmp = Mod.copy_full()
         Modtmp.update()
@@ -96,7 +96,7 @@ def shooting_from_cont_traj(Mod, Contlist, N_int):
         # print(Contlist[2 * i + 1])
         # print(Modtmp.Cont)
         Mod_list.append(Modtmp.copy_full())
-        # speed = Modtmp.GD.action(Modtmp.field_generator_curr())
+        # speed = Modtmp.GD.infinitesimal_action(Modtmp.field_generator_curr())
         speed = HamDer.dpH(Modtmp)
         speed.mult_tan_scal(step)
         Mod.add_speedGD(speed)
