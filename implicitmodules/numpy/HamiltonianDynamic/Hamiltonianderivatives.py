@@ -29,7 +29,7 @@ def dpH(Mod):
     """
     
     v = Mod.field_generator_curr()
-    appli = Mod.GD.Ximv(v)
+    appli = Mod.GD.action(v)
     return appli
 
 

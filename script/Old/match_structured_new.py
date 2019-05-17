@@ -311,12 +311,12 @@ grad_1.GD_list[0].cotan - grad_1_old.Cot['0'][0][0]
 # t=0
 # v_new = Modlist_save_new[t].field_generator_curr()
 # dGD_new = Modlist_save_new[t].GD.dCotDotV(v_new)
-# dGD_new = Modlist_save_new[t].GD.Ximv(v_new)
+# dGD_new = Modlist_save_new[t].GD.action(v_new)
 ##dGD_new = HamDer.dpH(Modlist_save_new[t])
 ##%%
 # v = Modlist[t].field_generator_curr()
 # dGD = Modlist[t].GD.dCotDotV(v)
-# dGD = Modlist[t].GD.Ximv(v)
+# dGD = Modlist[t].GD.action(v)
 ##dGD = HamDer_old.dpH(Modlist[t])
 ##%%
 ##

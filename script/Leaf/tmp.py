@@ -204,7 +204,7 @@ GD_t.GD = np.array([[5., 1.]])
 GD_t.cotan = 0.001*np.array([[1., -7.]])
 Model00_rot.GeodesicControls_curr(GD_t)
 print(Model00_rot.Cont)
-print(GD_t.Ximv(Model00_rot.field_generator_curr()).tan)
+print(GD_t.action(Model00_rot.field_generator_curr()).tan)
 #%%
 v0 = Model00_rot.cot_to_innerprod_curr(GD_t, 0)
 v1 = Model00_rot.cot_to_innerprod_curr(GD_t, 1)
@@ -224,7 +224,7 @@ GD_1 = Model1.GD
 GD_1.cotan = [np.random.rand(*x1.shape), np.random.rand(x1.shape[0], 2, 2)]
 vrot = Model00_rot.field_generator_curr()
 
-s1 = GD_1.Ximv(vrot)
+s1 = GD_1.action(vrot)
 
 v0 = Model00_rot.cot_to_innerprod_curr(GD_1, 0)
 v1 = Model00_rot.cot_to_innerprod_curr(GD_1, 1)

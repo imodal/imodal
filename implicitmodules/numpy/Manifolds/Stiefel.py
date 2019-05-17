@@ -82,8 +82,8 @@ class Stiefel(ab.Manifold):
         vm.fill_fieldparam((x, P))
         
         return stru_fie_sum.Summed_field([v0, vm])
-    
-    def Ximv(self, v):  #
+
+    def action(self, v):  #
         pts = self.get_points()
         R = self.get_R()
         vx = v.Apply(pts, 0)
@@ -120,7 +120,7 @@ class Stiefel(ab.Manifold):
         return GD
     
     def inner_prod_v(self, v):  # 
-        vGD = self.Ximv(v)
+        vGD = self.action(v)
         vx, vR = vGD.tan
         px, pR = self.get_mom()
         out = np.dot(px.flatten(), vx.flatten())

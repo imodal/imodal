@@ -56,18 +56,18 @@ class CompoundManifold(ab.Manifold):
         """
         v_list = [self.GD_list[i].Cot_to_Vs(sig) for i in range(self.N_GDs)]
         return stru_fie_sum.sum_structured_fields(v_list)
-    
-    def Ximv(self, v):
+
+    def action(self, v):
         """
         xi_m ()
         
         """
-        return CompoundManifold([GDi.Ximv(v) for GDi in self.GD_list])
+        return CompoundManifold([GDi.action(v) for GDi in self.GD_list])
     
     def dCotDotV(self, vs):  #
         """
         Supposes that Cot has been filled
-        (p Ximv(m,v)) wrt m
+        (p action(m,v)) wrt m
         """
         return CompoundManifold([GDi.dCotDotV(vs) for GDi in self.GD_list])
     
