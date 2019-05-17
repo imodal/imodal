@@ -34,8 +34,8 @@ class NumpyUnitTestCase(unittest.TestCase):
         
         nlx[:, 1] = 38.0 - scale * (nlx[:, 1] - lmin)
         nlx[:, 0] = scale * (nlx[:, 0] - np.mean(nlx[:, 0]))
-        
-        # %% target
+
+        # target
         with open(os.path.dirname(os.path.abspath(__file__)) + '/data/basi1t.pkl', 'rb') as f:
             _, lxt = pickle.load(f)
         
@@ -51,29 +51,29 @@ class NumpyUnitTestCase(unittest.TestCase):
         #  common options
         nu = 0.001
         dim = 2
-        
-        # %% Silent Module
+
+        #  Silent Module
         xs = nlx[nlx[:, 2] == 2, 0:2]
         xs = np.delete(xs, 3, axis=0)
         Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
         ps = np.zeros(xs.shape)
         param_sil = (xs, ps)
-        
-        # %% Modules of Order 0
+
+        #  Modules of Order 0
         sig0 = 6
         x0 = nlx[nlx[:, 2] == 1, 0:2]
         Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, 1., nu)
         p0 = np.zeros(x0.shape)
         param_0 = (x0, p0)
-        
-        # %% Modules of Order 0
+
+        #  Modules of Order 0
         sig00 = 200
         x00 = np.array([[0., 0.]])
         Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
         p00 = np.zeros([1, 2])
         param_00 = (x00, p00)
-        
-        # %% Modules of Order 1
+
+        # Modules of Order 1
         sig1 = 30
         x1 = nlx[nlx[:, 2] == 1, 0:2]
         C = np.zeros((x1.shape[0], 2, 1))
@@ -88,13 +88,13 @@ class NumpyUnitTestCase(unittest.TestCase):
         
         (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
         param_1 = ((x1, R), (p1, PR))
-        
-        # %% Full model
+
+        #  Full model
         Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
         Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
         P0 = opti.fill_Vector_from_GD(Module.GD)
-        
-        # %%
+
+        #
         lam_var = 10.
         sig_var = 30.
         N = 10

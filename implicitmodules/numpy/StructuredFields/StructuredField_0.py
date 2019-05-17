@@ -53,7 +53,6 @@ class StructuredField_0(ab.StructuredField):
         ker_vec = ker.my_vker(ker.my_xmy(z, x), j, self.sig)
         my_shape = (Nz, x.shape[0]) + tuple(ker_vec.shape[1:])
         ker_vec = ker_vec.reshape(my_shape)
-        djv += np.tensordot(np.swapaxes(np.tensordot(np.eye(2), ker_vec, axes=0), 0, 2),
-                            p, axes=([2, 3], [1, 0]))
+        djv += np.tensordot(np.swapaxes(np.tensordot(np.eye(2), ker_vec, axes=0), 0, 2), p, axes=([2, 3], [1, 0]))
         
         return djv

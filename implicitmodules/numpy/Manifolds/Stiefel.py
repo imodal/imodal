@@ -77,7 +77,8 @@ class Stiefel(ab.Manifold):
         v0.fill_fieldparam((x, px))
         
         vm = stru_fiem.StructuredField_m(sig, self.N_pts, self.dim)
-        P = np.einsum('nik, nkj->nij', pR, R.swapaxes(1, 2))
+        #  P = np.einsum('nik, nkj->nij', pR, R.swapaxes(1, 2))
+        P = np.einsum('nik, njk->nij', pR, R)
         vm.fill_fieldparam((x, P))
         
         return stru_fie_sum.Summed_field([v0, vm])
