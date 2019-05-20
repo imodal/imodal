@@ -1,13 +1,14 @@
 import numpy as np
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
+from implicitmodules.numpy.Manifolds import Landmark
 from implicitmodules.numpy.StructuredFields.ConstantField import ConstantField
 from implicitmodules.numpy.StructuredFields.LinearField import LinearField
 
 rot_mat = np.array([[0., -1.], [1., 0.]])
 
-class GlobalRotation(ab.DeformationModule):
+
+class GlobalRotation(DeformationModule):
     """
      GlobalRotation
     """
@@ -18,7 +19,7 @@ class GlobalRotation(ab.DeformationModule):
         """
         self.dim = dim
         self.coeff = coeff
-        self.GD = GeoDescr.Landmark(1, dim)
+        self.GD = Landmark(1, dim)
         self.Cont = np.zeros([1])
         self.cost = 0.
     

@@ -1,6 +1,6 @@
-import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
 from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
 from implicitmodules.numpy.Manifolds import CompoundManifold
+from implicitmodules.numpy.StructuredFields import Sum
 
 
 class CompoundModules(DeformationModule):  # tested
@@ -53,11 +53,11 @@ class CompoundModules(DeformationModule):  # tested
         self.init_Cont()
     
     def field_generator_curr(self):  # tested0
-        return stru_fie_sum.sum_structured_fields([self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
+        return Sum.sum_structured_fields([self.ModList[i].field_generator_curr() for i in range(self.NbMod)])
     
     def field_generator(self, GD, Cont):  # tested
         GDlist = GD.GD_list
-        return stru_fie_sum.sum_structured_fields(
+        return Sum.sum_structured_fields(
             [self.ModList[i].field_generator(GDlist[i], Cont[i]) for i in range(self.NbMod)])
     
     def Cost_curr(self):  # tested0

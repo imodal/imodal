@@ -1,7 +1,7 @@
 import numpy as np
 
-import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
 from implicitmodules.numpy.Manifolds.Abstract import Manifold
+from implicitmodules.numpy.StructuredFields import Sum
 
 
 class CompoundManifold(Manifold):
@@ -55,7 +55,7 @@ class CompoundManifold(Manifold):
         Supposes that Cot has been filled
         """
         v_list = [self.GD_list[i].Cot_to_Vs(sig) for i in range(self.N_GDs)]
-        return stru_fie_sum.sum_structured_fields(v_list)
+        return Sum.sum_structured_fields(v_list)
 
     def infinitesimal_action(self, v):
         """
