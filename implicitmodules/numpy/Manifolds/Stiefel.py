@@ -1,12 +1,12 @@
 import numpy as np
 
-import implicitmodules.numpy.Manifolds.Abstract as ab
-import implicitmodules.numpy.StructuredFields.StructuredField_0 as stru_fie0
-import implicitmodules.numpy.StructuredFields.StructuredField_m as stru_fiem
-import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
+from implicitmodules.numpy.Manifolds.Abstract import Manifold
+from implicitmodules.numpy.StructuredFields import StructuredField_0
+from implicitmodules.numpy.StructuredFields import StructuredField_m
+from implicitmodules.numpy.StructuredFields import Summed_field
 
 
-class Stiefel(ab.Manifold):
+class Stiefel(Manifold):
     def __init__(self, N_pts, dim):  # 
         """
         The GD and Mom are arrays of size N_pts x dim.
@@ -72,22 +72,19 @@ class Stiefel(ab.Manifold):
         R = self.GD[1].copy()
         px = self.cotan[0].copy()
         pR = self.cotan[1].copy()
+
+        v0 = StructuredField_0(x, px, sig)
         
-        v0 = stru_fie0.StructuredField_0(sig, self.N_pts, self.dim)
-        v0.fill_fieldparam((x, px))
-        
-        vm = stru_fiem.StructuredField_m(sig, self.N_pts, self.dim)
-        #  P = np.einsum('nik, nkj->nij', pR, R.swapaxes(1, 2))
         P = np.einsum('nik, njk->nij', pR, R)
-        vm.fill_fieldparam((x, P))
-        
-        return stru_fie_sum.Summed_field([v0, vm])
+        vm = StructuredField_m(x, P, sig)
+
+        return Summed_field([v0, vm])
 
     def infinitesimal_action(self, v):  #
         pts = self.get_points()
         R = self.get_R()
-        vx = v.Apply(pts, 0)
-        dvx = v.Apply(pts, 1)
+        vx = v(pts, 0)
+        dvx = v(pts, 1)
         S = (dvx - np.swapaxes(dvx, 1, 2)) / 2
         
         vR = np.einsum('nik, nkj->nij', S, R)
@@ -104,9 +101,9 @@ class Stiefel(ab.Manifold):
         x = self.get_points()
         R = self.get_R()
         px, pR = self.get_mom()
-        
-        dvx = vs.Apply(x, 1)
-        ddvx = vs.Apply(x, 2)
+
+        dvx = vs(x, 1)
+        ddvx = vs(x, 2)
         
         skew_dvx = (dvx - np.swapaxes(dvx, 1, 2)) / 2
         skew_ddvx = (ddvx - np.swapaxes(ddvx, 1, 2)) / 2

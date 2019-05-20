@@ -23,13 +23,13 @@ class Summed_field(ab.StructuredField):
         for i in range(self.N_fields):
             field_list.append(self.fields_list[i].copy_full())
         return Summed_field(field_list)
-    
-    def Apply(self, z, j):  # tested
+
+    def __call__(self, z, j):  # tested
         Nz = z.shape[0]
         lsize = ((Nz, 2), (Nz, 2, 2), (Nz, 2, 2, 2))
         djv = np.zeros(lsize[j])
         
         for i in range(self.N_fields):
-            djv += self.fields_list[i].Apply(z, j)
+            djv += self.fields_list[i](z, j)
         
         return djv

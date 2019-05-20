@@ -27,5 +27,5 @@ class Manifold(object):
         """
         pass
 
-    def dCotDotV(self):
+    def dCotDotV(self, vs):
         pass

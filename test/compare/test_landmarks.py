@@ -33,8 +33,7 @@ class TestCompareLandmarks(unittest.TestCase):
         support = np.random.rand(nb_pts_support, self.dim)
         moments = np.random.rand(nb_pts_support, self.dim)
         torch_field = t_StructuredField_0(torch.tensor(support), torch.tensor(moments), sigma)
-        numpy_field = n_StructuredField_0(sigma, nb_pts_support, self.dim)
-        numpy_field.fill_fieldparam((support, moments))
+        numpy_field = n_StructuredField_0(support, moments, sigma)
 
         torch_prod = self.torch_landmarks.inner_prod_field(torch_field)
         numpy_prod = self.numpy_landmarks.inner_prod_v(numpy_field)

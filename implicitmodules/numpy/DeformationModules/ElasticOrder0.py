@@ -1,13 +1,13 @@
 import numpy as np
 from scipy.linalg import solve
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
 from implicitmodules.numpy.Kernels import ScalarGaussian as ker
+from implicitmodules.numpy.Manifolds import GD_landmark
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0
 
 
-class ElasticOrder0(ab.DeformationModule):
+class ElasticOrder0(DeformationModule):
     """
      Elastic module of order 0
     """
@@ -23,7 +23,7 @@ class ElasticOrder0(ab.DeformationModule):
         self.dim = dim
         self.coeff = coeff
         self.nu = nu
-        self.GD = GeoDescr.GD_landmark(N_pts, dim)
+        self.GD = GD_landmark(N_pts, dim)
         self.SKS = np.zeros([self.N_pts * self.dim, self.N_pts * self.dim])
         self.Mom = np.zeros([self.N_pts, self.dim])
         self.Cont = np.zeros([self.N_pts, self.dim])
@@ -75,7 +75,7 @@ class ElasticOrder0(ab.DeformationModule):
         Supposes that GDCot has Cot filled
         """
         vs = GDCot.Cot_to_Vs(self.sig)
-        vm = vs.Apply(self.GD.get_points(), 0)
+        vm = vs(self.GD.get_points(), 0)
         # print(self.sig)
         self.Cont = solve(self.SKS,
                           vm.flatten(), sym_pos=True).reshape(self.N_pts, self.dim)
@@ -87,10 +87,7 @@ class ElasticOrder0(ab.DeformationModule):
         return self.field_generator(self.GD, self.Cont)
     
     def field_generator(self, GD, Cont):
-        param = [GD.get_points(), Cont]
-        v = StructuredField_0(self.sig, self.N_pts, self.dim)
-        v.fill_fieldparam(param)
-        return v
+        return StructuredField_0(GD.get_points(), Cont, self.sig)
     
     def Cost_curr(self):
         SKS = self.SKS
@@ -141,8 +138,7 @@ class ElasticOrder0(ab.DeformationModule):
     
     def p_Ximv_curr(self, vs, j):
         """
-        Put in Module because it uses the link between GD and support 
-        of vector fields      
+        Put in Module because it uses the link between GD and support of vector fields
         """
         GD_cont = self.GD.copy_full()
         GD_cont.cotan = self.Cont.copy()
@@ -151,7 +147,7 @@ class ElasticOrder0(ab.DeformationModule):
             out = 0.
             x = GD_cont.GD.copy()
             p = GD_cont.cotan.copy()
-            vx = vs.Apply(x, j)
+            vx = vs(x, j)
             out += np.sum(np.asarray([np.dot(p[i], vx[i])
                                       for i in range(x.shape[0])]))
         
@@ -161,7 +157,7 @@ class ElasticOrder0(ab.DeformationModule):
             out.fill_zero_tan()
             x = GD_cont.GD.copy()
             p = GD_cont.cotan.copy()
-            vx = vs.Apply(x, j)
+            vx = vs(x, j)
             der = np.asarray([np.dot(p[i], vx[i]) for i in range(x.shape[0])])
             out.cotan = der.copy()
         

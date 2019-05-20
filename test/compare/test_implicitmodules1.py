@@ -55,7 +55,7 @@ class TestCompareImplicitModules1(unittest.TestCase):
 
         points = np.random.rand(nb_pts, 2)
         speed_torch = self.implicit1_torch(torch.tensor(points))
-        speed_numpy = self.implicit1_numpy.field_generator_curr().Apply(points, 0)
+        speed_numpy = self.implicit1_numpy.field_generator_curr()(points, 0)
 
         self.assertTrue(np.allclose(speed_torch.numpy(), speed_numpy))
 

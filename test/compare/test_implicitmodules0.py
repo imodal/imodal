@@ -52,7 +52,7 @@ class TestCompareImplicitModules0(unittest.TestCase):
         nb_pts = 100
         points = np.random.rand(nb_pts, 2)
         speed_torch = self.implicit0_torch(torch.tensor(points))
-        speed_numpy = self.implicit0_numpy.field_generator_curr().Apply(points, 0)
+        speed_numpy = self.implicit0_numpy.field_generator_curr()(points, 0)
 
         np.allclose(speed_torch.detach().numpy(), speed_numpy)
 

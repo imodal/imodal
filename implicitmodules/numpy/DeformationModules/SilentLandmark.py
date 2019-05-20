@@ -1,11 +1,11 @@
 import numpy as np
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.Manifolds.Landmark as GeoDescr
-import implicitmodules.numpy.StructuredFields.ZeroField as stru_fie_zero
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
+from implicitmodules.numpy.Manifolds import GD_landmark
+from implicitmodules.numpy.StructuredFields import StructuredField_Null
 
 
-class SilentLandmark(ab.DeformationModule):
+class SilentLandmark(DeformationModule):
     """
      Elastic module of order 0
     """
@@ -18,7 +18,7 @@ class SilentLandmark(ab.DeformationModule):
         """
         self.N_pts = N_pts
         self.dim = dim
-        self.GD = GeoDescr.GD_landmark(N_pts, dim)
+        self.GD = GD_landmark(N_pts, dim)
         self.cost = 0.
         self.Cont = np.empty([0])
     
@@ -43,7 +43,7 @@ class SilentLandmark(ab.DeformationModule):
         pass
     
     def field_generator_curr(self):
-        return stru_fie_zero.ZeroField(self.dim)
+        return StructuredField_Null()
     
     def Cost_curr(self):
         pass

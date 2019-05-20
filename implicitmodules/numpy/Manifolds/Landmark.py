@@ -1,10 +1,10 @@
 import numpy as np
 
-import implicitmodules.numpy.Manifolds.Abstract as ab
-import implicitmodules.numpy.StructuredFields.StructuredField_0 as stru_fie
+from implicitmodules.numpy.Manifolds.Abstract import Manifold
+from implicitmodules.numpy.StructuredFields import StructuredField_0
 
 
-class GD_landmark(ab.Manifold):
+class GD_landmark(Manifold):
     def __init__(self, N_pts, dim):  #
         """
         The GD and Mom are arrays of size N_pts x dim.
@@ -55,8 +55,7 @@ class GD_landmark(ab.Manifold):
         self.cotan = param[1].copy()
     
     def Cot_to_Vs(self, sig):
-        v = stru_fie.StructuredField_0(sig, self.N_pts, self.dim)
-        v.fill_fieldparam((self.GD, self.cotan))
+        v = StructuredField_0(self.GD, self.cotan, sig)
         return v
 
     def infinitesimal_action(self, v):
@@ -65,7 +64,7 @@ class GD_landmark(ab.Manifold):
         
         """
         pts = self.get_points()
-        appli = v.Apply(pts, 0)
+        appli = v(pts, 0)
         out = self.copy_full()
         out.fill_zero_cotan()
         out.tan = appli.copy()
@@ -78,7 +77,7 @@ class GD_landmark(ab.Manifold):
         """
         x = self.get_points()
         p = self.get_mom()
-        der = vs.Apply(x, 1)
+        der = vs(x, 1)
         
         dx = np.asarray([np.dot(p[i], der[i]) for i in range(x.shape[0])])
         

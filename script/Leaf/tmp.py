@@ -240,15 +240,15 @@ print(v1.cotan)
 print(diff0, diff1)
 #%%
 x0 = np.array([[1., 0.]])
-speed0 = vrot.Apply(x0, 0)
+speed0 = vrot(x0, 0)
 eps = 0.01
 diff = np.random.rand(1,2)
 x1 = x0 + eps * diff
-speed1 = vrot.Apply(x1, 0)
+speed1 = vrot(x1, 0)
 
 speeddiff = (speed1 - speed0)/eps
 
-speedder = vrot.Apply(np.array([[1., 0.]]), 1)
+speedder = vrot(np.array([[1., 0.]]), 1)
 
 
 print(speeddiff)

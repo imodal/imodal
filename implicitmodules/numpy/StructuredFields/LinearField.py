@@ -1,34 +1,24 @@
 import numpy as np
 
-import implicitmodules.numpy.StructuredFields.Abstract as ab
+from implicitmodules.numpy.StructuredFields.Abstract import SupportStructuredField
 
 
-class LinearField(ab.StructuredField):
+class LinearField(SupportStructuredField):
     
-    def __init__(self, dim, mat):  # tested
-        """
-         support and mom are the parametrization of the vector field
-        """
-        self.dim = dim
-        self.mat = mat.copy()
-        self.support = np.zeros([1, dim])
-        self.mom = np.zeros([1])
+    def __init__(self, support, moments, sigma=np.inf):
+        super().__init__(support, moments, sigma)
     
     def copy(self):
-        v = LinearField(self.dim)
+        v = LinearField(self.support, self.moments)
         return v
     
     def copy_full(self):
-        v = LinearField(self.dim)
+        v = LinearField(self.support, self.moments)
         v.support = self.support.copy()
-        v.mom = self.mom.copy()
+        v.mom = self.moments.copy()
         return v
     
-    def fill_fieldparam(self, param):
-        self.support = param[0].copy()
-        self.mom = param[1].copy()
-    
-    def Apply(self, z, j):
+    def __call__(self, z, j):
         """
         Applies the field to points z (or computes the derivative). 
         Needs pre-assigned parametrization of the field in dic

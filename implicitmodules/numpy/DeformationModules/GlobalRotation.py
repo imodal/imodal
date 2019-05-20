@@ -52,8 +52,7 @@ class GlobalRotation(ab.DeformationModule):
         
         Cont_geo = np.zeros([1])
         v = LinearField(self.dim, rot_mat)
-        param = [self.GD.GD, np.ones([1])]
-        v.fill_fieldparam(param)
+        v.fill_fieldparam(self.GD.GD, np.ones([1]))
         Cont_geo[0] = (1. / self.coeff) * GDCot.inner_prod_v(v)
         self.Cont = Cont_geo.copy()
     
@@ -61,9 +60,8 @@ class GlobalRotation(ab.DeformationModule):
         return self.field_generator(self.GD, self.Cont)
     
     def field_generator(self, GD, Cont):
-        param =  [self.GD.GD, Cont]
         v = LinearField(self.dim, rot_mat)
-        v.fill_fieldparam(param)
+        v.fill_fieldparam(self.GD.GD, Cont)
         return v
     
     def Cost_curr(self):
@@ -100,7 +98,7 @@ class GlobalRotation(ab.DeformationModule):
             cotan = np.zeros([1, self.dim])
             for i in range(self.dim):
                 v = ConstantField(self.dim)
-                v.mom = - self.Cont[0] * rot_mat[:, i].reshape([1,-1])
+                v.moments = - self.Cont[0] * rot_mat[:, i].reshape([1, -1])
                 cotan[0, i] = GDCot.inner_prod_v(v)
                 
             out.GD = self.GD.GD.copy()
