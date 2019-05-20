@@ -10,8 +10,8 @@ import torch
 
 from implicitmodules.numpy.Manifolds.Landmark import Landmark
 from implicitmodules.torch.Manifolds.Landmark import Landmarks
-from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0 as n_StructuredField_0
-from implicitmodules.torch.structuredfield import StructuredField_0 as t_StructuredField_0
+from implicitmodules.numpy.StructuredFields import StructuredField_0 as n_StructuredField_0
+from implicitmodules.torch.StructuredFields import StructuredField_0 as t_StructuredField_0
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 

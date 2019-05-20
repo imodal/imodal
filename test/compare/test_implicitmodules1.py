@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
-from implicitmodules.torch.implicitmodules import ImplicitModule1
+from implicitmodules.torch.DeformationModules.ElasticOrder1 import ImplicitModule1
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 

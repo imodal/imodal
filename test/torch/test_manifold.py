@@ -72,7 +72,7 @@ class TestLandmarks(unittest.TestCase):
 
         nb_pts_mod = 15
         landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
-        trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
+        trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
         man = landmarks.infinitesimal_action(trans.field_generator())
@@ -85,7 +85,7 @@ class TestLandmarks(unittest.TestCase):
 
         nb_pts_mod = 15
         landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
-        trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
+        trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
         inner_prod = landmarks.inner_prod_field(trans.field_generator())
@@ -150,7 +150,7 @@ class TestLandmarks(unittest.TestCase):
     def test_gradcheck_action(self):
         def action(gd, controls):
             landmarks.fill_gd(gd)
-            module = im.deformationmodules.Translations(landmarks, 2.)
+            module = im.DeformationModules.Translations(landmarks, 2.)
             module.fill_controls(controls)
             man = landmarks.infinitesimal_action(module.field_generator())
             return man.gd, man.tan, man.cotan
@@ -164,7 +164,7 @@ class TestLandmarks(unittest.TestCase):
     def test_gradcheck_inner_prod_field(self):
         def inner_prod_field(gd, controls):
             landmarks.fill_gd(gd)
-            module = im.deformationmodules.Translations(landmarks, 2.)
+            module = im.DeformationModules.Translations(landmarks, 2.)
             module.fill_controls(controls)
             return landmarks.inner_prod_field(module.field_generator())
 
@@ -249,7 +249,7 @@ class TestCompoundManifold(unittest.TestCase):
     def test_action(self):
         nb_pts_mod = 15
         landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
-        trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
+        trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
 
         man = self.compound.infinitesimal_action(trans.field_generator())
 
@@ -313,12 +313,13 @@ class TestCompoundManifold(unittest.TestCase):
 
     def test_gradcheck_action(self):
         def action(gd0, gd1, controls0, controls1):
-            module0 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd0)
+            module0 = im.DeformationModules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd0)
             module0.fill_controls(controls0)
-            module1 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd1)
+            module1 = im.DeformationModules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd1)
             module1.fill_controls(controls1)
-
-            man = self.compound.infinitesimal_action(im.deformationmodules.CompoundModule([module0, module1]))
+    
+            man = self.compound.infinitesimal_action(
+                im.DeformationModules.CompoundModule([module0, module1]))
             return man.gd[0], man.gd[1], man.tan[0], man.tan[1], man.cotan[0], man.cotan[1]
 
         self.gd0.requires_grad_()
@@ -333,13 +334,13 @@ class TestCompoundManifold(unittest.TestCase):
         def inner_prod_field(*tensors):
             gd = tensors[:2]
             controls = tensors[2:]
-            module0 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd[0])
+            module0 = im.DeformationModules.Translations.build_and_fill(2, self.nb_pts0, 1., gd=gd[0])
             module0.fill_controls(controls[0])
-            module1 = im.deformationmodules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd[1])
+            module1 = im.DeformationModules.Translations.build_and_fill(2, self.nb_pts1, 1., gd=gd[1])
             module1.fill_controls(controls[1])
 
             return self.compound.inner_prod_field(
-                im.deformationmodules.CompoundModule([module0, module1]).field_generator())
+                im.DeformationModules.CompoundModule([module0, module1]).field_generator())
 
         gd = [self.gd0.requires_grad_(), self.gd1.requires_grad_()]
         controls0 = torch.rand_like(self.gd0, requires_grad=True)

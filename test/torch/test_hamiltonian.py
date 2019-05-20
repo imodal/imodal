@@ -20,13 +20,13 @@ class TestHamiltonian(unittest.TestCase):
         self.landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.controls = 100.*torch.rand_like(self.gd)
 
-        self.trans = im.deformationmodules.Translations(self.landmarks, self.sigma)
+        self.trans = im.DeformationModules.Translations(self.landmarks, self.sigma)
         self.trans.fill_controls(self.controls)
 
         self.h = im.hamiltonian.Hamiltonian([self.trans])
 
     def test_good_init(self):
-        self.assertIsInstance(self.h.module, im.deformationmodules.DeformationModule)
+        self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)
 
     def test_apply_mom(self):
         self.assertIsInstance(self.h.apply_mom(), torch.Tensor)
@@ -108,14 +108,14 @@ class TestHamiltonianCompound(unittest.TestCase):
         self.controls_silent = torch.tensor([])
         self.controls = [self.controls_trans, self.controls_silent]
 
-        self.trans = im.deformationmodules.Translations(self.landmarks_trans, self.sigma)
+        self.trans = im.DeformationModules.Translations(self.landmarks_trans, self.sigma)
         self.trans.fill_controls(self.controls[0])
-        self.silent = im.deformationmodules.SilentPoints(self.landmarks_silent)
+        self.silent = im.DeformationModules.SilentLandmarks(self.landmarks_silent)
 
         self.h = im.hamiltonian.Hamiltonian([self.trans, self.silent])
 
     def test_good_init(self):
-        self.assertIsInstance(self.h.module, im.deformationmodules.DeformationModule)
+        self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)
 
     def test_apply_mom(self):
         self.assertIsInstance(self.h.apply_mom(), torch.Tensor)

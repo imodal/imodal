@@ -3,7 +3,8 @@ from typing import Iterable
 import torch
 
 from implicitmodules.torch.Manifolds.Abstract import Manifold
-from implicitmodules.torch.structuredfield import StructuredField_0, StructuredField_m, CompoundStructuredField
+from implicitmodules.torch.StructuredFields import StructuredField_m, StructuredField_0
+from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
 
 
 class Stiefel(Manifold):

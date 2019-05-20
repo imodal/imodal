@@ -1,5 +1,5 @@
 from implicitmodules.torch.Manifolds.Abstract import Manifold
-from implicitmodules.torch.structuredfield import CompoundStructuredField
+from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
 
 
 class CompoundManifold(Manifold):

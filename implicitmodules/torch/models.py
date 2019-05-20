@@ -1,8 +1,9 @@
 import torch
 import torch.optim
 
+from implicitmodules.torch.DeformationModules.Combination import CompoundModule
+from implicitmodules.torch.DeformationModules.SilentLandmark import SilentLandmarks
 from implicitmodules.torch.Manifolds import Landmarks
-from .deformationmodules import SilentPoints, CompoundModule
 from .hamiltonian import Hamiltonian
 from .kernels import distances, scal
 from .sampling import sample_from_greyscale, deformed_intensities
@@ -148,7 +149,7 @@ class ModelCompound(Model):
         gridpos = grid2vec(x, y)
 
         grid_landmarks = Landmarks(2, gridpos.shape[0], gd=gridpos.view(-1))
-        grid_silent = SilentPoints(grid_landmarks)
+        grid_silent = SilentLandmarks(grid_landmarks)
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
@@ -161,7 +162,7 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
     def __init__(self, source, module_list, fixed, attachement):
         self.alpha = source[1]
 
-        module_list.insert(0, SilentPoints(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
+        module_list.insert(0, SilentLandmarks(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
         fixed.insert(0, True)
 
         super().__init__(module_list, fixed, attachement)
@@ -201,7 +202,7 @@ class ModelCompoundImageRegistration(ModelCompound):
         compound.manifold.negate_cotan()
 
         image_landmarks = Landmarks(2, self.__source[0].shape[0], gd=self.__source[0].view(-1))
-        compound = CompoundModule([SilentPoints(image_landmarks), *compound])
+        compound = CompoundModule([SilentLandmarks(image_landmarks), *compound])
 
         # Then, reverse shooting in order to get the final deformed image
         intermediate = shoot(Hamiltonian(compound), it=8)

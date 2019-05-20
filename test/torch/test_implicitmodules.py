@@ -21,7 +21,7 @@ class TestImplicitModule0(unittest.TestCase):
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
         self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-        self.implicit = im.implicitmodules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
+        self.implicit = im.DeformationModules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
 
     def test_call(self):
         points = torch.rand(100, self.dim)
@@ -37,7 +37,7 @@ class TestImplicitModule0(unittest.TestCase):
         self.assertEqual(torch.all(torch.eq(result, torch.zeros_like(result))), True)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.implicit.field_generator(), im.structuredfield.StructuredField)
+        self.assertIsInstance(self.implicit.field_generator(), im.StructuredFields.Abstract.StructuredField)
 
     def test_cost(self):
         cost = self.implicit.cost()
@@ -121,7 +121,7 @@ class TestImplicitModule1(unittest.TestCase):
         self.nu = 1e-3
         self.sigma = 1.0
 
-        self.implicit = im.implicitmodules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
+        self.implicit = im.DeformationModules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
         self.implicit.fill_controls(self.controls)
 
     def test_call(self):
@@ -132,7 +132,7 @@ class TestImplicitModule1(unittest.TestCase):
         self.assertEqual(speed.shape, points.shape)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.implicit.field_generator(), im.structuredfield.StructuredField_p)
+        self.assertIsInstance(self.implicit.field_generator(), im.StructuredFields.StructuredField_p)
 
     def test_cost(self):
         cost = self.implicit.cost()

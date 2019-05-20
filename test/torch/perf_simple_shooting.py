@@ -26,11 +26,11 @@ def simple_shooting(method, it):
     C = torch.rand(nb_pts_order1, 2, 1)
     R = torch.rand(nb_pts_order1, 2, 2)
 
-    silent = im.deformationmodules.SilentPoints(
+    silent = im.DeformationModules.SilentLandmarks(
         im.Manifolds.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
-    order0 = im.implicitmodules.ImplicitModule0(
+    order0 = im.DeformationModules.ImplicitModule0(
         im.Manifolds.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
-    order1 = im.implicitmodules.ImplicitModule1(
+    order1 = im.DeformationModules.ImplicitModule1(
         im.Manifolds.Stiefel(dim, nb_pts_order1,
                              gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
         C, sigma, nu, coeff)

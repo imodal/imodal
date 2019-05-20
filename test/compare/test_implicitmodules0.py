@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder0 import ElasticOrder0
-from implicitmodules.torch.implicitmodules import ImplicitModule0
+from implicitmodules.torch.DeformationModules.ElasticOrder0 import ImplicitModule0
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 

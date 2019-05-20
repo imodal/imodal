@@ -55,7 +55,7 @@ sigma0 = 10.
 nu0 = 0.001
 coeff0 = 100.
 pos_implicit0 = source[source[:, 2] == 1, 0:2]
-implicit0 = im.implicitmodules.ImplicitModule0(
+implicit0 = im.DeformationModules.ImplicitModule0(
     im.Manifolds.Landmarks(2, pos_implicit0.shape[0], gd=pos_implicit0.view(-1).requires_grad_()), sigma0, nu0, coeff0)
 
 ###############################################################################
@@ -63,7 +63,7 @@ implicit0 = im.implicitmodules.ImplicitModule0(
 sigma00 = 800.
 nu00 = 0.001
 coeff00 = 0.01
-implicit00 = im.implicitmodules.ImplicitModule0(
+implicit00 = im.DeformationModules.ImplicitModule0(
     im.Manifolds.Landmarks(2, 1, gd=torch.tensor([0., 0.], requires_grad=True)), sigma00, nu00, coeff00)
 
 ###############################################################################
@@ -80,7 +80,7 @@ C[:, 0, 0] = 1. * C[:, 1, 0]
 th = 0. * torch.ones(pos_implicit1.shape[0])
 R = torch.stack([im.usefulfunctions.rot2d(t) for t in th])
 
-implicit1 = im.implicitmodules.ImplicitModule1(
+implicit1 = im.DeformationModules.ImplicitModule1(
     im.Manifolds.Stiefel(2, pos_implicit1.shape[0],
                          gd=(pos_implicit1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
     C,
