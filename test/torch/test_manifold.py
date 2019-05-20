@@ -20,7 +20,7 @@ class TestLandmarks(unittest.TestCase):
         self.cotan = torch.rand(self.nb_pts, 2, requires_grad=True).view(-1)
 
     def test_constructor(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         self.assertEqual(landmarks.nb_pts, self.nb_pts)
         self.assertEqual(landmarks.dim, 2)
@@ -30,7 +30,7 @@ class TestLandmarks(unittest.TestCase):
         self.assertTrue(torch.allclose(landmarks.cotan, self.cotan))
 
     def test_fill(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts)
 
         landmarks.fill_gd(self.gd)
         landmarks.fill_tan(self.tan)
@@ -41,7 +41,7 @@ class TestLandmarks(unittest.TestCase):
         self.assertTrue(torch.all(torch.eq(landmarks.cotan, self.cotan)))
 
     def test_assign(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts)
 
         landmarks.gd = self.gd
         landmarks.tan = self.tan
@@ -52,7 +52,7 @@ class TestLandmarks(unittest.TestCase):
         self.assertTrue(torch.allclose(landmarks.cotan, self.cotan))
 
     def test_muladd(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         scale = 1.5
         d_gd = torch.rand(self.nb_pts, 2, requires_grad=True).view(-1)
@@ -68,23 +68,23 @@ class TestLandmarks(unittest.TestCase):
         self.assertTrue(torch.allclose(landmarks.cotan, self.cotan+scale*d_cotan))
 
     def test_action(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         nb_pts_mod = 15
-        landmarks_mod = im.manifold.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
+        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
         man = landmarks.infinitesimal_action(trans.field_generator())
     
-        self.assertIsInstance(man, im.manifold.Landmarks)
+        self.assertIsInstance(man, im.Manifolds.Landmarks)
         self.assertEqual(man.gd.shape[0], 2*self.nb_pts)
 
     def test_inner_prod_field(self):
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         nb_pts_mod = 15
-        landmarks_mod = im.manifold.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
+        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
@@ -110,7 +110,7 @@ class TestLandmarks(unittest.TestCase):
         self.tan.requires_grad_()
         self.cotan.requires_grad_()
 
-        landmarks = im.manifold.Landmarks(2, self.nb_pts)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts)
 
         self.assertTrue(gradcheck(fill_gd, (self.gd), raise_exception=False))
         self.assertTrue(gradcheck(fill_tan, (self.tan), raise_exception=False))
@@ -136,7 +136,7 @@ class TestLandmarks(unittest.TestCase):
         self.tan.requires_grad_()
         self.cotan.requires_grad_()
 
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
         scale = 2.
 
         gd_mul = torch.rand_like(self.gd, requires_grad=True)
@@ -157,7 +157,7 @@ class TestLandmarks(unittest.TestCase):
 
         self.gd.requires_grad_()
         controls = torch.rand_like(self.gd, requires_grad=True)
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd)
 
         self.assertTrue(gradcheck(action, (self.gd, controls), raise_exception=False))
 
@@ -170,7 +170,7 @@ class TestLandmarks(unittest.TestCase):
 
         self.gd.requires_grad_()
         controls = torch.rand_like(self.gd, requires_grad=True)
-        landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd)
+        landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd)
 
         self.assertTrue(gradcheck(inner_prod_field, (self.gd, controls), raise_exception=False))
 
@@ -185,9 +185,9 @@ class TestCompoundManifold(unittest.TestCase):
         self.gd1 = torch.rand(self.nb_pts1, 2, requires_grad=True).view(-1)
         self.tan1 = torch.rand(self.nb_pts1, 2, requires_grad=True).view(-1)
         self.cotan1 = torch.rand(self.nb_pts1, 2, requires_grad=True).view(-1)
-        self.landmarks0 = im.manifold.Landmarks(2, self.nb_pts0, gd=self.gd0, tan=self.tan0, cotan=self.cotan0)
-        self.landmarks1 = im.manifold.Landmarks(2, self.nb_pts1, gd=self.gd1, tan=self.tan1, cotan=self.cotan1)
-        self.compound = im.manifold.CompoundManifold([self.landmarks0, self.landmarks1])
+        self.landmarks0 = im.Manifolds.Landmarks(2, self.nb_pts0, gd=self.gd0, tan=self.tan0, cotan=self.cotan0)
+        self.landmarks1 = im.Manifolds.Landmarks(2, self.nb_pts1, gd=self.gd1, tan=self.tan1, cotan=self.cotan1)
+        self.compound = im.Manifolds.CompoundManifold([self.landmarks0, self.landmarks1])
 
     def test_constructor(self):
         self.assertEqual(self.compound.nb_pts, self.nb_pts0+self.nb_pts1)
@@ -248,12 +248,12 @@ class TestCompoundManifold(unittest.TestCase):
 
     def test_action(self):
         nb_pts_mod = 15
-        landmarks_mod = im.manifold.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
+        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
         trans = im.deformationmodules.Translations(landmarks_mod, 1.5)
 
         man = self.compound.infinitesimal_action(trans.field_generator())
 
-        self.assertIsInstance(man, im.manifold.CompoundManifold)
+        self.assertIsInstance(man, im.Manifolds.CompoundManifold)
         self.assertTrue(man.nb_manifold, self.compound.nb_manifold)
         self.assertEqual(man[0].gd.shape[0], 2*self.nb_pts0)
         self.assertEqual(man[1].gd.shape[0], 2*self.nb_pts1)

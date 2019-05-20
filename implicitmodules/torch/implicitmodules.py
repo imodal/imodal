@@ -1,9 +1,9 @@
 import torch
 
+from implicitmodules.torch.Manifolds import Stiefel, Landmarks
+from implicitmodules.torch.structuredfield import StructuredField_0, StructuredField_p
 from .deformationmodules import DeformationModule
 from .kernels import K_xx, K_xy, compute_sks, eta
-from .manifold import Landmarks, Stiefel
-from .structuredfield import StructuredField_0, StructuredField_p
 
 
 class ImplicitModule0(DeformationModule):

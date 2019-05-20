@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.Manifolds.Stiefel import Stiefel as n_Stiefel
-from implicitmodules.torch.manifold import Stiefel as t_Stiefel
+from implicitmodules.torch.Manifolds.Stiefel import Stiefel as t_Stiefel
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0 as n_StructuredField_0
 from implicitmodules.torch.structuredfield import StructuredField_0 as t_StructuredField_0
 

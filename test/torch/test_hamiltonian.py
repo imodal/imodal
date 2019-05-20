@@ -15,9 +15,9 @@ class TestHamiltonian(unittest.TestCase):
     def setUp(self):
         self.nb_pts = 10
         self.sigma = 0.5
-        self.gd = 100.*torch.rand(self.nb_pts, 2).view(-1)
-        self.mom = 100.*torch.rand_like(self.gd).view(-1)
-        self.landmarks = im.manifold.Landmarks(2, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.gd = 100. * torch.rand(self.nb_pts, 2).view(-1)
+        self.mom = 100. * torch.rand_like(self.gd).view(-1)
+        self.landmarks = im.Manifolds.Landmarks(2, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.controls = 100.*torch.rand_like(self.gd)
 
         self.trans = im.deformationmodules.Translations(self.landmarks, self.sigma)
@@ -94,17 +94,17 @@ class TestHamiltonianCompound(unittest.TestCase):
         self.nb_pts_trans = 10
         self.nb_pts_silent = 15
         self.sigma = 0.5
-        
-        self.gd_trans = 100.*torch.rand(self.nb_pts_trans, 2).view(-1)
-        self.mom_trans = 100.*torch.rand_like(self.gd_trans).view(-1)
-        self.gd_silent = 100.*torch.rand(self.nb_pts_silent, 2).view(-1)
-        self.mom_silent = 100.*torch.rand_like(self.gd_silent).view(-1)
+
+        self.gd_trans = 100. * torch.rand(self.nb_pts_trans, 2).view(-1)
+        self.mom_trans = 100. * torch.rand_like(self.gd_trans).view(-1)
+        self.gd_silent = 100. * torch.rand(self.nb_pts_silent, 2).view(-1)
+        self.mom_silent = 100. * torch.rand_like(self.gd_silent).view(-1)
         self.gd = [self.gd_trans, self.gd_silent]
         self.mom = [self.mom_trans, self.mom_silent]
 
-        self.landmarks_trans = im.manifold.Landmarks(2, self.nb_pts_trans, gd=self.gd_trans, cotan=self.mom_trans)
-        self.landmarks_silent = im.manifold.Landmarks(2, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
-        self.controls_trans = 100.*torch.rand_like(self.gd_trans)
+        self.landmarks_trans = im.Manifolds.Landmarks(2, self.nb_pts_trans, gd=self.gd_trans, cotan=self.mom_trans)
+        self.landmarks_silent = im.Manifolds.Landmarks(2, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
+        self.controls_trans = 100. * torch.rand_like(self.gd_trans)
         self.controls_silent = torch.tensor([])
         self.controls = [self.controls_trans, self.controls_silent]
 

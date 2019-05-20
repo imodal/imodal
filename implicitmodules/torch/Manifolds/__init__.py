@@ -1,3 +1,3 @@
 from .Compound import CompoundManifold
-from .Landmark import Landmark
+from .Landmark import Landmarks
 from .Stiefel import Stiefel

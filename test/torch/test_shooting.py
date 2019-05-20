@@ -18,7 +18,7 @@ class TestShooting(unittest.TestCase):
         self.m = 4
         self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
         self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.landmarks = im.manifold.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
         self.trans = im.deformationmodules.Translations(self.landmarks, 0.5)
         self.h = im.hamiltonian.Hamiltonian([self.trans])
         self.method = "rk4"
@@ -87,7 +87,7 @@ class TestShootingEuler(unittest.TestCase):
         self.m = 4
         self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
         self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.landmarks = im.manifold.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
         self.trans = im.deformationmodules.Translations(self.landmarks, 0.5)
         self.h = im.hamiltonian.Hamiltonian([self.trans])
         self.method = "torch_euler"

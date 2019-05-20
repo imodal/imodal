@@ -1,10 +1,10 @@
 import numpy as np
 
-import implicitmodules.numpy.Manifolds.Abstract as ab
 import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
+from implicitmodules.numpy.Manifolds.Abstract import Manifold
 
 
-class CompoundManifold(ab.Manifold):
+class CompoundManifold(Manifold):
     def __init__(self, GD_list):  # tested 0
         self.GD_list = GD_list
         self.N_GDs = len(self.GD_list)

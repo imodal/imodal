@@ -3,9 +3,9 @@ from collections import Iterable
 
 import torch
 
-from .kernels import K_xx, K_xy
-from .manifold import Landmarks, CompoundManifold
-from .structuredfield import StructuredField_Null, StructuredField_0, CompoundStructuredField
+from implicitmodules.torch.Manifolds import Landmarks, CompoundManifold
+from implicitmodules.torch.kernels import K_xx, K_xy
+from implicitmodules.torch.structuredfield import StructuredField_Null, StructuredField_0, CompoundStructuredField
 
 
 class DeformationModule:

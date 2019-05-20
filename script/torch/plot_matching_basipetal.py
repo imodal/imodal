@@ -88,7 +88,7 @@ sigma0 = 15.
 nu0 = 0.001
 coeff0 = 100.
 implicit0 = im.implicitmodules.ImplicitModule0(
-    im.manifold.Landmarks(2, pos_implicit0.shape[0], gd=pos_implicit0.view(-1).requires_grad_()), sigma0, nu0, coeff0)
+    im.Manifolds.Landmarks(2, pos_implicit0.shape[0], gd=pos_implicit0.view(-1).requires_grad_()), sigma0, nu0, coeff0)
 
 my_plot(pos_implicit0.detach().numpy(), title="Silent Module", col='*b')
 
@@ -98,7 +98,7 @@ sigma00 = 400.
 nu00 = 0.001
 coeff00 = 0.01
 implicit00 = im.implicitmodules.ImplicitModule0(
-    im.manifold.Landmarks(2, 1, gd=torch.tensor([0., 0.], requires_grad=True)), sigma00, nu00, coeff00)
+    im.Manifolds.Landmarks(2, 1, gd=torch.tensor([0., 0.], requires_grad=True)), sigma00, nu00, coeff00)
 
 my_plot(torch.tensor([[0., 0.]]).detach().numpy(), title="Silent Module", col='+r')
 
@@ -117,8 +117,8 @@ th = 0. * math.pi * torch.ones(pos_implicit1.shape[0])
 R = torch.stack([im.usefulfunctions.rot2d(t) for t in th])
 
 implicit1 = im.implicitmodules.ImplicitModule1(
-    im.manifold.Stiefel(2, pos_implicit1.shape[0],
-                        gd=(pos_implicit1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
+    im.Manifolds.Stiefel(2, pos_implicit1.shape[0],
+                         gd=(pos_implicit1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
     C,
     sigma1,
     nu1,

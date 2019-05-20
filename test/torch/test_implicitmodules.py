@@ -20,7 +20,7 @@ class TestImplicitModule0(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = im.deformationmodules.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.implicit = im.implicitmodules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
 
     def test_call(self):
@@ -114,7 +114,7 @@ class TestImplicitModule1(unittest.TestCase):
         self.gd = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
         self.tan = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
         self.cotan = (torch.rand(self.nb_pts, 2).view(-1), torch.rand(self.nb_pts, 2, 2).view(-1))
-        self.stiefel = im.manifold.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+        self.stiefel = im.Manifolds.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
         self.dim_controls = 2
         self.controls = torch.rand(self.dim_controls)
         self.C = torch.rand(self.nb_pts, self.dim, self.dim_controls)

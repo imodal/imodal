@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
+import time
 import torch
 
 import implicitmodules.torch as im
@@ -26,11 +27,12 @@ def simple_shooting(method, it):
     R = torch.rand(nb_pts_order1, 2, 2)
 
     silent = im.deformationmodules.SilentPoints(
-        im.manifold.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
+        im.Manifolds.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
     order0 = im.implicitmodules.ImplicitModule0(
-        im.manifold.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
+        im.Manifolds.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
     order1 = im.implicitmodules.ImplicitModule1(
-        im.manifold.Stiefel(dim, nb_pts_order1, gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
+        im.Manifolds.Stiefel(dim, nb_pts_order1,
+                             gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
         C, sigma, nu, coeff)
 
     im.shooting.shoot(im.hamiltonian.Hamiltonian([order1]), it=it, method=method)
@@ -65,5 +67,3 @@ method_summary("torch_euler", 10, 1)
 for i in range(10):
     method_summary("rk4", i+1, 1)
 
-if __name__ == '__main__':
-    unittest.main()

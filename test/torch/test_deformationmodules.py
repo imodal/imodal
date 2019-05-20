@@ -19,7 +19,7 @@ class TestTranslations2D(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = im.deformationmodules.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.trans = im.deformationmodules.Translations(self.landmarks, self.sigma)
 
     def test_call(self):
@@ -112,7 +112,7 @@ class TestSilentPoints2D(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = im.manifold.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
         self.silent_points = im.deformationmodules.SilentPoints(self.landmarks)
         self.silent_points.fill_controls(self.controls)
 
@@ -192,10 +192,10 @@ class CompoundTest2D(unittest.TestCase):
         self.mom_trans = torch.rand(self.nb_pts_trans, self.dim).view(-1)
         self.gd_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
         self.mom_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
-        self.landmarks_trans = im.manifold.Landmarks(self.dim, self.nb_pts_trans, gd=self.gd_trans,
-                                                     cotan=self.mom_trans)
-        self.landmarks_silent = im.manifold.Landmarks(self.dim, self.nb_pts_silent, gd=self.gd_silent,
-                                                      cotan=self.mom_silent)
+        self.landmarks_trans = im.Manifolds.Landmarks(self.dim, self.nb_pts_trans, gd=self.gd_trans,
+                                                      cotan=self.mom_trans)
+        self.landmarks_silent = im.Manifolds.Landmarks(self.dim, self.nb_pts_silent, gd=self.gd_silent,
+                                                       cotan=self.mom_silent)
         self.trans = im.deformationmodules.Translations(self.landmarks_trans, self.sigma)
         self.silent = im.deformationmodules.SilentPoints(self.landmarks_silent)
         self.compound = im.deformationmodules.CompoundModule([self.silent, self.trans])
