@@ -1,13 +1,13 @@
 import numpy as np
 
-import implicitmodules.numpy.StructuredFields.Abstract as ab
+from implicitmodules.numpy.StructuredFields.Abstract import StructuredField
 
 
 def sum_structured_fields(fields_list):
     return Summed_field(fields_list)
 
 
-class Summed_field(ab.StructuredField):
+class Summed_field(StructuredField):
     def __init__(self, fields_list):
         self.N_fields = len(fields_list)
         self.fields_list = fields_list
