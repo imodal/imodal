@@ -67,7 +67,7 @@ class ImplicitModule0(DeformationModule):
         return 0.5 * self.__coeff * torch.dot(m.view(-1), self.__controls.view(-1))
     
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from \delta \in H^\ast."""
+        r"""Computes geodesic control from \delta \in H^\ast."""
         vs = self.adjoint(man)
         K_q = K_xx(self.manifold.gd.view(-1, self.__manifold.dim), self.__sigma) + self.__nu * torch.eye(
             self.__manifold.nb_pts)
