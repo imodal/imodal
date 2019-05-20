@@ -23,7 +23,7 @@ class TestHamiltonian(unittest.TestCase):
         self.trans = im.DeformationModules.Translations(self.landmarks, self.sigma)
         self.trans.fill_controls(self.controls)
 
-        self.h = im.hamiltonian.Hamiltonian([self.trans])
+        self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
 
     def test_good_init(self):
         self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)
@@ -112,7 +112,7 @@ class TestHamiltonianCompound(unittest.TestCase):
         self.trans.fill_controls(self.controls[0])
         self.silent = im.DeformationModules.SilentLandmarks(self.landmarks_silent)
 
-        self.h = im.hamiltonian.Hamiltonian([self.trans, self.silent])
+        self.h = im.HamiltonianDynamic.Hamiltonian([self.trans, self.silent])
 
     def test_good_init(self):
         self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)

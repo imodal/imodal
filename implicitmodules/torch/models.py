@@ -1,10 +1,9 @@
 import torch
 import torch.optim
 
-from implicitmodules.torch.DeformationModules.Combination import CompoundModule
-from implicitmodules.torch.DeformationModules.SilentLandmark import SilentLandmarks
+from implicitmodules.torch.DeformationModules import CompoundModule, SilentLandmarks
+from implicitmodules.torch.HamiltonianDynamic import Hamiltonian
 from implicitmodules.torch.Manifolds import Landmarks
-from .hamiltonian import Hamiltonian
 from .kernels import distances, scal
 from .sampling import sample_from_greyscale, deformed_intensities
 from .shooting import shoot

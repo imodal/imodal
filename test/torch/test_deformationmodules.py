@@ -97,7 +97,7 @@ class TestTranslations2D(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.trans.fill_controls(torch.zeros_like(self.trans.controls, requires_grad=True))
-        h = im.hamiltonian.Hamiltonian([self.trans])
+        h = im.HamiltonianDynamic.Hamiltonian([self.trans])
         h.geodesic_controls()
 
         [d_controls] = torch.autograd.grad(h(), [self.trans.controls])
@@ -284,7 +284,7 @@ class CompoundTest2D(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.compound.fill_controls([torch.tensor([]), torch.zeros_like(self.compound[1].controls, requires_grad=True)])
-        h = im.hamiltonian.Hamiltonian(self.compound)
+        h = im.HamiltonianDynamic.Hamiltonian(self.compound)
         h.geodesic_controls()
 
         [d_controls_silent, d_controls_trans] = torch.autograd.grad(h(), self.compound.controls, allow_unused=True)

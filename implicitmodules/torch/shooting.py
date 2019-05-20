@@ -2,7 +2,7 @@ import torch
 from torch.autograd import grad
 from torchdiffeq import odeint as odeint
 
-from .hamiltonian import Hamiltonian
+from implicitmodules.torch.HamiltonianDynamic import Hamiltonian
 
 
 def shoot(h, it, method):

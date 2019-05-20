@@ -35,7 +35,7 @@ def simple_shooting(method, it):
                              gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
         C, sigma, nu, coeff)
 
-    im.shooting.shoot(im.hamiltonian.Hamiltonian([order1]), it=it, method=method)
+    im.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it, method=method)
 
     return [silent.manifold.gd, order0.manifold.gd, order1.manifold.gd[0]]
 

@@ -1,8 +1,8 @@
 import implicitmodules.torch.DeformationModules
+import implicitmodules.torch.HamiltonianDynamic
 import implicitmodules.torch.Manifolds
 import implicitmodules.torch.StructuredFields
 from . import attachement
-from . import hamiltonian
 from . import implicitmodules
 from . import kernels
 from . import models

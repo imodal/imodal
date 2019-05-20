@@ -98,7 +98,7 @@ class TestImplicitModule0(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.implicit.fill_controls(torch.zeros_like(self.implicit.controls, requires_grad=True))
-        h = im.hamiltonian.Hamiltonian([self.implicit])
+        h = im.HamiltonianDynamic.Hamiltonian([self.implicit])
         h.geodesic_controls()
 
         [d_controls] = torch.autograd.grad(h(), [self.implicit.controls])
@@ -176,7 +176,7 @@ class TestImplicitModule1(unittest.TestCase):
     # TODO: Gradcheck
     def test_hamiltonian_control_grad_zero(self):
         self.implicit.fill_controls(torch.zeros_like(self.implicit.controls, requires_grad=True))
-        h = im.hamiltonian.Hamiltonian([self.implicit])
+        h = im.HamiltonianDynamic.Hamiltonian([self.implicit])
         h.geodesic_controls()
         h.module[0].fill_controls(h.module[0].controls.requires_grad_())
 
