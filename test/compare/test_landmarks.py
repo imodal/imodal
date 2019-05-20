@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import torch
 
-from implicitmodules.numpy.Manifolds.Landmark import GD_landmark
+from implicitmodules.numpy.Manifolds.Landmark import Landmark
 from implicitmodules.torch.manifold import Landmarks
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0 as n_StructuredField_0
 from implicitmodules.torch.structuredfield import StructuredField_0 as t_StructuredField_0
@@ -23,7 +23,7 @@ class TestCompareLandmarks(unittest.TestCase):
         self.cotan = np.random.rand(self.nb_pts, self.dim)
 
         self.torch_landmarks = Landmarks(self.dim, self.nb_pts, gd=torch.tensor(self.gd).view(-1), cotan=torch.tensor(self.cotan).view(-1))
-        self.numpy_landmarks = GD_landmark(self.nb_pts, self.dim)
+        self.numpy_landmarks = Landmark(self.nb_pts, self.dim)
         self.numpy_landmarks.fill_cot_from_param((self.gd, self.cotan))
 
     def test_inner_prod_field(self):

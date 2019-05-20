@@ -18,7 +18,7 @@ class GlobalRotation(ab.DeformationModule):
         """
         self.dim = dim
         self.coeff = coeff
-        self.GD = GeoDescr.GD_landmark(1, dim)
+        self.GD = GeoDescr.Landmark(1, dim)
         self.Cont = np.zeros([1])
         self.cost = 0.
     

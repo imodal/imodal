@@ -1,7 +1,7 @@
 import numpy as np
 
 from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
-from implicitmodules.numpy.Manifolds import GD_landmark
+from implicitmodules.numpy.Manifolds import Landmark
 from implicitmodules.numpy.StructuredFields import StructuredField_Null
 
 
@@ -18,7 +18,7 @@ class SilentLandmark(DeformationModule):
         """
         self.N_pts = N_pts
         self.dim = dim
-        self.GD = GD_landmark(N_pts, dim)
+        self.GD = Landmark(N_pts, dim)
         self.cost = 0.
         self.Cont = np.empty([0])
     

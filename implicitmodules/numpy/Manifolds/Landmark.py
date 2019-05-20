@@ -4,7 +4,7 @@ from implicitmodules.numpy.Manifolds.Abstract import Manifold
 from implicitmodules.numpy.StructuredFields import StructuredField_0
 
 
-class GD_landmark(Manifold):
+class Landmark(Manifold):
     def __init__(self, N_pts, dim):  #
         """
         The GD and Mom are arrays of size N_pts x dim.
@@ -18,10 +18,10 @@ class GD_landmark(Manifold):
         self.dimMom = self.N_pts * self.dim
     
     def copy(self):  #
-        return GD_landmark(self.N_pts, self.dim)
+        return Landmark(self.N_pts, self.dim)
     
     def copy_full(self):  #
-        GD = GD_landmark(self.N_pts, self.dim)
+        GD = Landmark(self.N_pts, self.dim)
         GD.GD = self.GD.copy()
         GD.tan = self.tan.copy()
         GD.cotan = self.cotan.copy()

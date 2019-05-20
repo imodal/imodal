@@ -3,7 +3,7 @@ from scipy.linalg import solve
 
 from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
 from implicitmodules.numpy.Kernels import ScalarGaussian as ker
-from implicitmodules.numpy.Manifolds import GD_landmark
+from implicitmodules.numpy.Manifolds import Landmark
 from implicitmodules.numpy.StructuredFields.StructuredField_0 import StructuredField_0
 
 
@@ -23,7 +23,7 @@ class ElasticOrder0(DeformationModule):
         self.dim = dim
         self.coeff = coeff
         self.nu = nu
-        self.GD = GD_landmark(N_pts, dim)
+        self.GD = Landmark(N_pts, dim)
         self.SKS = np.zeros([self.N_pts * self.dim, self.N_pts * self.dim])
         self.Mom = np.zeros([self.N_pts, self.dim])
         self.Cont = np.zeros([self.N_pts, self.dim])

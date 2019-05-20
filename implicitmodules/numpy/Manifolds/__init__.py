@@ -1,2 +1,2 @@
-from .Landmark import GD_landmark
+from .Landmark import Landmark
 from .Stiefel import Stiefel

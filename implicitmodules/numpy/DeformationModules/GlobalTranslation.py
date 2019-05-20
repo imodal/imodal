@@ -1,7 +1,7 @@
 import numpy as np
 
 from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
-from implicitmodules.numpy.Manifolds import GD_landmark
+from implicitmodules.numpy.Manifolds import Landmark
 from implicitmodules.numpy.StructuredFields import ConstantField
 
 
@@ -16,7 +16,7 @@ class GlobalTranslation(DeformationModule):
         """
         self.dim = dim
         self.coeff = coeff
-        self.GD = GD_landmark(1, dim)
+        self.GD = Landmark(1, dim)
         self.Cont = np.zeros([self.dim])
         self.cost = 0.
     
