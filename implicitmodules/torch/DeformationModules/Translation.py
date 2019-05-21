@@ -1,9 +1,9 @@
 import torch
 
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
+from implicitmodules.torch.Kernels.kernels import K_xy, K_xx
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_0
-from implicitmodules.torch.kernels import K_xy, K_xx
 
 
 class Translations(DeformationModule):
@@ -60,7 +60,7 @@ class Translations(DeformationModule):
         """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
         K_q = K_xx(self.manifold.gd.view(-1, self.__manifold.dim), self.__sigma)
-        controls, _ = torch.gesv(vs(self.manifold.gd.view(-1, self.manifold.dim)), K_q)
+        controls, _ = torch.solve(vs(self.manifold.gd.view(-1, self.manifold.dim)), K_q)
         self.__controls = controls.contiguous().view(-1)
     
     def field_generator(self):

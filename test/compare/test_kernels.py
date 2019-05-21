@@ -9,7 +9,8 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.Kernels.ScalarGaussian import my_vker, my_K, my_xmy
-from implicitmodules.torch.kernels import gauss_kernel, compute_sks, rel_differences
+from implicitmodules.torch.Kernels import gauss_kernel, rel_differences
+from implicitmodules.torch.Kernels.SKS import compute_sks
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 

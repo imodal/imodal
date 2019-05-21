@@ -3,8 +3,8 @@ from collections import Iterable
 import geomloss
 import torch
 
-from .kernels import distances, scal
-from .usefulfunctions import close_shape
+from implicitmodules.torch.Kernels.kernels import distances, scal
+from implicitmodules.torch.Utilities.usefulfunctions import close_shape
 
 
 class Attachement:
@@ -47,7 +47,7 @@ class VarifoldAttachement(Attachement):
 
     @property
     def sigmas(self):
-        return sigmas
+        return self.__sigmas
 
     def __cost_varifold(self, x, y, sigma):
         def dot_varifold(x, y, sigma):
@@ -86,10 +86,10 @@ class GeomlossAttachement(Attachement):
     def loss(self, x, y):
         return self.__geomloss.loss(x, y)
 
+
 class PointwiseDistanceAttachement(Attachement):
     def __init__(self, norm='L1'):
         super().__init__()
 
     def loss(self, x, y):
         return torch.sum(torch.norm(x[0]-y[0], dim=1))
-

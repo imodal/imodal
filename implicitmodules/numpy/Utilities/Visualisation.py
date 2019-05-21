@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Ellipse
 
-import implicitmodules.torch as im
-
 
 def my_close(x):
     N = x.shape[0]
@@ -40,8 +38,8 @@ def my_plot4(Mod0, Mod1, Cot, fig, nx, ny, name, i):
 # helper function
 def my_plot(x, ellipse=[], angles=[], title="", col='*b'):
     _, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
-    
-    aabb = im.usefulfunctions.AABB.build_from_points(x)
+
+    aabb = implicitmodules.torch.Utilities.usefulfunctions.AABB.build_from_points(x)
     aabb.squared()
     
     ax.set_aspect('equal')

@@ -78,7 +78,7 @@ a, b = -2 / L ** 3, 3 / L ** 2
 C[:, 1, 0] = (K * (a * (L - pos_implicit1[:, 1] + Dy) ** 3 + b * (L - pos_implicit1[:, 1] + Dy) ** 2))
 C[:, 0, 0] = 1. * C[:, 1, 0]
 th = 0. * torch.ones(pos_implicit1.shape[0])
-R = torch.stack([im.usefulfunctions.rot2d(t) for t in th])
+R = torch.stack([im.Utilities.usefulfunctions.rot2d(t) for t in th])
 
 implicit1 = im.DeformationModules.ImplicitModule1(
     im.Manifolds.Stiefel(2, pos_implicit1.shape[0],
@@ -96,11 +96,11 @@ implicit1 = im.DeformationModules.ImplicitModule1(
 # Setting up the model and start the fitting loop
 #
 
-model = im.models.ModelCompoundWithPointsRegistration(
+model = im.Models.ModelCompoundWithPointsRegistration(
     (pos_source, torch.ones(pos_source.shape[0])),
     [implicit0, implicit00, implicit1],
     [True, True, True],
-    im.attachement.VarifoldAttachement([10., 50.])
+    im.Attachment.VarifoldAttachement([10., 50.])
 )
 
 # costs = model.fit((pos_target, torch.ones(pos_target.shape[0])), max_iter=40, l=1., lr=5e-1, log_interval=1)
