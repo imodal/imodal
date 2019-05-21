@@ -9,7 +9,6 @@ from . import kernels
 from . import models
 from . import sampling
 from . import usefulfunctions
-from . import globalmodules
 
 __version__ = "0.0.2"
 

@@ -18,7 +18,7 @@ class Translations(DeformationModule):
         self.__controls = torch.zeros(self.__dim_controls, requires_grad=True)
     
     @classmethod
-    def build_and_fill(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None):
+    def build_from_points(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma)
     
