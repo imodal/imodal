@@ -1,10 +1,10 @@
 import numpy as np
 
-import implicitmodules.numpy.GeometricalDescriptors.Abstract as ab
-import implicitmodules.numpy.StructuredFields.StructuredField_0 as stru_fie
+from implicitmodules.numpy.Manifolds.Abstract import Manifold
+from implicitmodules.numpy.StructuredFields import StructuredField_0
 
 
-class GD_landmark(ab.GeometricalDescriptors):
+class Landmark(Manifold):
     def __init__(self, N_pts, dim):  #
         """
         The GD and Mom are arrays of size N_pts x dim.
@@ -18,10 +18,10 @@ class GD_landmark(ab.GeometricalDescriptors):
         self.dimMom = self.N_pts * self.dim
     
     def copy(self):  #
-        return GD_landmark(self.N_pts, self.dim)
+        return Landmark(self.N_pts, self.dim)
     
     def copy_full(self):  #
-        GD = GD_landmark(self.N_pts, self.dim)
+        GD = Landmark(self.N_pts, self.dim)
         GD.GD = self.GD.copy()
         GD.tan = self.tan.copy()
         GD.cotan = self.cotan.copy()
@@ -55,17 +55,16 @@ class GD_landmark(ab.GeometricalDescriptors):
         self.cotan = param[1].copy()
     
     def Cot_to_Vs(self, sig):
-        v = stru_fie.StructuredField_0(sig, self.N_pts, self.dim)
-        v.fill_fieldparam((self.GD, self.cotan))
+        v = StructuredField_0(self.GD, self.cotan, sig)
         return v
-    
-    def Ximv(self, v):
+
+    def infinitesimal_action(self, v):
         """
         xi_m ()
         
         """
         pts = self.get_points()
-        appli = v.Apply(pts, 0)
+        appli = v(pts, 0)
         out = self.copy_full()
         out.fill_zero_cotan()
         out.tan = appli.copy()
@@ -74,11 +73,11 @@ class GD_landmark(ab.GeometricalDescriptors):
     def dCotDotV(self, vs):  #
         """
         Supposes that Cot has been filled
-        derivates (p Ximv(m,v)) wrt m
+        derivates (p infinitesimal_action(m,v)) wrt m
         """
         x = self.get_points()
         p = self.get_mom()
-        der = vs.Apply(x, 1)
+        der = vs(x, 1)
         
         dx = np.asarray([np.dot(p[i], der[i]) for i in range(x.shape[0])])
         
@@ -88,7 +87,7 @@ class GD_landmark(ab.GeometricalDescriptors):
         return GD
     
     def inner_prod_v(self, v):  # tested
-        dGD = self.Ximv(v)
+        dGD = self.infinitesimal_action(v)
         dpts = dGD.tan
         mom = self.get_mom()
         return np.dot(mom.flatten(), dpts.flatten())

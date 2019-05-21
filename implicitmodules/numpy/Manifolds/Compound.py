@@ -1,10 +1,10 @@
 import numpy as np
 
-import implicitmodules.numpy.GeometricalDescriptors.Abstract as ab
-import implicitmodules.numpy.StructuredFields.Sum as stru_fie_sum
+from implicitmodules.numpy.Manifolds.Abstract import Manifold
+from implicitmodules.numpy.StructuredFields import Sum
 
 
-class Combine_GD(ab.GeometricalDescriptors):
+class CompoundManifold(Manifold):
     def __init__(self, GD_list):  # tested 0
         self.GD_list = GD_list
         self.N_GDs = len(self.GD_list)
@@ -14,7 +14,7 @@ class Combine_GD(ab.GeometricalDescriptors):
         GD_list = []
         for i in range(self.N_GDs):
             GD_list.append(self.GD_list[i].copy())
-        GD = Combine_GD(GD_list)
+        GD = CompoundManifold(GD_list)
         # GD.indi_0 = self.indi_0.copy()
         # GD.indi_xR = self.indi_xR.copy()
         return GD
@@ -23,7 +23,7 @@ class Combine_GD(ab.GeometricalDescriptors):
         GD_list = []
         for i in range(self.N_GDs):
             GD_list.append(self.GD_list[i].copy_full())
-        GD_comb = Combine_GD(GD_list)
+        GD_comb = CompoundManifold(GD_list)
         # GD_comb.indi_0 = self.indi_0.copy()
         # GD_comb.indi_xR = self.indi_xR.copy()
         # GD_comb.fill_cot_from_GD()
@@ -55,21 +55,21 @@ class Combine_GD(ab.GeometricalDescriptors):
         Supposes that Cot has been filled
         """
         v_list = [self.GD_list[i].Cot_to_Vs(sig) for i in range(self.N_GDs)]
-        return stru_fie_sum.sum_structured_fields(v_list)
-    
-    def Ximv(self, v):
+        return Sum.sum_structured_fields(v_list)
+
+    def infinitesimal_action(self, v):
         """
         xi_m ()
         
         """
-        return Combine_GD([GDi.Ximv(v) for GDi in self.GD_list])
+        return CompoundManifold([GDi.infinitesimal_action(v) for GDi in self.GD_list])
     
     def dCotDotV(self, vs):  #
         """
         Supposes that Cot has been filled
-        (p Ximv(m,v)) wrt m
+        (p infinitesimal_action(m,v)) wrt m
         """
-        return Combine_GD([GDi.dCotDotV(vs) for GDi in self.GD_list])
+        return CompoundManifold([GDi.dCotDotV(vs) for GDi in self.GD_list])
     
     def inner_prod_v(self, v):  # tested0
         return sum([GD_i.inner_prod_v(v) for GD_i in self.GD_list])

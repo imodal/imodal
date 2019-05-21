@@ -18,13 +18,13 @@ class TestShooting(unittest.TestCase):
         self.m = 4
         self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
         self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.landmarks = im.manifold.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
-        self.trans = im.deformationmodules.Translations(self.landmarks, 0.5)
-        self.h = im.hamiltonian.Hamiltonian([self.trans])
+        self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
+        self.trans = im.DeformationModules.Translations(self.landmarks, 0.5)
+        self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
         self.method = "rk4"
 
     def test_shooting(self):
-        intermediates = im.shooting.shoot(self.h, self.it, self.method)
+        intermediates = im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertIsInstance(self.h.module.manifold.gd, list)
         self.assertIsInstance(self.h.module.manifold.gd[0], torch.Tensor)
@@ -39,13 +39,13 @@ class TestShooting(unittest.TestCase):
     def test_shooting_zero(self):
         mom = torch.zeros_like(self.mom, requires_grad=True)
         self.h.module.manifold.fill_cotan([mom])
-        im.shooting.shoot(self.h, self.it, self.method)
+        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertTrue(torch.allclose(self.h.module.manifold.gd[0], self.gd))
         self.assertTrue(torch.allclose(self.h.module.manifold.cotan[0], mom))
 
     def test_shooting_rand(self):
-        im.shooting.shoot(self.h, self.it, self.method)
+        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertFalse(torch.allclose(self.h.module.manifold.gd[0], self.gd[0]))
         self.assertFalse(torch.allclose(self.h.module.manifold.cotan[0], self.mom[0]))
@@ -69,7 +69,7 @@ class TestShooting(unittest.TestCase):
             self.h.module.manifold.fill_gd([gd])
             self.h.module.manifold.fill_cotan([mom])
 
-            im.shooting.shoot(self.h, self.it, self.method)
+            im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
             return self.h.module.manifold.gd[0], self.h.module.manifold.cotan[0]
 
@@ -87,13 +87,13 @@ class TestShootingEuler(unittest.TestCase):
         self.m = 4
         self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
         self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.landmarks = im.manifold.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
-        self.trans = im.deformationmodules.Translations(self.landmarks, 0.5)
-        self.h = im.hamiltonian.Hamiltonian([self.trans])
+        self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
+        self.trans = im.DeformationModules.Translations(self.landmarks, 0.5)
+        self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
         self.method = "torch_euler"
 
     def test_shooting(self):
-        intermediates = im.shooting.shoot(self.h, self.it, self.method)
+        intermediates = im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertIsInstance(self.h.module.manifold.gd, list)
         self.assertIsInstance(self.h.module.manifold.gd[0], torch.Tensor)
@@ -108,13 +108,13 @@ class TestShootingEuler(unittest.TestCase):
     def test_shooting_zero(self):
         mom = torch.zeros_like(self.mom, requires_grad=True)
         self.h.module.manifold.fill_cotan([mom])
-        im.shooting.shoot(self.h, self.it, self.method)
+        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertTrue(torch.allclose(self.h.module.manifold.gd[0], self.gd))
         self.assertTrue(torch.allclose(self.h.module.manifold.cotan[0], mom))
 
     def test_shooting_rand(self):
-        im.shooting.shoot(self.h, self.it, self.method)
+        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
         self.assertFalse(torch.allclose(self.h.module.manifold.gd[0], self.gd[0]))
         self.assertFalse(torch.allclose(self.h.module.manifold.cotan[0], self.mom[0]))
@@ -124,7 +124,7 @@ class TestShootingEuler(unittest.TestCase):
             self.h.module.manifold.fill_gd([gd])
             self.h.module.manifold.fill_cotan([mom])
 
-            im.shooting.shoot(self.h, self.it, self.method)
+            im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
 
             return self.h.module.manifold.gd[0], self.h.module.manifold.cotan[0]
 

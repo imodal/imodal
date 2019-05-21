@@ -1,14 +1,14 @@
+import os.path
 import sys
-sys.path.append("../")
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 import unittest
 
 import numpy as np
 import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
-from implicitmodules.torch.implicitmodules import ImplicitModule1
-from implicitmodules.torch.manifold import Stiefel
+from implicitmodules.torch.DeformationModules.ElasticOrder1 import ImplicitModule1
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -55,7 +55,10 @@ class TestCompareImplicitModules1(unittest.TestCase):
 
         points = np.random.rand(nb_pts, 2)
         speed_torch = self.implicit1_torch(torch.tensor(points))
-        speed_numpy = self.implicit1_numpy.field_generator_curr().Apply(points, 0)
+        speed_numpy = self.implicit1_numpy.field_generator_curr()(points, 0)
 
         self.assertTrue(np.allclose(speed_torch.numpy(), speed_numpy))
 
+
+if __name__ == '__main__':
+    unittest.main()

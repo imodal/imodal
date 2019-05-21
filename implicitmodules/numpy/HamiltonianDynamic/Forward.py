@@ -1,4 +1,4 @@
-import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
+import implicitmodules.numpy.HamiltonianDynamic.Hamiltonianderivatives as HamDer
 
 
 def forward_step(Mod, step):
@@ -24,8 +24,7 @@ def forward_step(Mod, step):
 
 def forward_step_rk2(Mod, step):
     Mod1 = Mod.copy_full()
-    forward_step(Mod1, 0.5 * step)
-    
+    forward_step(Mod1, step / 2)
     Mod1.update()
     Mod1.GeodesicControls_curr(Mod1.GD)
     
@@ -33,9 +32,7 @@ def forward_step_rk2(Mod, step):
     dpH = HamDer.dpH(Mod1)
     
     dxH.mult_cotan_scal(step)
-    # dxH.mult_GD_scal(step)
     dpH.mult_tan_scal(step)
-    # dpH.mult_tan_scal(step)
     
     Mod.add_cotan(dxH)
     Mod.add_speedGD(dpH)
@@ -62,8 +59,8 @@ def shooting(Mod, N_int):
 def shooting_traj(Mod, N_int):
     """
     Supposes that Cot is filled
-    
     """
+    
     step = 1. / N_int
     Mod.update()
     Mod.GeodesicControls_curr(Mod.GD)
@@ -87,7 +84,7 @@ def shooting_from_cont_traj(Mod, Contlist, N_int):
     step = 1. / N_int
     # print(Contlist[0])
     for i in range(N_int):
-        # speed = Mod.GD.Ximv(Mod.field_generator_curr())
+        # speed = Mod.GD.infinitesimal_action(Mod.field_generator_curr())
         
         Modtmp = Mod.copy_full()
         Modtmp.update()
@@ -99,7 +96,7 @@ def shooting_from_cont_traj(Mod, Contlist, N_int):
         # print(Contlist[2 * i + 1])
         # print(Modtmp.Cont)
         Mod_list.append(Modtmp.copy_full())
-        # speed = Modtmp.GD.Ximv(Modtmp.field_generator_curr())
+        # speed = Modtmp.GD.infinitesimal_action(Modtmp.field_generator_curr())
         speed = HamDer.dpH(Modtmp)
         speed.mult_tan_scal(step)
         Mod.add_speedGD(speed)

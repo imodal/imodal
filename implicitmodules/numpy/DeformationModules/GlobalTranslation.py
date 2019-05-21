@@ -1,11 +1,11 @@
 import numpy as np
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Landmark as GeoDescr
-from implicitmodules.numpy.StructuredFields.ConstantField import ConstantField
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
+from implicitmodules.numpy.Manifolds import Landmark
+from implicitmodules.numpy.StructuredFields import ConstantField
 
 
-class GlobalTranslation(ab.DeformationModule):
+class GlobalTranslation(DeformationModule):
     """
      GlobalTranslation
     """
@@ -16,7 +16,7 @@ class GlobalTranslation(ab.DeformationModule):
         """
         self.dim = dim
         self.coeff = coeff
-        self.GD = GeoDescr.GD_landmark(1, dim)
+        self.GD = Landmark(1, dim)
         self.Cont = np.zeros([self.dim])
         self.cost = 0.
     
@@ -53,8 +53,7 @@ class GlobalTranslation(ab.DeformationModule):
         for i in range(self.dim):
             cont_i = np.zeros([self.dim])
             cont_i[i] = 1.
-            v_i = ConstantField(self.dim)
-            v_i.fill_fieldparam(cont_i)
+            v_i = ConstantField(cont_i)
             Cont_geo[i] = (1. / self.coeff) * GDCot.inner_prod_v(v_i)
         
         self.Cont = Cont_geo.copy()
@@ -63,10 +62,7 @@ class GlobalTranslation(ab.DeformationModule):
         return self.field_generator(self.GD, self.Cont)
     
     def field_generator(self, GD, Cont):
-        param = Cont
-        v = ConstantField(self.dim)
-        v.fill_fieldparam(param)
-        return v
+        return ConstantField(Cont)
     
     def Cost_curr(self):
         p = self.Cont.flatten()

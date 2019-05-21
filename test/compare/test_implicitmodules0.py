@@ -1,5 +1,7 @@
+import os.path
 import sys
-sys.path.append("../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
@@ -7,7 +9,7 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder0 import ElasticOrder0
-from implicitmodules.torch.implicitmodules import ImplicitModule0
+from implicitmodules.torch.DeformationModules.ElasticOrder0 import ImplicitModule0
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -50,7 +52,10 @@ class TestCompareImplicitModules0(unittest.TestCase):
         nb_pts = 100
         points = np.random.rand(nb_pts, 2)
         speed_torch = self.implicit0_torch(torch.tensor(points))
-        speed_numpy = self.implicit0_numpy.field_generator_curr().Apply(points, 0)
+        speed_numpy = self.implicit0_numpy.field_generator_curr()(points, 0)
 
         np.allclose(speed_torch.detach().numpy(), speed_numpy)
 
+
+if __name__ == '__main__':
+    unittest.main()

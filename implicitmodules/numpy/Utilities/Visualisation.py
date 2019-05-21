@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Ellipse
 
+import implicitmodules.torch as im
+
+
 def my_close(x):
     N = x.shape[0]
     z = np.zeros((N + 1, 2))
@@ -38,6 +41,13 @@ def my_plot4(Mod0, Mod1, Cot, fig, nx, ny, name, i):
 def my_plot(x, ellipse=[], angles=[], title="", col='*b'):
     _, ax = plt.subplots(subplot_kw={'aspect': 'equal'})
     
+    aabb = im.usefulfunctions.AABB.build_from_points(x)
+    aabb.squared()
+    
+    ax.set_aspect('equal')
+    ax.axis(aabb.get_list())
+    
+    
     if ellipse == []:
         ax.plot(x[:, 0], x[:, 1], col)
     
@@ -56,10 +66,10 @@ def my_plot(x, ellipse=[], angles=[], title="", col='*b'):
             e.set_alpha(1)
             e.set_facecolor('g')
     
-    m, M = np.min(x, axis=0), np.max(x, axis=0)
+    # ax.set_xlim(m[0] - (M[0] - m[0]) * .2, M[0] + (M[0] - m[0]) * .2)
+    # ax.set_ylim(m[1] - (M[1] - m[1]) * .2, M[1] + (M[1] - m[1]) * .2)
     
-    ax.set_xlim(m[0] - (M[0] - m[0]) * .2, M[0] + (M[0] - m[0]) * .2)
-    ax.set_ylim(m[1] - (M[1] - m[1]) * .2, M[1] + (M[1] - m[1]) * .2)
+    
     
     plt.title(title)
     plt.show()

@@ -1,31 +1,31 @@
 import numpy as np
 
-import implicitmodules.numpy.StructuredFields.Abstract as ab
+from implicitmodules.numpy.StructuredFields.Abstract import StructuredField
 
 
-class ConstantField(ab.StructuredField):
+class ConstantField(StructuredField):
     
-    def __init__(self, dim):  # tested
+    def __init__(self, mom):  # tested
         """
          sigma is the scale of the rkhs to which the field belongs
          support and mom are the parametrization of the vector field
         """
-        self.dim = dim
-        self.mom = np.zeros([1, dim])
+        # self.moments = np.zeros([1, dim]) # TODO : heck this with B.
+        self.moments = mom
     
     def copy(self):
-        v = ConstantField(self.dim)
+        v = ConstantField(self.moments)
         return v
     
     def copy_full(self):
-        v = ConstantField(self.dim)
-        v.mom = self.mom.copy()
+        v = ConstantField(self.moments)
+        v.moments = self.moments.copy()
         return v
     
     def fill_fieldparam(self, param):
-        self.mom = param.copy()
+        self.moments = param.copy()
     
-    def Apply(self, z, j):
+    def __call__(self, z, j):
         """
         Applies the field to points z (or computes the derivative). 
         Needs pre-assigned parametrization of the field in dic
@@ -36,6 +36,6 @@ class ConstantField(ab.StructuredField):
         djv = np.zeros(lsize[j])
         
         if j==0:
-            djv = np.tile(self.mom, [Nz,1])
+            djv = np.tile(self.moments, [Nz, 1])
         
         return djv

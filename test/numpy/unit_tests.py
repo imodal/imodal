@@ -16,11 +16,9 @@ class NumpyUnitTestCase(unittest.TestCase):
         import numpy as np
         import scipy.optimize
 
-        import implicitmodules.numpy.DeformationModules.Combination as comb_mod
-        import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
-        import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
-        import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
-        import implicitmodules.numpy.Forward.Shooting as shoot
+        from implicitmodules.numpy.DeformationModules import CompoundModules
+        from implicitmodules.numpy.DeformationModules import ElasticOrder0, ElasticOrder1, SilentLandmark
+        import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
         import implicitmodules.numpy.Optimisation.ScipyOpti as opti
         from implicitmodules.numpy.Utilities import Rotation as rot
 
@@ -34,8 +32,8 @@ class NumpyUnitTestCase(unittest.TestCase):
         
         nlx[:, 1] = 38.0 - scale * (nlx[:, 1] - lmin)
         nlx[:, 0] = scale * (nlx[:, 0] - np.mean(nlx[:, 0]))
-        
-        # %% target
+
+        # target
         with open(os.path.dirname(os.path.abspath(__file__)) + '/data/basi1t.pkl', 'rb') as f:
             _, lxt = pickle.load(f)
         
@@ -51,29 +49,29 @@ class NumpyUnitTestCase(unittest.TestCase):
         #  common options
         nu = 0.001
         dim = 2
-        
-        # %% Silent Module
+
+        #  Silent Module
         xs = nlx[nlx[:, 2] == 2, 0:2]
         xs = np.delete(xs, 3, axis=0)
-        Sil = defmodsil.SilentLandmark(xs.shape[0], dim)
+        Sil = SilentLandmark(xs.shape[0], dim)
         ps = np.zeros(xs.shape)
         param_sil = (xs, ps)
-        
-        # %% Modules of Order 0
+
+        #  Modules of Order 0
         sig0 = 6
         x0 = nlx[nlx[:, 2] == 1, 0:2]
-        Model0 = defmod0.ElasticOrder0(sig0, x0.shape[0], dim, 1., nu)
+        Model0 = ElasticOrder0(sig0, x0.shape[0], dim, 1., nu)
         p0 = np.zeros(x0.shape)
         param_0 = (x0, p0)
-        
-        # %% Modules of Order 0
+
+        #  Modules of Order 0
         sig00 = 200
         x00 = np.array([[0., 0.]])
-        Model00 = defmod0.ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
+        Model00 = ElasticOrder0(sig00, x00.shape[0], dim, 0.1, nu)
         p00 = np.zeros([1, 2])
         param_00 = (x00, p00)
-        
-        # %% Modules of Order 1
+
+        # Modules of Order 1
         sig1 = 30
         x1 = nlx[nlx[:, 2] == 1, 0:2]
         C = np.zeros((x1.shape[0], 2, 1))
@@ -81,20 +79,20 @@ class NumpyUnitTestCase(unittest.TestCase):
         a, b = -2 / L ** 3, 3 / L ** 2
         C[:, 1, 0] = K * (a * (L - x1[:, 1]) ** 3 + b * (L - x1[:, 1]) ** 2)
         C[:, 0, 0] = 1. * C[:, 1, 0]
-        Model1 = defmod1.ElasticOrder1(sig1, x1.shape[0], dim, 0.01, C, nu)
+        Model1 = ElasticOrder1(sig1, x1.shape[0], dim, 0.01, C, nu)
         
         th = 0 * np.pi * np.ones(x1.shape[0])
         R = np.asarray([rot.my_R(cth) for cth in th])
         
         (p1, PR) = (np.zeros(x1.shape), np.zeros((x1.shape[0], 2, 2)))
         param_1 = ((x1, R), (p1, PR))
-        
-        # %% Full model
-        Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
+
+        #  Full model
+        Module = CompoundModules([Sil, Model00, Model0, Model1])
         Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])
         P0 = opti.fill_Vector_from_GD(Module.GD)
-        
-        # %%
+
+        #
         lam_var = 10.
         sig_var = 30.
         N = 10
@@ -246,7 +244,7 @@ class NumpyUnitTestCase(unittest.TestCase):
         from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
         from implicitmodules.numpy.DeformationModules.SilentLandmark import SilentLandmark
         import implicitmodules.numpy.Utilities.Rotation as rot
-        import implicitmodules.numpy.Forward.Shooting as shoot
+        import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
         
         # %%
         xmin, xmax, ymin, ymax = -5, 5, -5, 5

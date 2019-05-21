@@ -1,7 +1,14 @@
-import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
+import implicitmodules.numpy.HamiltonianDynamic.Hamiltonianderivatives as HamDer
 
 
 def backward_step(Mod, eps, grad):  # tested
+    """
+    Implement the Arguillère's finite difference trick to compute the backward
+        :param Mod:
+    :param eps:
+    :param grad:
+    :return:
+    """
     
     GD_0 = Mod.GD.copy_full()  # n
     GD_1 = Mod.GD.copy_full()  # b
@@ -43,7 +50,7 @@ def backward_step(Mod, eps, grad):  # tested
     Mod_tmp.update()
     Mod_tmp.GeodesicControls_curr(Mod_tmp.GD)
     
-    # Hamiltonian derivatives for GD_0
+    # Hamiltonian derivatives for GD_1
     dxH_1 = HamDer.dxH(Mod_tmp)  # put in cotan, it is -\partial_x
     dxH_1.exchange_tan_cotan()  # now -\partial_x H in tan
     dpH_1 = HamDer.dpH(Mod_tmp)  # put in tan
@@ -68,13 +75,13 @@ def backward_step(Mod, eps, grad):  # tested
 
 def backward_shoot_rk2(Modlist, grad_1, eps):
     """
-    Modlist is the "trajectory" of the module
-    grad_1 is a GD corresponding to the gradient of an attachment term
-    It is seen as a tangent element of the cotangent, 
+    :param Modlist: is the "trajectory" of the module
+    :param grad_1: is a GD corresponding to the gradient of an attachment term
+    It is seen as a tangent element of the cotangent,
     the tangent of GD is in tan and the tangent of cotan is in cotan (vector space)
-    eps in the step for finite differences
-    
+    :param eps: is the step for finite differences
     """
+    
     # Modlist.reverse()
     N_tot = len(Modlist)
     N = int((N_tot - 1) / 2)

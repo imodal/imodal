@@ -15,7 +15,7 @@ import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
 import implicitmodules.numpy.DeformationModules.GlobalRotation as globrot
 import implicitmodules.numpy.DeformationModules.GlobalTranslation as globtrans
 import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
-import implicitmodules.numpy.Forward.Shooting as shoot
+import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
 import implicitmodules.numpy.Optimisation.ScipyOpti_attach as opti
 from implicitmodules.numpy.Utilities import Rotation as rot
 from implicitmodules.numpy.Utilities.Visualisation import my_close
@@ -204,7 +204,7 @@ GD_t.GD = np.array([[5., 1.]])
 GD_t.cotan = 0.001*np.array([[1., -7.]])
 Model00_rot.GeodesicControls_curr(GD_t)
 print(Model00_rot.Cont)
-print(GD_t.Ximv(Model00_rot.field_generator_curr()).tan)
+print(GD_t.infinitesimal_action(Model00_rot.field_generator_curr()).tan)
 #%%
 v0 = Model00_rot.cot_to_innerprod_curr(GD_t, 0)
 v1 = Model00_rot.cot_to_innerprod_curr(GD_t, 1)
@@ -224,7 +224,7 @@ GD_1 = Model1.GD
 GD_1.cotan = [np.random.rand(*x1.shape), np.random.rand(x1.shape[0], 2, 2)]
 vrot = Model00_rot.field_generator_curr()
 
-s1 = GD_1.Ximv(vrot)
+s1 = GD_1.infinitesimal_action(vrot)
 
 v0 = Model00_rot.cot_to_innerprod_curr(GD_1, 0)
 v1 = Model00_rot.cot_to_innerprod_curr(GD_1, 1)
@@ -240,15 +240,15 @@ print(v1.cotan)
 print(diff0, diff1)
 #%%
 x0 = np.array([[1., 0.]])
-speed0 = vrot.Apply(x0, 0)
+speed0 = vrot(x0, 0)
 eps = 0.01
 diff = np.random.rand(1,2)
 x1 = x0 + eps * diff
-speed1 = vrot.Apply(x1, 0)
+speed1 = vrot(x1, 0)
 
 speeddiff = (speed1 - speed0)/eps
 
-speedder = vrot.Apply(np.array([[1., 0.]]), 1)
+speedder = vrot(np.array([[1., 0.]]), 1)
 
 
 print(speeddiff)

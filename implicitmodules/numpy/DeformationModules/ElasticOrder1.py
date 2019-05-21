@@ -1,14 +1,14 @@
 import numpy as np
 from scipy.linalg import solve
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.x_R as GeoDescr
-import implicitmodules.numpy.StructuredFields.StructuredField_p as stru_fiep
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
 from implicitmodules.numpy.Kernels import ScalarGaussian as ker
+from implicitmodules.numpy.Manifolds import Stiefel
+from implicitmodules.numpy.StructuredFields import StructuredField_p
 from implicitmodules.numpy.Utilities import FunctionsEta as fun_eta
 
 
-class ElasticOrder1(ab.DeformationModule):
+class ElasticOrder1(DeformationModule):
     """
      Elastic module of order 0
     """
@@ -27,7 +27,7 @@ class ElasticOrder1(ab.DeformationModule):
         self.nu = nu
         self.dimR = 3
         self.dimcont = C.shape[2]
-        self.GD = GeoDescr.GD_xR(N_pts, dim)
+        self.GD = Stiefel(N_pts, dim)
         self.SKS = np.zeros([self.N_pts * self.dimR, self.N_pts * self.dimR])
         self.Mom = np.zeros([self.N_pts, self.dim, self.dim])
         self.lam = np.zeros([self.N_pts * self.dimR])
@@ -95,7 +95,7 @@ class ElasticOrder1(ab.DeformationModule):
         x = self.GD.get_points()
 
         vs = GDCot.Cot_to_Vs(self.sig)
-        dvsx = vs.Apply(x, 1)
+        dvsx = vs(x, 1)
         dvsx_sym = (dvsx + np.swapaxes(dvsx, 1, 2)) / 2
         S = np.tensordot(dvsx_sym, fun_eta.my_eta())
 
@@ -114,9 +114,7 @@ class ElasticOrder1(ab.DeformationModule):
                                 fun_eta.my_eta().transpose(), axes=1)
 
     def field_generator_curr(self):
-        v = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
-        param = (self.GD.get_points(), self.Mom)
-        v.fill_fieldparam(param)
+        v = StructuredField_p(self.GD.get_points(), self.Mom, self.sig)
         return v
 
     def Cost_curr(self):
@@ -157,15 +155,14 @@ class ElasticOrder1(ab.DeformationModule):
         x = self.GD.get_points()
         R = self.GD.get_R()
 
-        dvx = vsr.Apply(x, 1)
+        dvx = vsr(x, 1)
         dvx_sym = (dvx + np.swapaxes(dvx, 1, 2)) / 2
         S = np.tensordot(dvx_sym, fun_eta.my_eta())
 
         tlam = solve(self.SKS, S.flatten(), sym_pos=True)
         tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes=1)
 
-        tVs = stru_fiep.StructuredField_p(self.sig, self.N_pts, self.dim)
-        tVs.fill_fieldparam((x.copy(), tP.copy()))
+        tVs = StructuredField_p(x.copy(), tP.copy(), self.sig)
 
         der1 = self.p_Ximv_curr(tVs, 1)
         der1.mult_cotan_scal(-1)
@@ -200,11 +197,11 @@ class ElasticOrder1(ab.DeformationModule):
         """
         v_curr = self.field_generator_curr()
         x = v_curr.support
-        P = v_curr.mom
+        P = v_curr.moments
 
         if j == 0:
             out = 0.
-            dvx = vs.Apply(x, j + 1)
+            dvx = vs(x, j + 1)
             dvx = (dvx + np.swapaxes(dvx, 1, 2)) / 2
             # TODO: remove loop
             out += np.sum(np.asarray([np.tensordot(P[i], dvx[i])
@@ -214,7 +211,7 @@ class ElasticOrder1(ab.DeformationModule):
             out = self.GD.copy_full()
             out.fill_zero_tan()
             out.fill_zero_cotan()
-            ddvx = vs.Apply(x, j + 1)
+            ddvx = vs(x, j + 1)
             ddvx = (ddvx + np.swapaxes(ddvx, 1, 2)) / 2
             der = np.einsum('kij, kijl->kl', P, ddvx)
 

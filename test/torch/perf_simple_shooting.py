@@ -1,8 +1,9 @@
+import os.path
 import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
+
 import time
-
-sys.path.append("../../")
-
 import torch
 
 import implicitmodules.torch as im
@@ -25,15 +26,17 @@ def simple_shooting(method, it):
     C = torch.rand(nb_pts_order1, 2, 1)
     R = torch.rand(nb_pts_order1, 2, 2)
 
-    silent = im.deformationmodules.SilentPoints(
-        im.manifold.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
-    order0 = im.implicitmodules.ImplicitModule0(
-        im.manifold.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
-    order1 = im.implicitmodules.ImplicitModule1(
-        im.manifold.Stiefel(dim, nb_pts_order1, gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
+    silent = im.DeformationModules.SilentLandmarks(
+        im.Manifolds.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
+    order0 = im.DeformationModules.ImplicitModule0(
+        im.Manifolds.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
+    order1 = im.DeformationModules.ImplicitModule1(
+        im.Manifolds.Stiefel(dim, nb_pts_order1,
+                             gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())),
         C, sigma, nu, coeff)
 
-    im.shooting.shoot(im.hamiltonian.Hamiltonian([order1]), it=it, method=method)
+    implicitmodules.torch.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it,
+                                                            method=method)
 
     return [silent.manifold.gd, order0.manifold.gd, order1.manifold.gd[0]]
 

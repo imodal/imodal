@@ -1,8 +1,8 @@
 import numpy as np
 
-import implicitmodules.numpy.Backward.Backward as bckwd
-import implicitmodules.numpy.Forward.Hamiltonianderivatives as HamDer
-import implicitmodules.numpy.Forward.Shooting as shoot
+import implicitmodules.numpy.HamiltonianDynamic.Backward as bckwd
+import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
+import implicitmodules.numpy.HamiltonianDynamic.Hamiltonianderivatives as HamDer
 
 
 def fill_Vector_from_GD(GD):  # 

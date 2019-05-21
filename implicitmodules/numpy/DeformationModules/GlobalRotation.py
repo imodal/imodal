@@ -1,20 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Apr 18 10:06:35 2019
-
-@author: gris
-"""
-
 import numpy as np
 
-import implicitmodules.numpy.DeformationModules.Abstract as ab
-import implicitmodules.numpy.GeometricalDescriptors.Landmark as GeoDescr
+from implicitmodules.numpy.DeformationModules.Abstract import DeformationModule
+from implicitmodules.numpy.Manifolds import Landmark
 from implicitmodules.numpy.StructuredFields.ConstantField import ConstantField
 from implicitmodules.numpy.StructuredFields.LinearField import LinearField
 
 rot_mat = np.array([[0., -1.], [1., 0.]])
 
-class GlobalRotation(ab.DeformationModule):
+
+class GlobalRotation(DeformationModule):
     """
      GlobalRotation
     """
@@ -25,7 +19,7 @@ class GlobalRotation(ab.DeformationModule):
         """
         self.dim = dim
         self.coeff = coeff
-        self.GD = GeoDescr.GD_landmark(1, dim)
+        self.GD = Landmark(1, dim)
         self.Cont = np.zeros([1])
         self.cost = 0.
     
@@ -59,8 +53,7 @@ class GlobalRotation(ab.DeformationModule):
         
         Cont_geo = np.zeros([1])
         v = LinearField(self.dim, rot_mat)
-        param = [self.GD.GD, np.ones([1])]
-        v.fill_fieldparam(param)
+        v.fill_fieldparam(self.GD.GD, np.ones([1]))
         Cont_geo[0] = (1. / self.coeff) * GDCot.inner_prod_v(v)
         self.Cont = Cont_geo.copy()
     
@@ -68,9 +61,8 @@ class GlobalRotation(ab.DeformationModule):
         return self.field_generator(self.GD, self.Cont)
     
     def field_generator(self, GD, Cont):
-        param =  [self.GD.GD, Cont]
         v = LinearField(self.dim, rot_mat)
-        v.fill_fieldparam(param)
+        v.fill_fieldparam(self.GD.GD, Cont)
         return v
     
     def Cost_curr(self):
@@ -107,7 +99,7 @@ class GlobalRotation(ab.DeformationModule):
             cotan = np.zeros([1, self.dim])
             for i in range(self.dim):
                 v = ConstantField(self.dim)
-                v.mom = - self.Cont[0] * rot_mat[:, i].reshape([1,-1])
+                v.moments = - self.Cont[0] * rot_mat[:, i].reshape([1, -1])
                 cotan[0, i] = GDCot.inner_prod_v(v)
                 
             out.GD = self.GD.GD.copy()

@@ -1,5 +1,7 @@
+import os.path
 import sys
-sys.path.append("../")
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
@@ -51,3 +53,6 @@ class TestCompareKernels(unittest.TestCase):
         self.assertTrue(np.allclose(compute_sks(X, sigma, 0).numpy(), my_K(x, x, sigma, 0)))
         self.assertTrue(np.allclose(compute_sks(X, sigma, 1).numpy(), my_K(x, x, sigma, 1)))
 
+
+if __name__ == '__main__':
+    unittest.main()

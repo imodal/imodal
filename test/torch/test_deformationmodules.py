@@ -19,8 +19,8 @@ class TestTranslations2D(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = im.deformationmodules.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-        self.trans = im.deformationmodules.Translations(self.landmarks, self.sigma)
+        self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.trans = im.DeformationModules.Translations(self.landmarks, self.sigma)
 
     def test_call(self):
         points = torch.rand(100, self.dim)
@@ -36,7 +36,7 @@ class TestTranslations2D(unittest.TestCase):
         self.assertEqual(torch.all(torch.eq(result, torch.zeros_like(result))), True)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.trans.field_generator(), im.structuredfield.StructuredField_0)
+        self.assertIsInstance(self.trans.field_generator(), im.StructuredFields.StructuredField_0)
 
     def test_cost(self):
         cost = self.trans.cost()
@@ -97,7 +97,7 @@ class TestTranslations2D(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.trans.fill_controls(torch.zeros_like(self.trans.controls, requires_grad=True))
-        h = im.hamiltonian.Hamiltonian([self.trans])
+        h = im.HamiltonianDynamic.Hamiltonian([self.trans])
         h.geodesic_controls()
 
         [d_controls] = torch.autograd.grad(h(), [self.trans.controls])
@@ -112,8 +112,8 @@ class TestSilentPoints2D(unittest.TestCase):
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.landmarks = im.manifold.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-        self.silent_points = im.deformationmodules.SilentPoints(self.landmarks)
+        self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+        self.silent_points = im.DeformationModules.SilentLandmarks(self.landmarks)
         self.silent_points.fill_controls(self.controls)
 
     def test_call(self):
@@ -126,7 +126,7 @@ class TestSilentPoints2D(unittest.TestCase):
         self.assertEqual(torch.all(torch.eq(result, torch.zeros_like(points))), True)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.silent_points.field_generator(), im.structuredfield.StructuredField_Null)
+        self.assertIsInstance(self.silent_points.field_generator(), im.StructuredFields.StructuredField_Null)
 
     def test_cost(self):
         cost = self.silent_points.cost()
@@ -192,13 +192,13 @@ class CompoundTest2D(unittest.TestCase):
         self.mom_trans = torch.rand(self.nb_pts_trans, self.dim).view(-1)
         self.gd_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
         self.mom_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
-        self.landmarks_trans = im.manifold.Landmarks(self.dim, self.nb_pts_trans, gd=self.gd_trans,
-                                                     cotan=self.mom_trans)
-        self.landmarks_silent = im.manifold.Landmarks(self.dim, self.nb_pts_silent, gd=self.gd_silent,
-                                                      cotan=self.mom_silent)
-        self.trans = im.deformationmodules.Translations(self.landmarks_trans, self.sigma)
-        self.silent = im.deformationmodules.SilentPoints(self.landmarks_silent)
-        self.compound = im.deformationmodules.CompoundModule([self.silent, self.trans])
+        self.landmarks_trans = im.Manifolds.Landmarks(self.dim, self.nb_pts_trans, gd=self.gd_trans,
+                                                      cotan=self.mom_trans)
+        self.landmarks_silent = im.Manifolds.Landmarks(self.dim, self.nb_pts_silent, gd=self.gd_silent,
+                                                       cotan=self.mom_silent)
+        self.trans = im.DeformationModules.Translations(self.landmarks_trans, self.sigma)
+        self.silent = im.DeformationModules.SilentLandmark.SilentLandmarks(self.landmarks_silent)
+        self.compound = im.DeformationModules.CompoundModule([self.silent, self.trans])
         self.controls_trans = torch.rand_like(self.gd_trans)
         self.controls = [None, self.controls_trans]
         self.compound.fill_controls(self.controls)
@@ -224,8 +224,8 @@ class CompoundTest2D(unittest.TestCase):
         self.assertEqual(torch.all(torch.eq(result, torch.zeros_like(points))), True)
 
     def test_field_generator(self):
-        self.assertIsInstance(self.compound[0].field_generator(), im.structuredfield.StructuredField_Null)
-        self.assertIsInstance(self.compound[1].field_generator(), im.structuredfield.StructuredField_0)
+        self.assertIsInstance(self.compound[0].field_generator(), im.StructuredFields.StructuredField_Null)
+        self.assertIsInstance(self.compound[1].field_generator(), im.StructuredFields.StructuredField_0)
 
     def test_cost(self):
         cost = self.compound.cost()
@@ -284,7 +284,7 @@ class CompoundTest2D(unittest.TestCase):
 
     def test_hamiltonian_control_grad_zero(self):
         self.compound.fill_controls([torch.tensor([]), torch.zeros_like(self.compound[1].controls, requires_grad=True)])
-        h = im.hamiltonian.Hamiltonian(self.compound)
+        h = im.HamiltonianDynamic.Hamiltonian(self.compound)
         h.geodesic_controls()
 
         [d_controls_silent, d_controls_trans] = torch.autograd.grad(h(), self.compound.controls, allow_unused=True)
