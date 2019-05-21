@@ -6,7 +6,7 @@ test_ubuntu:
 
     script:
     - cd test
-    - python3 numpy/unit_tests.py
+    - python3 -m unittest discover numpy/
     - python3 -m unittest discover torch/
     - python3 -m unittest discover compare/
 
