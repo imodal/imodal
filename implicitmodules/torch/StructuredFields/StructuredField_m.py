@@ -1,7 +1,7 @@
 import torch
 
+from implicitmodules.torch.Kernels.kernels import gauss_kernel, rel_differences
 from implicitmodules.torch.StructuredFields.Abstract import SupportStructuredField
-from implicitmodules.torch.kernels import gauss_kernel, rel_differences
 
 
 class StructuredField_m(SupportStructuredField):

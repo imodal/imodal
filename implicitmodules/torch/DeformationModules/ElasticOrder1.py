@@ -1,9 +1,9 @@
 import torch
 
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
+from implicitmodules.torch.Kernels.SKS import eta, compute_sks
 from implicitmodules.torch.Manifolds import Stiefel
 from implicitmodules.torch.StructuredFields import StructuredField_p
-from implicitmodules.torch.kernels import eta, compute_sks
 
 
 class ImplicitModule1(DeformationModule):
@@ -75,11 +75,11 @@ class ImplicitModule1(DeformationModule):
         S = torch.tensordot(S, eta(), dims=2)
         
         self.__compute_sks()
-        
-        tlambdas, _ = torch.gesv(S.view(-1, 1), self.__coeff * self.__sks)
+
+        tlambdas, _ = torch.solve(S.view(-1, 1), self.__coeff * self.__sks)
         
         (aq, aqkiaq) = self.__compute_aqkiaq()
-        c, _ = torch.gesv(torch.mm(aq.t(), tlambdas), aqkiaq)
+        c, _ = torch.solve(torch.mm(aq.t(), tlambdas), aqkiaq)
         self.__controls = c.reshape(-1)
         self.__compute_moments()
     
@@ -103,7 +103,7 @@ class ImplicitModule1(DeformationModule):
     
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.__controls)
-        lambdas, _ = torch.gesv(self.__aqh.view(-1, 1), self.__sks)
+        lambdas, _ = torch.solve(self.__aqh.view(-1, 1), self.__sks)
         self.__lambdas = lambdas.contiguous()
         self.__moments = torch.tensordot(self.__lambdas.view(-1, 3), torch.transpose(eta(), 0, 2), dims=1)
     
@@ -115,7 +115,7 @@ class ImplicitModule1(DeformationModule):
             h[i] = 1.
             aqi = self.__compute_aqh(h).view(-1)
             aq[:, i] = aqi
-            l, _ = torch.gesv(aqi.view(-1, 1), self.__sks)
+            l, _ = torch.solve(aqi.view(-1, 1), self.__sks)
             lambdas[i, :] = l.view(-1)
         
         return (aq, torch.mm(lambdas, aq))
