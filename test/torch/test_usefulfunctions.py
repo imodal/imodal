@@ -145,9 +145,9 @@ class TestUsefulFunctions(unittest.TestCase):
         origin = torch.tensor([0.5, 0.])
         vec = torch.tensor([1., 3.])
 
-        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[0]), -1) 
-        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[1]), 1)
-        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[2]), 1)
+        self.assertEqual(im.Utilities.usefulfunctions.point_side(origin, vec, pts[0]), -1) 
+        self.assertEqual(im.Utilities.usefulfunctions.point_side(origin, vec, pts[1]), 1)
+        self.assertEqual(im.Utilities.usefulfunctions.point_side(origin, vec, pts[2]), 1)
 
     def test_is_inside_shape(self):
         nb_pts_shape = 500
@@ -161,7 +161,7 @@ class TestUsefulFunctions(unittest.TestCase):
         pts = torch.rand(nb_pts, 2)*2. - 1.
 
         inside = torch.norm(pts, dim=1) <= 1.
-        inside_func = im.usefulfunctions.is_inside_shape(shape, pts)
+        inside_func = im.Utilities.usefulfunctions.is_inside_shape(shape, pts)
 
         self.assertTrue(torch.all(torch.eq(inside, inside_func)))
 
