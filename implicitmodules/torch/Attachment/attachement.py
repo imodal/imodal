@@ -3,8 +3,8 @@ from collections import Iterable
 import geomloss
 import torch
 
+from implicitmodules.torch.Kernels.kernels import distances, scal
 from implicitmodules.torch.Utilities.usefulfunctions import close_shape
-from implicitmodules.torch.kernels import distances, scal
 
 
 class Attachement:

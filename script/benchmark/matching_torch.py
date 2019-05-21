@@ -96,7 +96,7 @@ implicit1 = im.DeformationModules.ImplicitModule1(
 # Setting up the model and start the fitting loop
 #
 
-model = im.models.ModelCompoundWithPointsRegistration(
+model = im.Models.ModelCompoundWithPointsRegistration(
     (pos_source, torch.ones(pos_source.shape[0])),
     [implicit0, implicit00, implicit1],
     [True, True, True],

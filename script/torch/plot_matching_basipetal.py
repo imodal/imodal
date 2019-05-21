@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import torch
 
 import implicitmodules.torch as im
-from implicitmodules.numpy.Utilities.Visualisation import my_close, my_plot
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -47,7 +46,7 @@ pos_implicit0 = source[source[:, 2] == 1, 0:2]
 pos_implicit1 = source[source[:, 2] == 1, 0:2]
 pos_target = target[target[:, 2] == 2, 0:2]
 
-aabb = implicitmodules.torch.Utilities.usefulfunctions.AABB.build_from_points(pos_target)
+aabb = im.Utilities.AABB.build_from_points(pos_target)
 aabb.squared()
 
 ##################################################################################
@@ -90,7 +89,7 @@ coeff0 = 100.
 implicit0 = im.DeformationModules.ImplicitModule0(
     im.Manifolds.Landmarks(2, pos_implicit0.shape[0], gd=pos_implicit0.view(-1).requires_grad_()), sigma0, nu0, coeff0)
 
-my_plot(pos_implicit0.detach().numpy(), title="Silent Module", col='*b')
+im.Utilities.my_plot(pos_implicit0.detach().numpy(), title="Silent Module", col='*b')
 
 ###############################################################################
 # Global translation module
@@ -100,7 +99,7 @@ coeff00 = 0.01
 implicit00 = im.DeformationModules.ImplicitModule0(
     im.Manifolds.Landmarks(2, 1, gd=torch.tensor([0., 0.], requires_grad=True)), sigma00, nu00, coeff00)
 
-my_plot(torch.tensor([[0., 0.]]).detach().numpy(), title="Silent Module", col='+r')
+im.Utilities.my_plot(torch.tensor([[0., 0.]]).detach().numpy(), title="Silent Module", col='+r')
 
 ###############################################################################
 # Elastic modules
@@ -114,7 +113,7 @@ a, b = -2 / L ** 3, 3 / L ** 2
 C[:, 1, 0] = (K * (a * (L - pos_implicit1[:, 1] + Dy) ** 3 + b * (L - pos_implicit1[:, 1] + Dy) ** 2))
 C[:, 0, 0] = 1. * C[:, 1, 0]
 th = 0. * math.pi * torch.ones(pos_implicit1.shape[0])
-R = torch.stack([implicitmodules.torch.Utilities.usefulfunctions.rot2d(t) for t in th])
+R = torch.stack([im.Utilities.rot2d(t) for t in th])
 
 implicit1 = im.DeformationModules.ImplicitModule1(
     im.Manifolds.Stiefel(2, pos_implicit1.shape[0],
@@ -134,7 +133,7 @@ my_plot(pos_implicit1.detach().numpy(), ellipse=C.detach().numpy(), title="Modul
 # Setting up the model and start the fitting loop
 #
 
-model = im.models.ModelCompoundWithPointsRegistration(
+model = im.Models.ModelCompoundWithPointsRegistration(
     (pos_source, torch.ones(pos_source.shape[0])),
     [implicit0, implicit00, implicit1],
     [True, True, True],
@@ -159,7 +158,7 @@ axs[0].plot(pos_implicit0[:, 0].numpy(), pos_implicit0[:, 1].numpy(), 'or')
 axs[1].set_aspect('equal')
 axs[1].axis(aabb.get_list())
 axs[1].set_title('Deformed source')
-out = my_close(model.shot_manifold[0].gd.view(-1, 2).detach().numpy())
+out = im.Utilities.my_close(model.shot_manifold[0].gd.view(-1, 2).detach().numpy())
 shot_implicit0 = model.shot_manifold[1].gd.view(-1, 2).detach().numpy()
 shot_implicit00 = model.shot_manifold[2].gd.view(-1, 2).detach().numpy()
 shot_implicit1 = model.shot_manifold[3].gd[0].view(-1, 2).detach().numpy()
@@ -171,7 +170,7 @@ axs[1].plot(shot_implicit1[:, 0], shot_implicit1[:, 1], 'og')
 axs[2].set_aspect('equal')
 axs[2].axis(aabb.get_list())
 axs[2].set_title('Source and Target')
-axs[2].plot(my_close(pos_target.numpy())[:, 0], my_close(pos_target.numpy())[:, 1], 'k-')
+axs[2].plot(im.Utilities.my_close(pos_target.numpy())[:, 0], my_close(pos_target.numpy())[:, 1], 'k-')
 axs[2].plot(out[:, 0], out[:, 1], 'b-')
 
 fig.tight_layout()

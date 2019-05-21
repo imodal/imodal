@@ -1,8 +1,8 @@
 import matplotlib.image
 import torch
 
+from implicitmodules.torch.Kernels.kernels import K_xy
 from implicitmodules.torch.Utilities.usefulfunctions import AABB, grid2vec, indices2coords
-from implicitmodules.torch.kernels import K_xy
 
 
 def load_greyscale_image(filename):
