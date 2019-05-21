@@ -85,3 +85,11 @@ class GeomlossAttachement(Attachement):
 
     def loss(self, x, y):
         return self.__geomloss.loss(x, y)
+
+
+class PointwiseDistanceAttachement(Attachement):
+    def __init__(self, norm='L1'):
+        super().__init__()
+
+    def loss(self, x, y):
+        return torch.sum(torch.norm(x[0]-y[0], dim=1))

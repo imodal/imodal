@@ -1,1 +1,1 @@
-from implicitmodules.torch.Kernels import *
+from implicitmodules.torch.Kernels.kernels import *

@@ -44,17 +44,15 @@ def gauss_kernel(x, k, sigma):
         sigma2 = sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
         return (k_0.view(-1, 1, 1).repeat(1, 2, 2) * (-torch.eye(2).repeat(x.shape[0], 1, 1)
-                                                      + torch.einsum('ki, kj->kij', x, x)) / sigma2) / sigma2
+                                                      + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
         sigma2 = sigma * sigma
         sigma3 = sigma * sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
         k_2 = gauss_kernel(x, 2, sigma) * sigma2
-        return (-torch.einsum('kij, kl->kijl', k_2, x / sigma) + k_0.view(-1, 1, 1, 1).repeat(1, 2, 2, 2) * (
-                    torch.transpose(torch.tensordot(x / sigma, torch.eye(2), dims=0), 1, 2) + torch.tensordot(x / sigma,
-                                                                                                              torch.eye(
-                                                                                                                  2),
-                                                                                                              dims=0))) / sigma3
+        return (-torch.einsum('kij, kl->kijl', k_2, x / sigma) + k_0.view(-1, 1, 1, 1).repeat(1, 2, 2, 2)
+                * (torch.transpose(torch.tensordot(x / sigma, torch.eye(2), dims=0), 1, 2)
+                   + torch.tensordot(x / sigma, torch.eye(2), dims=0))) / sigma3
 
 # def keops_gauss_kernel(sigma, dtype=torch.float32):
 #     p = torch.tensor([1/sigma/sigma])
