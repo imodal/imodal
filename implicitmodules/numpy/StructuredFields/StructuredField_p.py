@@ -27,8 +27,8 @@ class StructuredField_p(SupportStructuredField):
         Nz = z.shape[0]
         # lsize = ((Nz, 2), (Nz, 2, 2), (Nz, 2, 2, 2))
         # djv = np.zeros(lsize[j])
-        
-        x = self.support.copy()
+
+        x = self.support.value
         P = self.moments.copy()
         P = (P + np.swapaxes(P, 1, 2)) / 2
         ker_vec = -ker.my_vker(ker.my_xmy(z, x), j + 1, self.sigma)
@@ -47,19 +47,19 @@ class StructuredField_p(SupportStructuredField):
         If j=1, it returns the derivative wrt self.support. It returns a
            SupportPoint with value and cotan filled
         """
-        x = self.support.get_value()
-        P = self.mom
+        x = self.support.value
+        P = self.moments
+        
         if j == 0:
             out = 0.
-            dvx = vs.Apply(x, j + 1)
+            dvx = vs(x, j + 1)
             dvx = (dvx + np.swapaxes(dvx, 1, 2)) / 2
             # TODO: remove loop
             out += np.sum(np.asarray([np.tensordot(P[i], dvx[i])
                                       for i in range(x.shape[0])]))
         elif j == 1:
             out = self.support.copy_full()
-            out.fill_zero_cotan()
-            ddvx = vs.Apply(x, j + 1)
+            ddvx = vs(x, j + 1)
             ddvx = (ddvx + np.swapaxes(ddvx, 1, 2)) / 2
             der = np.einsum('kij, kijl->kl', P, ddvx)
 

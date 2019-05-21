@@ -164,21 +164,19 @@ class ElasticOrder1(DeformationModule):
             x = self.GD.get_points()
             R = self.GD.get_R()
 
-            dvx = vsr.Apply(x, 1)
+            dvx = vsr(x, 1)
             dvx_sym = (dvx + np.swapaxes(dvx, 1, 2)) / 2
             S = np.tensordot(dvx_sym, fun_eta.my_eta())
 
             tlam = solve(self.SKS, S.flatten(), sym_pos=True)
             tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes=1)
 
-            tVs = StructuredField_p(self.sig, self.N_pts, self.dim)
-            tVs.fill_fieldparam((x.copy(), tP.copy()))
+            tVs = StructuredField_p(x.copy(), tP.copy(), self.sig)
 
             der1supp = v_curr.pairing(tVs, 1)
             derx = derx - der1supp.cotan.copy()
 
-            vsl2 = StructuredField_p(self.sig, self.N_pts, self.dim)
-            vsl2.fill_fieldparam((x.copy(), tP.copy()))
+            vsl2 = StructuredField_p(x.copy(), tP.copy(), self.sig)
             der2supp = vsl2.pairing(self.field_generator_curr(), 1)
             derx = derx - der2supp.cotan.copy()
 

@@ -141,6 +141,7 @@ class TestSilentPoints2D(unittest.TestCase):
         self.assertIsInstance(self.silent_points.controls, torch.Tensor)
         self.assertEqual(self.silent_points.controls.shape, torch.tensor([]).shape)
 
+    # TODO :
     @unittest.expectedFailure
     def test_gradcheck_call(self):
         def call(gd, controls, points):

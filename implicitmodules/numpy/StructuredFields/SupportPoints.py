@@ -1,37 +1,43 @@
 import numpy as np
 
-import implicitmodules.numpy.StructuredFields.SupportAbstract as ab
 
-
-
-class SupportPoints(ab.SupportAbstract):
-    def __init__(self, N_pts, dim):  #
-
-        self.dim = dim
-        self.N_pts = N_pts
+class SupportPoints:
+    """
+    This class implement a for the structured Field. It s
+    """
+    
+    def __init__(self, support):
+        self.__value = support
+        self.fill_zero_cotan()
         
     def copy(self):
-        supp = SupportPoints(self.N_pts, self.dim)
+        supp = SupportPoints(self.__value)
         return supp
         
-        
     def copy_full(self):
-        supp = SupportPoints(self.N_pts, self.dim)
-        if hasattr(self, 'value'):
-            supp.value = self.value.copy()
+        supp = SupportPoints(self.__value)
+        if hasattr(self, '__value'):
+            supp.value = self.__value.copy()
             
         if hasattr(self, 'cotan'):
             supp.cotan = self.cotan.copy()
         return supp
         
-    def fill_zero_cotan(self):
-         self.cotan = np.zeros([self.N_pts, self.dim])
-        
     def fill_value(self, val):
-        self.value = val.copy()
-        
-    def get_value(self):
-        return self.value.copy()
-        
+        self.__value = val
+    
+    def __get_value(self):
+        return self.__value
+    
+    value = property(__get_value, fill_value)
+    
+    def fill_zero_cotan(self):
+        self.__cotan = np.zeros_like(self.__value)
+
     def fill_cotan(self, cot):
-        self.cotan = cot.copy()
+        self.__cotan = cot
+    
+    def __get_cotan(self):
+        return self.__cotan
+    
+    cotan = property(__get_cotan, fill_cotan)

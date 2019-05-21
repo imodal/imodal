@@ -26,8 +26,8 @@ class StructuredField_m(SupportStructuredField):
         Nz = z.shape[0]
         # lsize = ((Nz, 2), (Nz, 2, 2), (Nz, 2, 2, 2))
         # djv = np.zeros(lsize[j])
-        
-        x = self.support.copy()
+
+        x = self.support.value
         P = self.moments.copy()
         P = (P - np.swapaxes(P, 1, 2)) / 2
         ker_vec = -ker.my_vker(ker.my_xmy(z, x), j + 1, self.sigma)

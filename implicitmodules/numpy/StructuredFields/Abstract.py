@@ -1,3 +1,6 @@
+from implicitmodules.numpy.StructuredFields.SupportPoints import SupportPoints
+
+
 class StructuredField:
     """
         Abstract class for structured field
@@ -31,7 +34,7 @@ class SupportStructuredField(StructuredField):
     
     def __init__(self, support, moments, sigma):
         super().__init__()
-        self.__support = support
+        self.__support = SupportPoints(support)
         self.__moments = moments
         self.__sigma = sigma  # TODO : put a generic kernel
     

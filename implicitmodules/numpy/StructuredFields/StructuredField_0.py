@@ -26,8 +26,8 @@ class StructuredField_0(SupportStructuredField):
         Nz = z.shape[0]
         lsize = ((Nz, 2), (Nz, 2, 2), (Nz, 2, 2, 2))
         djv = np.zeros(lsize[j])
-        
-        x = self.support.copy()
+
+        x = self.support.value
         p = self.moments.copy()
 
         ker_vec = ker.my_vker(ker.my_xmy(z, x), j, self.sigma)
@@ -47,17 +47,17 @@ class StructuredField_0(SupportStructuredField):
 
         if j == 0:
             out = 0.
-            x = self.support.get_value()
-            p = self.mom
-            vx = vs.Apply(x, j)
+            x = self.support.value
+            p = self.moments
+            vx = vs(x, j)
             out += np.sum(np.asarray([np.dot(p[i], vx[i])
                                       for i in range(x.shape[0])]))
         elif j == 1:
             out = self.support.copy_full()
             out.fill_zero_cotan()
-            x = self.support.get_value()
-            p = self.mom
-            vx = vs.Apply(x, j)
+            x = self.support.value
+            p = self.moments
+            vx = vs(x, j)
             der = np.asarray([np.dot(p[i], vx[i]) for i in range(x.shape[0])])
             out.cotan = der.copy()
 
