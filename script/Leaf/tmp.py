@@ -12,7 +12,7 @@ import implicitmodules.numpy.DataAttachment.Varifold as var
 import implicitmodules.numpy.DeformationModules.Combination as comb_mod
 import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
 import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
-import implicitmodules.numpy.DeformationModules.GlobalRotation as globrot
+#import implicitmodules.numpy.DeformationModules.GlobalRotation as globrot
 import implicitmodules.numpy.DeformationModules.GlobalTranslation as globtrans
 import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
 import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
@@ -155,14 +155,14 @@ param_00 = (x00, p00)
 if(flag_show):
     my_plot(x00, "Module order 00", '+r')
 
-# %% Global rotation
-x00 = np.array([[0., 0.]])
-Model00_rot = globrot.GlobalRotation(dim, 10.)
-p00_r = np.zeros([1, 2])
-param_00_r = (x00, p00_r)
-
-if(flag_show):
-    my_plot(x00, "Module order 00", '+r')
+## %% Global rotation
+#x00 = np.array([[0., 0.]])
+#Model00_rot = globrot.GlobalRotation(dim, 10.)
+#p00_r = np.zeros([1, 2])
+#param_00_r = (x00, p00_r)
+#
+#if(flag_show):
+#    my_plot(x00, "Module order 00", '+r')
 
 # %% Modules of Order 1
 sig1 = 30.
@@ -195,72 +195,14 @@ param_1 = ((x1, R), (p1, PR))
 if(flag_show):
     my_plot(x1, "Module order 1", 'og')
 
-#%%
-GD_r = Model00_rot.GD
-GD_r.GD = np.array([[0., 0.]])
-GD_t = Model00_g.GD
-
-GD_t.GD = np.array([[5., 1.]])
-GD_t.cotan = 0.001*np.array([[1., -7.]])
-Model00_rot.GeodesicControls_curr(GD_t)
-print(Model00_rot.Cont)
-print(GD_t.infinitesimal_action(Model00_rot.field_generator_curr()).tan)
-#%%
-v0 = Model00_rot.cot_to_innerprod_curr(GD_t, 0)
-v1 = Model00_rot.cot_to_innerprod_curr(GD_t, 1)
-eps = 0.01
-GD_r.GD = np.array([[eps, 0.]])
-v00 = Model00_rot.cot_to_innerprod_curr(GD_t, 0)
-GD_r.GD = np.array([[0., eps]])
-v01 = Model00_rot.cot_to_innerprod_curr(GD_t, 0)
-
-diff0 = (v00 - v0) / eps
-diff1 = (v01 - v0) / eps
-print(v1.cotan)
-print(diff0, diff1)
-#%%
-GD_r.GD = np.array([[0., 0.]])
-GD_1 = Model1.GD
-GD_1.cotan = [np.random.rand(*x1.shape), np.random.rand(x1.shape[0], 2, 2)]
-vrot = Model00_rot.field_generator_curr()
-
-s1 = GD_1.infinitesimal_action(vrot)
-
-v0 = Model00_rot.cot_to_innerprod_curr(GD_1, 0)
-v1 = Model00_rot.cot_to_innerprod_curr(GD_1, 1)
-eps = 0.01
-GD_r.GD = np.array([[eps, 0.]])
-v00 = Model00_rot.cot_to_innerprod_curr(GD_1, 0)
-GD_r.GD = np.array([[0., eps]])
-v01 = Model00_rot.cot_to_innerprod_curr(GD_1, 0)
-
-diff0 = (v00 - v0) / eps
-diff1 = (v01 - v0) / eps
-print(v1.cotan)
-print(diff0, diff1)
-#%%
-x0 = np.array([[1., 0.]])
-speed0 = vrot(x0, 0)
-eps = 0.01
-diff = np.random.rand(1,2)
-x1 = x0 + eps * diff
-speed1 = vrot(x1, 0)
-
-speeddiff = (speed1 - speed0)/eps
-
-speedder = vrot(np.array([[1., 0.]]), 1)
-
-
-print(speeddiff)
-print(speedder[0] @ np.transpose(diff))
 # %% Full model
 
 if name_exp == 'basi_pure_nonparametric':
     Module = comb_mod.CompoundModules([Sil, Model0])
     Module.GD.fill_cot_from_param([param_sil, param_0])  
 elif name_exp == 'basi_pure_parametric':
-    Module = comb_mod.CompoundModules([Sil, Model00_g, Model00_rot, Model1])
-    Module.GD.fill_cot_from_param([param_sil, param_00, param_00_r, param_1])
+    Module = comb_mod.CompoundModules([Sil, Model00_g, Model1])
+    Module.GD.fill_cot_from_param([param_sil, param_00, param_1])
 elif name_exp == 'basi_semi_parametric':
     Module = comb_mod.CompoundModules([Sil, Model00, Model0, Model1])
     Module.GD.fill_cot_from_param([param_sil, param_00, param_0, param_1])

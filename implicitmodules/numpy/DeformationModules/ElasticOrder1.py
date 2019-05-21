@@ -127,9 +127,9 @@ class ElasticOrder1(DeformationModule):
         R = self.GD.get_R()
         v = self.field_generator_curr()
 
-        # der = self.my_pSmV(v.dic,v.dic,1)
-        der = self.p_Ximv_curr(v, 1)
-        cotx = -self.coeff * der.cotan[0]
+        #der = self.p_Ximv_curr(v, 1)
+        dersupp = v.pairing(v, 1)
+        cotx = -self.coeff * dersupp.cotan
 
         tP = self.coeff * self.Mom
 
@@ -147,44 +147,48 @@ class ElasticOrder1(DeformationModule):
          The derivative is a returned as a GD with cotan filled (tan=0)
         """
 
-        vsr = GDCot.Cot_to_Vs(self.sig)
 
-        # der wrt x as support of generated vector field by self
-        der0 = self.p_Ximv_curr(vsr, j)
+        if j==0:
+            vsr = GDCot.Cot_to_Vs(self.sig)
+            out = self.p_Ximv_curr(vsr, j)
+        if j == 1:
 
-        x = self.GD.get_points()
-        R = self.GD.get_R()
+            v_curr = self.field_generator_curr()
+            vsr = GDCot.Cot_to_Vs(self.sig)
 
-        dvx = vsr(x, 1)
-        dvx_sym = (dvx + np.swapaxes(dvx, 1, 2)) / 2
-        S = np.tensordot(dvx_sym, fun_eta.my_eta())
+            # der wrt x as support of generated vector field by self
+            der0supp = v_curr.pairing(vsr, j)
+            derx = der0supp.cotan.copy()
 
-        tlam = solve(self.SKS, S.flatten(), sym_pos=True)
-        tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes=1)
 
-        tVs = StructuredField_p(x.copy(), tP.copy(), self.sig)
+            x = self.GD.get_points()
+            R = self.GD.get_R()
 
-        der1 = self.p_Ximv_curr(tVs, 1)
-        der1.mult_cotan_scal(-1)
+            dvx = vsr.Apply(x, 1)
+            dvx_sym = (dvx + np.swapaxes(dvx, 1, 2)) / 2
+            S = np.tensordot(dvx_sym, fun_eta.my_eta())
 
-        # artifial module in order to use p_Ximv_curr : needs to be changed 
-        Mod_t = self.copy()
-        Mod_t.GD = self.GD.copy_full()
-        Mod_t.Mom = tP.copy()
-        der2 = Mod_t.p_Ximv_curr(self.field_generator_curr(), 1)
-        der2.mult_cotan_scal(-1)
+            tlam = solve(self.SKS, S.flatten(), sym_pos=True)
+            tP = np.tensordot(tlam.reshape(S.shape), fun_eta.my_eta().transpose(), axes=1)
 
-        der0.add_cotan(der1)
-        der0.add_cotan(der2)
+            tVs = StructuredField_p(self.sig, self.N_pts, self.dim)
+            tVs.fill_fieldparam((x.copy(), tP.copy()))
 
-        cotR = 2. * np.einsum('kul, kli, kij, kj, kiv->kuv', tP, R, self.C, np.tile(self.Cont, [x.shape[0], 1]), np.tile(np.eye(2), [x.shape[0], 1, 1]))
+            der1supp = v_curr.pairing(tVs, 1)
+            derx = derx - der1supp.cotan.copy()
 
-        out = self.GD.copy_full()
-        out.fill_zero_tan()
-        out.fill_zero_cotan()
+            vsl2 = StructuredField_p(self.sig, self.N_pts, self.dim)
+            vsl2.fill_fieldparam((x.copy(), tP.copy()))
+            der2supp = vsl2.pairing(self.field_generator_curr(), 1)
+            derx = derx - der2supp.cotan.copy()
 
-        cotx0, cotR0 = der0.cotan
-        out.cotan = (cotx0.copy(), cotR.copy())
+            cotR = 2. * np.einsum('kul, kli, kij, kj, kiv->kuv', tP, R, self.C, np.tile(self.Cont, [x.shape[0], 1]), np.tile(np.eye(2), [x.shape[0], 1, 1]))
+
+            out = self.GD.copy_full()
+            out.fill_zero_tan()
+            out.fill_zero_cotan()
+
+            out.cotan = (derx.copy(), cotR.copy())
 
         return out
 

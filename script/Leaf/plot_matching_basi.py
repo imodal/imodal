@@ -22,6 +22,7 @@ import implicitmodules.numpy.DeformationModules.Combination as comb_mod
 import implicitmodules.numpy.DeformationModules.ElasticOrder0 as defmod0
 import implicitmodules.numpy.DeformationModules.ElasticOrder1 as defmod1
 import implicitmodules.numpy.DeformationModules.SilentLandmark as defmodsil
+import implicitmodules.numpy.DeformationModules.GlobalTranslation as globtrans
 import implicitmodules.numpy.HamiltonianDynamic.Forward as shoot
 import implicitmodules.numpy.Optimisation.ScipyOpti_attach as opti
 from implicitmodules.numpy.Utilities import Rotation as rot
@@ -34,9 +35,9 @@ flag_show = True
 nu = 0.001
 dim = 2
 N = 10
-maxiter = 50
+maxiter = 500
 
-lam_var = 1
+lam_var = 2.
 sig_var = [50., 10.]
 
 
@@ -147,17 +148,17 @@ if (flag_show):
     my_plot(x0_m, title="Module order 0, medium scale", col='or')
 
 ######################################################################################
-# The second modules of order 0 generates one global translation (large scale).
+# The second modules generates one global translation
 # It allows to change the position of the object.
 
-sig0_l = 2000.
-x0_l = np.array([[0., 0.]])
-Model0_l = defmod0.ElasticOrder0(sig0_l, x0_l.shape[0], dim, coeffs[0], nu)
-p0_l = np.zeros([1, 2])
-param_0_l = (x0_l, p0_l)
+x0_t = np.array([[0., 0.]])
+Model0_t =  globtrans.GlobalTranslation(dim, coeffs[0])
+p0_t = np.zeros([1, 2])
+param_0_t = (x0_t, p0_t)
 
 if (flag_show):
-    my_plot(x0_l, title="Module order 0, large scale", col='+r')
+    my_plot(x0_t, title="Module global translation", col='+r')
+
 
 #######################################################################################
 # Modules of order 1
@@ -210,14 +211,14 @@ if name_exp == 'basi_pure_nonparametric':
 # Pure parametric module: prior on the deformation via Model1, changes in the 
 # global position allowed via Model0_l
 if name_exp == 'basi_pure_parametric':
-    Module = comb_mod.CompoundModules([Sil, Model0_l, Model1])
-    Module.GD.fill_cot_from_param([param_sil, param_0_l, param_1])
+    Module = comb_mod.CompoundModules([Sil, Model0_t, Model1])
+    Module.GD.fill_cot_from_param([param_sil, param_0_t, param_1])
 ######################################################################################
 # Semi parametric module: prior on the deformation via Model1, changes in the 
 # global position allowed via Model0_l
 if name_exp == 'basi_semi_parametric':
-    Module = comb_mod.CompoundModules([Sil, Model0_l, Model0_m, Model0_s, Model1])
-    Module.GD.fill_cot_from_param([param_sil, param_0_l, param_0_m, param_0_s, param_1])
+    Module = comb_mod.CompoundModules([Sil, Model0_t, Model0_m, Model0_s, Model1])
+    Module.GD.fill_cot_from_param([param_sil, param_0_t, param_0_m, param_0_s, param_1])
 else:
     print('unknown experiment type')
 
@@ -227,8 +228,8 @@ else:
 
 name_exp = 'basi_pure_parametric'
 
-Module = comb_mod.CompoundModules([Sil, Model0_l, Model1])
-Module.GD.fill_cot_from_param([param_sil, param_0_l, param_1])
+Module = comb_mod.CompoundModules([Sil, Model0_t, Model1])
+Module.GD.fill_cot_from_param([param_sil, param_0_t, param_1])
 
 P0 = opti.fill_Vector_from_GD(Module.GD)
 
@@ -363,8 +364,8 @@ plt.show()
 
 name_exp = 'basi_semi_parametric'
 
-Module = comb_mod.CompoundModules([Sil, Model0_l, Model0_m, Model0_s, Model1])
-Module.GD.fill_cot_from_param([param_sil, param_0_l, param_0_m, param_0_s, param_1])
+Module = comb_mod.CompoundModules([Sil, Model0_t, Model0_m, Model0_s, Model1])
+Module.GD.fill_cot_from_param([param_sil, param_0_t, param_0_m, param_0_s, param_1])
 
 P0 = opti.fill_Vector_from_GD(Module.GD)
 

@@ -1,23 +1,22 @@
 import numpy as np
-
 from implicitmodules.numpy.StructuredFields.Abstract import SupportStructuredField
 
 
 class LinearField(SupportStructuredField):
-    
+
     def __init__(self, support, moments, sigma=np.inf):
         super().__init__(support, moments, sigma)
-    
+
     def copy(self):
         v = LinearField(self.support, self.moments)
         return v
-    
+
     def copy_full(self):
         v = LinearField(self.support, self.moments)
         v.support = self.support.copy()
         v.mom = self.moments.copy()
         return v
-    
+
     def __call__(self, z, j):
         """
         Applies the field to points z (or computes the derivative). 
