@@ -4,51 +4,8 @@ import torch.optim
 from implicitmodules.torch.DeformationModules import CompoundModule, SilentLandmarks
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.Manifolds import Landmarks
-from .kernels import distances, scal
 from .sampling import sample_from_greyscale, deformed_intensities
-from .usefulfunctions import grid2vec, vec2grid, close_shape
-
-
-def fidelity(a, b):
-    """Energy Distance between two sampled probability measures."""
-    x_i, a_i = a
-    y_j, b_j = b
-    K_xx = -distances(x_i, x_i)
-    K_xy = -distances(x_i, y_j)
-    K_yy = -distances(y_j, y_j)
-    cost = .5*scal(a_i, torch.mm(K_xx, a_i.view(-1, 1))) - scal(a_i, torch.mm(K_xy, b_j.view(-1, 1))) + .5*scal(b_j, torch.mm(K_yy, b_j.view(-1, 1)))
-    return cost
-
-
-def L2_norm_fidelity(a, b):
-    return torch.dist(a, b)
-
-
-def cost_varifold(x, y, sigma):
-    def dot_varifold(x, y, sigma):
-        cx, cy = close_shape(x), close_shape(y)
-        nx, ny = x.shape[0], y.shape[0]
-
-        vx, vy = cx[1:nx + 1, :] - x, cy[1:ny + 1, :] - y
-        mx, my = (cx[1:nx + 1, :] + x) / 2, (cy[1:ny + 1, :] + y) / 2
-
-        xy = torch.tensordot(torch.transpose(torch.tensordot(mx, my, dims=0), 1, 2), torch.eye(2))
-
-        d2 = torch.sum(mx * mx, dim=1).reshape(nx, 1).repeat(1, ny) + torch.sum(my * my, dim=1).repeat(nx, 1) - 2 * xy
-
-        kxy = torch.exp(-d2 / (2 * sigma ** 2))
-
-        vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2)) ** 2
-
-        nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
-        nvy = torch.sqrt(torch.sum(vy * vy, dim=1))
-
-        mask = vxvy > 0
-
-        cost = torch.sum(kxy[mask] * vxvy[mask] / (torch.tensordot(nvx, nvy, dims=0)[mask]))
-        return cost
-
-    return dot_varifold(x, x, sigma) + dot_varifold(y, y, sigma) - 2 * dot_varifold(x, y, sigma)
+from .usefulfunctions import grid2vec, vec2grid
 
 
 class Model():

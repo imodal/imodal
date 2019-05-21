@@ -100,7 +100,7 @@ model = im.models.ModelCompoundWithPointsRegistration(
     (pos_source, torch.ones(pos_source.shape[0])),
     [implicit0, implicit00, implicit1],
     [True, True, True],
-    im.attachement.VarifoldAttachement([10., 50.])
+    im.Attachment.VarifoldAttachement([10., 50.])
 )
 
 # costs = model.fit((pos_target, torch.ones(pos_target.shape[0])), max_iter=40, l=1., lr=5e-1, log_interval=1)
