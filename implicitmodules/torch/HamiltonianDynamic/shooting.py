@@ -12,6 +12,7 @@ def shoot(h, it, method):
         return shoot_torchdiffeq(h, it, method)
 
 
+# TODO: merge shoot_euler() and shoot_euler_controls() into one function to lower maintenance efforts.
 def shoot_euler(h, it):
     step = 1. / it
 
@@ -20,10 +21,16 @@ def shoot_euler(h, it):
     for i in range(it):
         h.geodesic_controls()
         l = [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()]
-        delta = grad(h(), l, create_graph=True, allow_unused=True)
-        # TODO: is list() necessary?
-        d_gd = h.module.manifold.roll_gd(list(delta[:int(len(delta)/2)]))
-        d_mom = h.module.manifold.roll_cotan(list(delta[int(len(delta)/2):]))
+
+        delta = list(grad(h(), l, create_graph=True, allow_unused=True))
+
+        # Nulls are replaced by zero tensors
+        for i in range(len(delta)):
+            if delta[i] is None:
+                delta[i] = torch.zeros_like(l[i])
+
+        d_gd = h.module.manifold.roll_gd(delta[:int(len(delta)/2)])
+        d_mom = h.module.manifold.roll_cotan(delta[int(len(delta)/2):])
         h.module.manifold.muladd_gd(d_mom, step)
         h.module.manifold.muladd_cotan(d_gd, -step)
         intermediate_states.append(h.module.manifold.copy())
@@ -40,10 +47,16 @@ def shoot_euler_controls(h, controls, it):
     for i in range(it):
         h.module.fill_controls(controls[i])
         l = [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()]
-        delta = grad(h(), l, create_graph=True)
-        # TODO: is list() necessary?
-        d_gd = h.module.manifold.roll_gd(list(delta[:int(len(delta)/2)]))
-        d_mom = h.module.manifold.roll_cotan(list(delta[int(len(delta)/2):]))
+
+        delta = list(grad(h(), l, create_graph=True))
+
+        # Nulls are replaced by zero tensors
+        for i in range(len(delta)):
+            if delta[i] is None:
+                delta[i] = torch.zeros_like(l[i])
+
+        d_gd = h.module.manifold.roll_gd(delta[:int(len(delta)/2)])
+        d_mom = h.module.manifold.roll_cotan(delta[int(len(delta)/2):])
         h.module.manifold.muladd_gd(d_mom, step)
         h.module.manifold.muladd_cotan(d_gd, -step)
         intermediate_states.append(h.module.manifold.copy())
@@ -51,6 +64,7 @@ def shoot_euler_controls(h, controls, it):
     return intermediate_states
 
 
+# No more maintained until we find out why backward is slow
 def shoot_torchdiffeq(h, it, method='rk4'):
     # Wrapper class used by TorchDiffEq
     # Returns (\partial H \over \partial p, -\partial H \over \partial q)
@@ -76,7 +90,7 @@ def shoot_torchdiffeq(h, it, method='rk4'):
                 delta = grad(super().__call__(),
                              [*self.module.manifold.unroll_gd(),
                               *self.module.manifold.unroll_cotan()],
-                             create_graph=True)
+                             create_graph=True, allow_unused=True)
 
                 gd_out = delta[:int(len(delta)/2)]
                 mom_out = delta[int(len(delta)/2):]

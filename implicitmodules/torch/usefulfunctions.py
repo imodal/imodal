@@ -132,6 +132,26 @@ def close_shape(x):
     return torch.cat([x, x[0, :].view(1, -1)], dim=0)
 
 
+# Both point_side() and is_inside_shape() functions are still pretty much WIP.
+def point_side(origin, vec, pts):
+    """Returns 1 if the point is to the left, 0 on the vector, and -1 if on the right."""
+    a = origin
+    b = origin + vec
+    return torch.sign((b[0] - a[0])*(pts[1] - a[1]) - (b[1] - a[1])*(pts[0] - a[0]))
+
+def is_inside_shape(shape, points):
+    """Returns True if the point is inside the shape (a tensor of CCW points defining the shape)."""
+    closed = close_shape(shape)
+    mask = torch.ones(points.shape[0], dtype=torch.uint8)
+    for i in range(points.shape[0]):
+        for j in range(shape.shape[0]):
+            if point_side(closed[j], closed[j] - closed[j+1], points[i]) == 1:
+                mask[i] = 0
+                break
+
+    return mask
+
+
 def plot_tensor_scatter(x, alpha=1., scale=64.):
     """Scatter plot points in the format: ([x, y], scale) or ([x, y]) (in that case you can specify scale)"""
     if (isinstance(x, tuple) or isinstance(x, list)):

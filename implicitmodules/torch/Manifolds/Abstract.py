@@ -12,3 +12,4 @@ class Manifold:
 
     def infinitesimal_action(self, module):
         raise NotImplementedError
+

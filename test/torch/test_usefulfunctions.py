@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
+import math
 
 import torch
 
@@ -136,6 +137,31 @@ class TestUsefulFunctions(unittest.TestCase):
         self.assertTrue(closed.shape, torch.Size([nb_pts + 1, dim]))
         self.assertTrue(torch.all(torch.eq(closed[0, :], closed[-1, :])))
 
+    def test_point_side(self):
 
-if __name__ == '__main__':
-    unittest.main()
+        pts = torch.tensor([[1., 1.],
+                            [0., 0.],
+                            [-1., -1]])
+        origin = torch.tensor([0.5, 0.])
+        vec = torch.tensor([1., 3.])
+
+        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[0]), -1) 
+        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[1]), 1)
+        self.assertEqual(im.usefulfunctions.point_side(origin, vec, pts[2]), 1)
+
+    def test_is_inside_shape(self):
+        nb_pts_shape = 500
+        t = torch.linspace(0, 2*math.pi, nb_pts_shape)
+        shape = torch.zeros(nb_pts_shape, 2)
+
+        shape[:, 0] = torch.cos(t)
+        shape[:, 1] = torch.sin(t)
+
+        nb_pts = 10
+        pts = torch.rand(nb_pts, 2)*2. - 1.
+
+        inside = torch.norm(pts, dim=1) <= 1.
+        inside_func = im.usefulfunctions.is_inside_shape(shape, pts)
+
+        self.assertTrue(torch.all(torch.eq(inside, inside_func)))
+
