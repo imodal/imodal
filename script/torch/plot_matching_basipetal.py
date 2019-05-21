@@ -47,7 +47,7 @@ pos_implicit0 = source[source[:, 2] == 1, 0:2]
 pos_implicit1 = source[source[:, 2] == 1, 0:2]
 pos_target = target[target[:, 2] == 2, 0:2]
 
-aabb = im.usefulfunctions.AABB.build_from_points(pos_target)
+aabb = implicitmodules.torch.Utilities.usefulfunctions.AABB.build_from_points(pos_target)
 aabb.squared()
 
 ##################################################################################
@@ -114,7 +114,7 @@ a, b = -2 / L ** 3, 3 / L ** 2
 C[:, 1, 0] = (K * (a * (L - pos_implicit1[:, 1] + Dy) ** 3 + b * (L - pos_implicit1[:, 1] + Dy) ** 2))
 C[:, 0, 0] = 1. * C[:, 1, 0]
 th = 0. * math.pi * torch.ones(pos_implicit1.shape[0])
-R = torch.stack([im.usefulfunctions.rot2d(t) for t in th])
+R = torch.stack([implicitmodules.torch.Utilities.usefulfunctions.rot2d(t) for t in th])
 
 implicit1 = im.DeformationModules.ImplicitModule1(
     im.Manifolds.Stiefel(2, pos_implicit1.shape[0],

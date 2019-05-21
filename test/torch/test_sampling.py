@@ -10,25 +10,24 @@ import numpy as np
 
 import implicitmodules.torch as im
 
-
 class TestSampling(unittest.TestCase):
     def test_load_greyscale(self):
-        img_8 = im.sampling.load_greyscale_image(
+        img_8 = im.Utilities.sampling.load_greyscale_image(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png")
         self.assertIsInstance(img_8, torch.Tensor)
         self.assertEqual(img_8.shape, torch.Size([16, 16]))
 
         # load_greyscale_image should be able to handle multichannel images
         # (and simply take the red channel)
-        img_24 = im.sampling.load_greyscale_image(
+        img_24 = im.Utilities.sampling.load_greyscale_image(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_24.png")
         self.assertEqual(img_24.shape, torch.Size([16, 16]))
 
     def test_sample_from_greyscale(self):
-        img = im.sampling.load_greyscale_image(
+        img = im.Utilities.sampling.load_greyscale_image(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png")
     
-        points = im.sampling.sample_from_greyscale(img, 0.)
+        points = im.Utilities.sampling.sample_from_greyscale(img, 0.)
         self.assertIsInstance(points, tuple)
         self.assertEqual(len(points), 2)
         self.assertIsInstance(points[0], torch.Tensor)
@@ -36,17 +35,17 @@ class TestSampling(unittest.TestCase):
         self.assertEqual(points[0].shape, torch.Size([16*16, 2]))
         self.assertEqual(points[1].shape, torch.Size([16*16]))
     
-        points = im.sampling.sample_from_greyscale(img, 1.1)
+        points = im.Utilities.sampling.sample_from_greyscale(img, 1.1)
         self.assertEqual(points[0].shape, torch.Size([0, 2]))
     
-        points = im.sampling.sample_from_greyscale(img, 0.2, centered=True)
+        points = im.Utilities.sampling.sample_from_greyscale(img, 0.2, centered=True)
         self.assertTrue(torch.allclose(torch.sum(points[0], dim=0), torch.zeros(1, 2)))
     
-        points = im.sampling.sample_from_greyscale(img, 0.2, normalise_weights=True)
+        points = im.Utilities.sampling.sample_from_greyscale(img, 0.2, normalise_weights=True)
         self.assertTrue(torch.allclose(torch.sum(points[1]), torch.tensor(1.)))
 
     def test_load_and_sample_greyscale(self):
-        points = im.sampling.load_and_sample_greyscale(
+        points = im.Utilities.sampling.load_and_sample_greyscale(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png", threshold=0.)
         self.assertIsInstance(points, tuple)
         self.assertEqual(len(points), 2)
@@ -55,16 +54,16 @@ class TestSampling(unittest.TestCase):
         self.assertEqual(points[0].shape, torch.Size([16*16, 2]))
         self.assertEqual(points[1].shape, torch.Size([16*16]))
     
-        points = im.sampling.load_and_sample_greyscale(
+        points = im.Utilities.sampling.load_and_sample_greyscale(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png", threshold=1.1)
         self.assertEqual(points[0].shape, torch.Size([0, 2]))
     
-        points = im.sampling.load_and_sample_greyscale(
+        points = im.Utilities.sampling.load_and_sample_greyscale(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png",
             0.2, centered=True)
         self.assertTrue(torch.allclose(torch.sum(points[0], dim=0), torch.zeros(1, 2)))
     
-        points = im.sampling.load_and_sample_greyscale(
+        points = im.Utilities.sampling.load_and_sample_greyscale(
             os.path.dirname(os.path.abspath(__file__)) + "/data/16x16_greyscale_8.png",
             0.2, normalise_weights=True)
         self.assertTrue(torch.allclose(torch.sum(points[1]), torch.tensor(1.)))
@@ -77,7 +76,7 @@ class TestSampling(unittest.TestCase):
         alpha = torch.rand(m)
         frame_res = torch.Size([square_size, square_size])
 
-        frame_out = im.sampling.sample_image_from_points((points, alpha), frame_res)
+        frame_out = im.Utilities.sampling.sample_image_from_points((points, alpha), frame_res)
 
         self.assertIsInstance(frame_out, torch.Tensor)
         self.assertEqual(frame_out.shape, frame_res)
@@ -96,7 +95,7 @@ class TestSampling(unittest.TestCase):
         x, y = torch.meshgrid([torch.arange(0., square_size, step=1.),
                                torch.arange(0., square_size, step=1.)])
 
-        pos = im.usefulfunctions.grid2vec(x, y)
+        pos = im.Utilities.usefulfunctions.grid2vec(x, y)
 
         def kernel(x, sigma):
             return np.exp(-0.5*x**2/sigma**2)
@@ -105,7 +104,7 @@ class TestSampling(unittest.TestCase):
         for i in range(0, pos.shape[0]):
             naive[i] = float(np.sum(kernel(np.linalg.norm((pos[i,:].expand_as(points[0]) - points[0]).numpy(), axis=1), sigma)*points[1].numpy()))
 
-        implementation = im.sampling.kernel_smoother(pos, points, sigma=sigma)
+        implementation = im.Utilities.sampling.kernel_smoother(pos, points, sigma=sigma)
 
         self.assertIsInstance(implementation, torch.Tensor)
         self.assertTrue(torch.allclose(naive, implementation))
@@ -118,7 +117,7 @@ class TestSampling(unittest.TestCase):
         frame_res = torch.Size([square_size, square_size])
         points = square_size*torch.rand(m, dim), torch.rand(m)
 
-        frame = im.sampling.sample_from_smoothed_points(points, frame_res, sigma=sigma)
+        frame = im.Utilities.sampling.sample_from_smoothed_points(points, frame_res, sigma=sigma)
 
         self.assertIsInstance(frame, torch.Tensor)
         self.assertTrue(frame.shape, frame_res)
@@ -135,15 +134,15 @@ class TestSampling(unittest.TestCase):
                                torch.tensor([1.]), torch.tensor([0.])).byte()
 
         # AABB made bigger on purpose in order to test the rejection
-        aabb = im.usefulfunctions.AABB(-1., 2., -1., 2.)
+        aabb = im.Utilities.usefulfunctions.AABB(-1., 2., -1., 2.)
 
-        filled = im.sampling.fill_area_uniform(area, aabb, 0.2)
+        filled = im.Utilities.sampling.fill_area_uniform(area, aabb, 0.2)
         
         self.assertIsInstance(filled, torch.Tensor)
         self.assertEqual(filled.shape[0], 36)
         self.assertTrue(torch.all(area(filled)))
 
-        filled_circle = im.sampling.fill_area_uniform(area_circle, aabb, 0.2)
+        filled_circle = im.Utilities.sampling.fill_area_uniform(area_circle, aabb, 0.2)
         self.assertTrue(torch.all(area_circle(filled_circle)))
 
     def test_fill_area_random(self):
@@ -158,14 +157,14 @@ class TestSampling(unittest.TestCase):
                                torch.tensor([1.]), torch.tensor([0.])).byte()
         
         # AABB made bigger on purpose in order to test the rejection
-        aabb = im.usefulfunctions.AABB(-1., 2., -1., 2.)
+        aabb = im.Utilities.usefulfunctions.AABB(-1., 2., -1., 2.)
 
-        filled = im.sampling.fill_area_random(area, aabb, 20)
+        filled = im.Utilities.sampling.fill_area_random(area, aabb, 20)
 
         self.assertIsInstance(filled, torch.Tensor)
         self.assertTrue(torch.all(area(filled)))
 
-        filled_circle = im.sampling.fill_area_random(area_circle, aabb, 100)
+        filled_circle = im.Utilities.sampling.fill_area_random(area_circle, aabb, 100)
 
         self.assertTrue(torch.all(area_circle(filled_circle)))
 

@@ -4,8 +4,8 @@ import torch.optim
 from implicitmodules.torch.DeformationModules import CompoundModule, SilentLandmarks
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.Manifolds import Landmarks
-from .sampling import sample_from_greyscale, deformed_intensities
-from .usefulfunctions import grid2vec, vec2grid
+from implicitmodules.torch.Utilities.sampling import sample_from_greyscale, deformed_intensities
+from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
 class Model():
