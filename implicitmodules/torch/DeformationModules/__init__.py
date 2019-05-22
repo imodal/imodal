@@ -3,3 +3,5 @@ from implicitmodules.torch.DeformationModules.ElasticOrder0 import ImplicitModul
 from implicitmodules.torch.DeformationModules.ElasticOrder1 import ImplicitModule1
 from implicitmodules.torch.DeformationModules.SilentLandmark import SilentLandmarks
 from implicitmodules.torch.DeformationModules.Translation import Translations
+from implicitmodules.torch.DeformationModules.GlobalTranslation import GlobalTranslation
+

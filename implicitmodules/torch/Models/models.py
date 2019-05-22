@@ -38,6 +38,8 @@ class Model():
         def closure():
             self.nit += 1
             optimizer.zero_grad()
+            if self.precompute_cb is not None:
+                self.precompute_cb(self.parameters)
             self.compute(transformed_target)
             attach = l*self.attach
             cost = attach + self.deformation_cost
@@ -64,10 +66,11 @@ class Model():
 
 
 class ModelCompound(Model):
-    def __init__(self, modules, fixed, attachement, parameters=[]):
+    def __init__(self, modules, fixed, attachement, precompute_cb=None, parameters=[]):
         super().__init__(attachement)
         self.__modules = modules
         self.__fixed = fixed
+        self.__precompute_cb = precompute_cb
 
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
         self.__init_parameters = copy.copy(parameters)
@@ -88,6 +91,10 @@ class ModelCompound(Model):
     @property
     def fixed(self):
         return self.__fixed
+
+    @property
+    def precompute_cb(self):
+        return self.__precompute_cb
 
     @property
     def init_manifold(self):
@@ -115,9 +122,7 @@ class ModelCompound(Model):
 
         intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), 10, "torch_euler")
 
-        out = [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
-        return out
-        #return vec2grid(grid_landmarks.gd.view(-1, 2).detach(), grid_resolution[0], grid_resolution[1])
+        return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
 
 class ModelCompoundWithPointsRegistration(ModelCompound):
@@ -128,13 +133,13 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
             self.alpha = []
             for i in range(self.__compound_fit_size):
                 self.alpha.insert(i, source[i][1])
-                module_list.insert(i, SilentPoints(Landmarks(2, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                module_list.insert(i, SilentLandmarks(Landmarks(2, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
                 fixed.insert(i, True)
 
         else:
             self.__compound_fit = False
             self.alpha = source[1]
-            module_list.insert(0, SilentPoints(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
+            module_list.insert(0, SilentLandmarks(Landmarks(2, source[0].shape[0], gd=source[0].view(-1).requires_grad_())))
             fixed.insert(0, True)
 
         super().__init__(module_list, fixed, attachement, parameters=parameters)

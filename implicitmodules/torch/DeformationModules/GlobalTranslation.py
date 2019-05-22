@@ -1,8 +1,8 @@
 import torch
 
-from implicitmodules.torch.structuredfield import ConstantField
-from implicitmodules.torch.manifold import EmptyManifold
-from implicitmodules.torch.deformationmodules import DeformationModule
+from implicitmodules.torch.StructuredFields import ConstantField
+from implicitmodules.torch.Manifolds import EmptyManifold
+from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 
 
 class GlobalTranslation(DeformationModule):
