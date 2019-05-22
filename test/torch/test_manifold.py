@@ -351,5 +351,32 @@ class TestCompoundManifold(unittest.TestCase):
         self.assertTrue(gradcheck(inner_prod_field, [*gd, *controls], raise_exception=False))
 
 
+class TestCompoundCompoundManifold(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_compoundcompound(self):
+        nb_pts = 5
+        landmarks0 = im.Manifolds.Landmarks(2, nb_pts, gd=torch.rand(2*nb_pts))
+        landmarks1 = im.Manifolds.Landmarks(2, nb_pts, gd=torch.rand(2*nb_pts))
+        landmarks2 = im.Manifolds.Landmarks(2, nb_pts, gd=torch.rand(2*nb_pts))
+
+        compound0 = im.Manifolds.CompoundManifold([landmarks0, landmarks1])
+        compound1 = im.Manifolds.CompoundManifold([compound0, landmarks2])
+
+        l_gd = compound1.unroll_gd()
+        l_cotan = compound1.unroll_cotan()
+
+        self.assertEqual(len(l_gd), 3)
+        self.assertEqual(len(l_cotan), 3)
+
+        rolled_gd = compound1.roll_gd(l_gd)
+        rolled_cotan = compound1.roll_cotan(l_cotan)
+
+        self.assertEqual(len(rolled_gd), 2)
+        self.assertEqual(len(rolled_gd[0]), 2)
+        self.assertEqual(len(rolled_cotan), 2)
+        self.assertEqual(len(rolled_cotan[0]), 2)
+
 if __name__ == '__main__':
     unittest.main()
