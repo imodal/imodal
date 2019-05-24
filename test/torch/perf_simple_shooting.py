@@ -36,7 +36,7 @@ def simple_shooting(method, it):
         im.Manifolds.Stiefel(dim, nb_pts_order1,
                              gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())), C, sigma, nu, coeff)
 
-    implicitmodules.torch.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it,
+    im.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it,
                                                             method=method)
 
     return [silent.manifold.gd, order0.manifold.gd, order1.manifold.gd[0]]
@@ -66,8 +66,5 @@ def method_summary(method, it, loops):
 
 
 torch.set_printoptions(precision=4)
-method_summary("torch_euler", 10, 10)
-# method_summary("torch_euler", 10, 1)
-# for i in range(10):
-#     method_summary("rk4", i+1, 1)
+method_summary("torch_euler", 10, 5)
 
