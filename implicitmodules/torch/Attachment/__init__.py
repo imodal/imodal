@@ -2,4 +2,4 @@ from implicitmodules.torch.Attachment.attachement import EnergyAttachement
 from implicitmodules.torch.Attachment.attachement import GeomlossAttachement
 from implicitmodules.torch.Attachment.attachement import L2NormAttachement
 from implicitmodules.torch.Attachment.attachement import VarifoldAttachement
-from implicitmodules.torch.Attachment.attachement import PointwiseDistanceAttachement
+from implicitmodules.torch.Attachment.attachement import EuclideanPointwiseDistanceAttachement

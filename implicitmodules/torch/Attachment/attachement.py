@@ -8,19 +8,23 @@ from implicitmodules.torch.Utilities.usefulfunctions import close_shape
 
 
 class Attachement:
-    def __init__(self):
-        pass
+    def __init__(self, weight=1.):
+        self.__weight = weight
+
+    @property
+    def weight(self):
+        return self.__weight
 
     def __call__(self, x, y):
-        return self.loss(x, y)
+        return self.__weight*self.loss(x, y)
 
     def loss(self, x, y):
         raise NotImplementedError
 
 class EnergyAttachement(Attachement):
     """Energy Distance between two sampled probability measures."""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, weight):
+        super().__init__(weight=1.)
 
     def loss(self, x, y):
         x_i, a_i = x
@@ -32,17 +36,17 @@ class EnergyAttachement(Attachement):
 
 class L2NormAttachement(Attachement):
     """L2 norm distance between two measures."""
-    def __init__(self):
-        super().__init__()
+    def __init__(self, weight=1.):
+        super().__init__(weight)
 
     def loss(self, x, y):
         return torch.dist(a, b)
 
 
 class VarifoldAttachement(Attachement):
-    def __init__(self, sigmas):
+    def __init__(self, sigmas, weight=1.):
         assert isinstance(sigmas, Iterable)
-        super().__init__()
+        super().__init__(weight)
         self.__sigmas = sigmas
 
     @property
@@ -79,17 +83,18 @@ class VarifoldAttachement(Attachement):
 
 
 class GeomlossAttachement(Attachement):
-    def __init__(self, **kwargs):
-        super().__init__()
+    def __init__(self, weight=1., **kwargs):
+        super().__init__(weight)
         self.__geomloss = geomloss.SamplesLoss(**kwargs)
 
     def loss(self, x, y):
-        return self.__geomloss.loss(x, y)
+        return self.__geomloss(x[1], x[0], y[1], y[0])
 
 
-class PointwiseDistanceAttachement(Attachement):
-    def __init__(self, norm='L1'):
-        super().__init__()
+class EuclideanPointwiseDistanceAttachement(Attachement):
+    def __init__(self, weight=1.):
+        super().__init__(weight)
 
     def loss(self, x, y):
         return torch.sum(torch.norm(x[0]-y[0], dim=1))
+

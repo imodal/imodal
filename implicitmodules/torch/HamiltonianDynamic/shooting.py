@@ -127,10 +127,8 @@ def shoot_torchdiffeq(h, it, method='rk4'):
 
         intermediate.append(init_manifold.copy())
 
-        intermediate[-1].roll_gd(gd)
-        intermediate[-1].roll_cotan(mom)
-        intermediate[-1].fill_gd(gd)
-        intermediate[-1].fill_cotan(mom)
+        intermediate[-1].fill_gd(intermediate[-1].roll_gd(gd))
+        intermediate[-1].fill_cotan(intermediate[-1].roll_cotan(mom))
 
     return intermediate
 
