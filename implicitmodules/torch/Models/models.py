@@ -80,10 +80,10 @@ class Model():
         return costs
 
 
-class ModelCompound(Model):
+class Model:
     def __init__(self, modules, attachement, fit_moments, precompute_callback, other_parameters):
-        super().__init__(attachement)
         self.__modules = modules
+        self.__attachement = attachement
         self.__precompute_callback = precompute_callback
         self.__fit_moments = fit_moments
 
@@ -100,6 +100,10 @@ class ModelCompound(Model):
     @property
     def modules(self):
         return self.__modules
+
+    @property
+    def attachement(self):
+        return self.__attachement
 
     @property
     def precompute_callback(self):
@@ -151,7 +155,7 @@ class ModelCompound(Model):
         return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
 
-class ModelCompoundWithPointsRegistration(ModelCompound):
+class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
@@ -183,7 +187,7 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
 
         # Shooting
         # TODO: Iteraction count and method should be provided by the user.
-        shoot(Hamiltonian(compound), 30, 'euler')
+        shoot(Hamiltonian(compound), 20, 'euler')
         deformation_cost = compound.cost()
 
         # We compute the attach cost for each source/target couple
@@ -193,7 +197,7 @@ class ModelCompoundWithPointsRegistration(ModelCompound):
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), self.weights[i]), target[i]))
             else:
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), None), (target[i], None)))
-        #print(attach_costs)
+
         return deformation_cost, sum(attach_costs)
 
 
