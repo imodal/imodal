@@ -62,6 +62,14 @@ class Stiefel(Manifold):
         return self.__numel_gd
 
     @property
+    def numel_gd_points(self):
+        return self.__numel_gd_points
+
+    @property
+    def numel_gd_mat(self):
+        return self.__numel_gd_mat
+
+    @property
     def len_gd(self):
         return 2
 
@@ -103,8 +111,7 @@ class Stiefel(Manifold):
         self.fill_cotan(manifold.cotan, copy=copy)
 
     def fill_gd(self, gd, copy=False):
-        assert isinstance(gd, Iterable) and (len(gd) == 2) and (gd[0].numel() == self.__numel_gd_points) and (
-                    gd[1].numel() == self.__numel_gd_mat)
+        assert isinstance(gd, Iterable) and (len(gd) == 2) and (gd[0].numel() == self.__numel_gd_points) and (gd[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__gd = gd
         else:
@@ -112,8 +119,7 @@ class Stiefel(Manifold):
                          gd[1].detach().clone().requires_grad_())
 
     def fill_tan(self, tan, copy=False):
-        assert isinstance(tan, Iterable) and (len(tan) == 2) and (tan[0].numel() == self.__numel_gd_points) and (
-                    tan[1].numel() == self.__numel_gd_mat)
+        assert isinstance(tan, Iterable) and (len(tan) == 2) and (tan[0].numel() == self.__numel_gd_points) and (tan[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__tan = tan
         else:
@@ -121,8 +127,7 @@ class Stiefel(Manifold):
                           tan[1].detach().clone().requires_grad_())
 
     def fill_cotan(self, cotan, copy=False):
-        assert isinstance(cotan, Iterable) and (len(cotan) == 2) and (cotan[0].numel() == self.__numel_gd_points) and (
-                    cotan[1].numel() == self.__numel_gd_mat)
+        assert isinstance(cotan, Iterable) and (len(cotan) == 2) and (cotan[0].numel() == self.__numel_gd_points) and (cotan[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__cotan = cotan
         else:

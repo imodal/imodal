@@ -13,73 +13,6 @@ from implicitmodules.torch.Utilities.sampling import sample_from_greyscale, defo
 from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
-class Model():
-    def __init__(self, attachement):
-        self.__attachement = attachement
-
-    @property
-    def attachement(self):
-        return self.__attachement
-
-    def compute(self):
-        raise NotImplementedError
-
-    def fit(self, target, step_length=1., l=1., max_iter=100, options={}):
-        optim = FullBatchLBFGS(self.parameters, lr=step_length, history_size=500, line_search='Wolfe')
-
-        last_costs = {}
-        def closure():
-            optim.zero_grad()
-
-            # Call precompute callback if available
-            if self.precompute_callback is not None:
-                self.precompute_callback(self.modules, self.parameters)
-
-            # Shooting + loss computation
-            deformation_cost, attach_cost = self.compute(target)
-            cost = l*attach_cost + deformation_cost
-
-            # Save for printing purpose
-            last_costs['deformation_cost'] = deformation_cost.detach()
-            last_costs['attach_cost'] = l*attach_cost.detach()
-            last_costs['cost'] = cost.detach()
-
-            return cost
-
-        loss = closure()
-        loss.backward()
-
-        print("Initial state")
-        print("Attach cost = %.3f" % (loss.detach().numpy()))
-
-        closure_count = 0
-        start = time.time()
-        costs = []
-        for i in range(max_iter):
-            # Computing step
-            step_options = {'closure': closure, 'current_loss': loss, 'ls_debug': True}
-            step_options.update(options)
-            loss, _, step_length, _, F_eval, G_eval, desc_dir, fail = optim.step(step_options)
-
-            # Retrieving costs
-            costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
-
-            print("="*80)
-            print("Iteration: %d \n Total energy = %f \n Attach cost = %f \n Deformation cost = %f \n Step length = %.12f \n Closure evaluations = %d" % (i + 1, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost'], step_length, F_eval))
-            closure_count += F_eval
-
-            if fail or not desc_dir:
-                break
-
-        print("="*80)
-        print("End of the optimisation process.")
-        print("Final energy =", last_costs['cost'])
-        print("Closure evaluations =", closure_count)
-        print("Time elapsed =", time.time() - start)
-
-        return costs
-
-
 class Model:
     def __init__(self, modules, attachement, fit_moments, precompute_callback, other_parameters):
         self.__modules = modules
@@ -125,6 +58,30 @@ class Model:
     def parameters(self):
         return self.__parameters
 
+    def gradcheck(self, target, l):
+        def energy(*param):
+            parameters = list(param)
+            init_manifold = []
+            init_other_parameters = []
+
+            if self.__fit_moments:
+                init_manifold = parameters[:self.__init_manifold.len_gd]
+                self.__init_other_parameters = parameters[len(init_manifold):]
+                self.__init_manifold.fill_cotan(self.__init_manifold.roll_cotan(init_manifold))
+            else:
+                self.__init_other_parameters = parameters
+
+            self.compute_parameters()
+
+            if self.__precompute_callback:
+                self.__precompute_callback(self.__modules, self.__parameters)
+
+            deformation_cost, attach_cost = self.compute(target)
+            cost = deformation_cost + l*attach_cost
+            return cost
+
+        return torch.autograd.gradcheck(energy, self.__parameters, raise_exception=False)
+
     def compute_parameters(self):
         """
         Fill the parameter list that will be optimized by the optimizer. 
@@ -150,7 +107,7 @@ class Model:
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
-        intermediate_states= shoot(Hamiltonian([grid_silent, *compound]), 10, 'euler')
+        intermediate_states= shoot(Hamiltonian([grid_silent, *compound]), 20, 'rk4')
 
         return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
@@ -187,7 +144,7 @@ class ModelPointsRegistration(Model):
 
         # Shooting
         # TODO: Iteraction count and method should be provided by the user.
-        shoot(Hamiltonian(compound), 20, 'euler')
+        shoot(Hamiltonian(compound), 20, 'midpoint')
         deformation_cost = compound.cost()
 
         # We compute the attach cost for each source/target couple
@@ -197,6 +154,9 @@ class ModelPointsRegistration(Model):
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), self.weights[i]), target[i]))
             else:
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), None), (target[i], None)))
+
+        #abc_norm = torch.norm(self.parameters[-1])
+        deformation_cost = deformation_cost
 
         return deformation_cost, sum(attach_costs)
 

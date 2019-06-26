@@ -7,7 +7,7 @@ import scipy.optimize
 from .models_fitting import ModelFitting
 
 class ModelFittingScipy(ModelFitting):
-    def __init__(self, model, step_length, lam):
+    def __init__(self, model, step_length, lam, post_iteration_callback=None):
         super().__init__(model)
 
         self.__step_length = step_length
@@ -15,10 +15,12 @@ class ModelFittingScipy(ModelFitting):
 
         self.__pytorch_optim = torch.optim.SGD(self.model.parameters, lr=step_length)
 
+        self.__post_iteration_callback = post_iteration_callback
+
     def reset(selt):
         pass
 
-    def fit(self, target, max_iter, method='BFGS', options={}):
+    def fit(self, target, max_iter, method='BFGS', options={}, log_interval=10):
         last_costs = {}
         costs = []
 
@@ -35,6 +37,7 @@ class ModelFittingScipy(ModelFitting):
 
             # Shooting + loss computation
             deformation_cost, attach_cost = self.model.compute(target)
+            #deformation_cost = 1.*deformation_cost
             cost = self.__lam*attach_cost + deformation_cost
             cost.backward()
             c = cost.item()
@@ -45,6 +48,7 @@ class ModelFittingScipy(ModelFitting):
             last_costs['deformation_cost'] = deformation_cost.item()
             last_costs['attach_cost'] = self.__lam*attach_cost.item()
             last_costs['cost'] = cost.item()
+            #last_costs['abc_cost'] = abc_norm.item()
 
             return (c, dx_c)
 
@@ -52,9 +56,15 @@ class ModelFittingScipy(ModelFitting):
 
         # Callback function called at the end of each iteration for printing and logging purpose.
         def callback(xk):
-            print("="*80)
-            print("Iteration: %d \nTotal energy = %f \nAttach cost = %f \nDeformation cost = %f" % (self.__it, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost']))
+            if self.__post_iteration_callback:
+                self.__post_iteration_callback(self.model)
+            
+            if self.__it % log_interval == 0 or self.__it == 1:
+                print("="*80)
+                print("Iteration: %d \nTotal energy = %f \nAttach cost = %f \nDeformation cost = %f" %
+            (self.__it, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost']))
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
+
             self.__it = self.__it + 1
 
         step_options = {'disp': True, 'maxiter': max_iter}
@@ -67,6 +77,8 @@ class ModelFittingScipy(ModelFitting):
 
         start = time.time()
         res = scipy.optimize.minimize(closure, x_0, method=method, jac=True, options=step_options, callback=callback)
+
+        self.__numpy_to_model(self.model, res.x)
 
         print("="*80)
         print("Optimisation process exited with message:", res.message)
