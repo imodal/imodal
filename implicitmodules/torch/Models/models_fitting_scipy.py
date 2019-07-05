@@ -37,7 +37,6 @@ class ModelFittingScipy(ModelFitting):
 
             # Shooting + loss computation
             deformation_cost, attach_cost = self.model.compute(target)
-            #deformation_cost = 1.*deformation_cost
             cost = self.__lam*attach_cost + deformation_cost
             cost.backward()
             c = cost.item()
@@ -48,7 +47,6 @@ class ModelFittingScipy(ModelFitting):
             last_costs['deformation_cost'] = deformation_cost.item()
             last_costs['attach_cost'] = self.__lam*attach_cost.item()
             last_costs['cost'] = cost.item()
-            #last_costs['abc_cost'] = abc_norm.item()
 
             return (c, dx_c)
 
@@ -59,7 +57,7 @@ class ModelFittingScipy(ModelFitting):
             if self.__post_iteration_callback:
                 self.__post_iteration_callback(self.model)
             
-            if self.__it % log_interval == 0 or self.__it == 1:
+            if (self.__it % log_interval == 0 or self.__it == 1) and log_interval != -1:
                 print("="*80)
                 print("Iteration: %d \nTotal energy = %f \nAttach cost = %f \nDeformation cost = %f" %
             (self.__it, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost']))
