@@ -144,7 +144,7 @@ class ModelPointsRegistration(Model):
 
         # Shooting
         # TODO: Iteraction count and method should be provided by the user.
-        shoot(Hamiltonian(compound), 20, 'midpoint')
+        shoot(Hamiltonian(compound), 10, 'midpoint')
         deformation_cost = compound.cost()
 
         # We compute the attach cost for each source/target couple
