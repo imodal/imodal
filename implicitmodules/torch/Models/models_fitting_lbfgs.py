@@ -26,7 +26,7 @@ class ModelFittingLBFGS(ModelFitting):
 
             # Call precompute callback if available
             if self.model.precompute_callback is not None:
-                self.model.precompute_callback(self.model.modules, self.model.parameters)
+                self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
             # Shooting + loss computation
             deformation_cost, attach_cost = self.model.compute(target)
