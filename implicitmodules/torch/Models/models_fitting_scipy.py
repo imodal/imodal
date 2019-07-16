@@ -20,7 +20,7 @@ class ModelFittingScipy(ModelFitting):
     def reset(selt):
         pass
 
-    def fit(self, target, max_iter, method='BFGS', options={}, log_interval=10):
+    def fit(self, target, max_iter, method='BFGS', options={}, log_interval=10, disp=True):
         last_costs = {}
         costs = []
 
@@ -36,7 +36,16 @@ class ModelFittingScipy(ModelFitting):
                 self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
             # Shooting + loss computation
-            deformation_cost, attach_cost = self.model.compute(target)
+            method = "euler"
+            it = 10
+
+            if "method" in options:
+                method = options["method"]
+
+            if "it" in options:
+                it = options["it"]
+
+            deformation_cost, attach_cost = self.model.compute(target, it=it, method=method)
             cost = self.__lam*attach_cost + deformation_cost
             cost.backward()
             c = cost.item()
@@ -57,7 +66,7 @@ class ModelFittingScipy(ModelFitting):
             if self.__post_iteration_callback:
                 self.__post_iteration_callback(self.model)
             
-            if (self.__it % log_interval == 0 or self.__it == 1) and log_interval != -1:
+            if (self.__it % log_interval == 0 or self.__it == 1) and log_interval != -1 and disp:
                 print("="*80)
                 print("Iteration: %d \nTotal energy = %f \nAttach cost = %f \nDeformation cost = %f" %
             (self.__it, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost']))
@@ -65,26 +74,28 @@ class ModelFittingScipy(ModelFitting):
 
             self.__it = self.__it + 1
 
-        step_options = {'disp': True, 'maxiter': max_iter}
+        step_options = {'disp': disp, 'maxiter': max_iter}
         step_options.update(options)
 
         x_0 = self.__model_to_numpy(self.model)
         initial_cost = closure(x_0)
 
-        print("Initial energy = %.3f" % last_costs['cost'])
+        if disp:
+            print("Initial energy = %.3f" % last_costs['cost'])
 
         start = time.time()
         res = scipy.optimize.minimize(closure, x_0, method=method, jac=True, options=step_options, callback=callback)
 
         self.__numpy_to_model(self.model, res.x)
 
-        print("="*80)
-        print("Optimisation process exited with message:", res.message)
-        print("Final energy =", last_costs['cost'])
-        print("Closure evaluations =", res['nfev'])
-        print("Time elapsed =", time.time() - start)
-        print("Jacobian min max = ", np.min(res.jac), np.max(res.jac))
-        print("Hessian condition number =", np.linalg.cond(res.hess_inv))
+        if disp:
+            print("="*80)
+            print("Optimisation process exited with message:", res.message)
+            print("Final energy =", last_costs['cost'])
+            print("Closure evaluations =", res['nfev'])
+            print("Time elapsed =", time.time() - start)
+            print("Jacobian min max = ", np.min(res.jac), np.max(res.jac))
+            print("Hessian condition number =", np.linalg.cond(res.hess_inv))
 
         return costs
 

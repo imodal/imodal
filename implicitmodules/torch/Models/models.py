@@ -136,7 +136,10 @@ class ModelPointsRegistration(Model):
 
         super().__init__(modules, attachement, fit_moments, precompute_callback, other_parameters)
 
-    def compute(self, target):
+        self.shooting_method = "euler"
+        self.shooting_it = 20
+
+    def compute(self, target, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
         # We first create and fill the compound module we will shoot
         compound = CompoundModule(self.modules)
@@ -144,7 +147,7 @@ class ModelPointsRegistration(Model):
 
         # Shooting
         # TODO: Iteraction count and method should be provided by the user.
-        shoot(Hamiltonian(compound), 10, 'midpoint')
+        shoot(Hamiltonian(compound), it, method)
         deformation_cost = compound.cost()
 
         # We compute the attach cost for each source/target couple
