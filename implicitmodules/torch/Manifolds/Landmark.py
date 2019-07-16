@@ -27,9 +27,9 @@ class Landmarks(Manifold):
         if isinstance(cotan, torch.Tensor):
             self.fill_cotan(cotan.requires_grad_(), copy=False)
 
-    def copy(self):
+    def copy(self, requires_grad=True):
         out = Landmarks(self.__dim, self.__nb_pts)
-        out.fill(self, copy=True)
+        out.fill(self, copy=True, requires_grad=requires_grad)
         return out
 
     @property
@@ -79,30 +79,30 @@ class Landmarks(Manifold):
     def __get_cotan(self):
         return self.__cotan
 
-    def fill(self, manifold, copy=False):
+    def fill(self, manifold, copy=False, requires_grad=True):
         assert isinstance(manifold, Landmarks)
-        self.fill_gd(manifold.gd, copy=copy)
-        self.fill_tan(manifold.tan, copy=copy)
-        self.fill_cotan(manifold.cotan, copy=copy)
+        self.fill_gd(manifold.gd, copy=copy, requires_grad=requires_grad)
+        self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
+        self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
-    def fill_gd(self, gd, copy=False):
+    def fill_gd(self, gd, copy=False, requires_grad=True):
         assert gd.shape[0] == self.__numel_gd
         if copy:
-            self.__gd = gd.detach().clone().requires_grad_()
+            self.__gd = gd.detach().clone().requires_grad_(requires_grad)
         else:
             self.__gd = gd
 
-    def fill_tan(self, tan, copy=False):
+    def fill_tan(self, tan, copy=False, requires_grad=True):
         assert tan.shape[0] == self.__numel_gd
         if copy:
-            self.__tan = tan.detach().clone().requires_grad_()
+            self.__tan = tan.detach().clone().requires_grad_(requires_grad)
         else:
             self.__tan = tan
 
-    def fill_cotan(self, cotan, copy=False):
+    def fill_cotan(self, cotan, copy=False, requires_grad=True):
         assert cotan.shape[0] == self.__numel_gd
         if copy:
-            self.__cotan = cotan.detach().clone().requires_grad_()
+            self.__cotan = cotan.detach().clone().requires_grad_(requires_grad)
         else:
             self.__cotan = cotan
 

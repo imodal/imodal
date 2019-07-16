@@ -44,9 +44,9 @@ class Stiefel(Manifold):
             self.__cotan = (torch.zeros(self.__numel_gd_points, requires_grad=True),
                             torch.zeros(self.__numel_gd_mat, requires_grad=True))
 
-    def copy(self):
+    def copy(self, requires_grad=True):
         out = Stiefel(self.__dim, self.__nb_pts)
-        out.fill(self, copy=True)
+        out.fill(self, copy=True, requires_grad=requires_grad)
         return out
 
     @property
@@ -104,35 +104,35 @@ class Stiefel(Manifold):
     def __get_cotan(self):
         return self.__cotan
 
-    def fill(self, manifold, copy=False):
+    def fill(self, manifold, copy=False, requires_grad=True):
         assert isinstance(manifold, Stiefel)
-        self.fill_gd(manifold.gd, copy=copy)
-        self.fill_tan(manifold.tan, copy=copy)
-        self.fill_cotan(manifold.cotan, copy=copy)
+        self.fill_gd(manifold.gd, copy=copy, requires_grad=requires_grad)
+        self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
+        self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
-    def fill_gd(self, gd, copy=False):
+    def fill_gd(self, gd, copy=False, requires_grad=True):
         assert isinstance(gd, Iterable) and (len(gd) == 2) and (gd[0].numel() == self.__numel_gd_points) and (gd[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__gd = gd
         else:
-            self.__gd = (gd[0].detach().clone().requires_grad_(),
-                         gd[1].detach().clone().requires_grad_())
+            self.__gd = (gd[0].detach().clone().requires_grad_(requires_grad),
+                         gd[1].detach().clone().requires_grad_(requires_grad))
 
-    def fill_tan(self, tan, copy=False):
+    def fill_tan(self, tan, copy=False, requires_grad=True):
         assert isinstance(tan, Iterable) and (len(tan) == 2) and (tan[0].numel() == self.__numel_gd_points) and (tan[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__tan = tan
         else:
-            self.__tan = (tan[0].detach().clone().requires_grad_(),
-                          tan[1].detach().clone().requires_grad_())
+            self.__tan = (tan[0].detach().clone().requires_grad_(requires_grad),
+                          tan[1].detach().clone().requires_grad_(requires_grad))
 
-    def fill_cotan(self, cotan, copy=False):
+    def fill_cotan(self, cotan, copy=False, requires_grad=True):
         assert isinstance(cotan, Iterable) and (len(cotan) == 2) and (cotan[0].numel() == self.__numel_gd_points) and (cotan[1].numel() == self.__numel_gd_mat)
         if not copy:
             self.__cotan = cotan
         else:
-            self.__cotan = (cotan[0].detach().clone().requires_grad_(),
-                            cotan[1].detach().clone().requires_grad_())
+            self.__cotan = (cotan[0].detach().clone().requires_grad_(requires_grad),
+                            cotan[1].detach().clone().requires_grad_(requires_grad))
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)

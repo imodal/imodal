@@ -12,8 +12,8 @@ class CompoundManifold(Manifold):
         self.__len_gd = sum([m.len_gd for m in self.__manifold_list])
         self.__dim_gd = tuple(sum((m.dim_gd for m in self.__manifold_list), ()))
 
-    def copy(self):
-        manifold_list = [m.copy() for m in self.__manifold_list]
+    def copy(self, requires_grad=True):
+        manifold_list = [m.copy(requires_grad=requires_grad) for m in self.__manifold_list]
         return CompoundManifold(manifold_list)
 
     @property
@@ -82,22 +82,22 @@ class CompoundManifold(Manifold):
     def __get_cotan(self):
         return [m.cotan for m in self.__manifold_list]
 
-    def fill(self, manifold, copy=False):
-        self.fill_gd(manifold.gd, copy=copy)
-        self.fill_tan(manifold.tan, copy=copy)
-        self.fill_cotan(manifold.cotan, copy=copy)
+    def fill(self, manifold, copy=False, requires_grad=True):
+        self.fill_gd(manifold.gd, copy=copy, requires_grad=requires_grad)
+        self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
+        self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
-    def fill_gd(self, gd, copy=False):
+    def fill_gd(self, gd, copy=False, requires_grad=True):
         for i in range(len(self.__manifold_list)):
-            self.__manifold_list[i].fill_gd(gd[i], copy=copy)
+            self.__manifold_list[i].fill_gd(gd[i], copy=copy, requires_grad=requires_grad)
 
-    def fill_tan(self, tan, copy=False):
+    def fill_tan(self, tan, copy=False, requires_grad=True):
         for i in range(len(self.__manifold_list)):
-            self.__manifold_list[i].fill_tan(tan[i], copy=copy)
+            self.__manifold_list[i].fill_tan(tan[i], copy=copy, requires_grad=requires_grad)
 
-    def fill_cotan(self, cotan, copy=False):
+    def fill_cotan(self, cotan, copy=False, requires_grad=True):
         for i in range(len(self.__manifold_list)):
-            self.__manifold_list[i].fill_cotan(cotan[i], copy=copy)
+            self.__manifold_list[i].fill_cotan(cotan[i], copy=copy, requires_grad=requires_grad)
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)

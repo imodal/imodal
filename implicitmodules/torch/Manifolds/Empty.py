@@ -8,7 +8,7 @@ class EmptyManifold(Manifold):
     def __init__(self):
         super().__init__()
 
-    def copy(self):
+    def copy(self, requires_grad=True):
         return EmptyManifold()
 
     @property
@@ -58,16 +58,16 @@ class EmptyManifold(Manifold):
     def __get_cotan(self):
         return torch.tensor([])
 
-    def fill(self, manifold, copy=False):
+    def fill(self, manifold, copy=False, requires_grad=True):
         pass
 
-    def fill_gd(self, gd, copy=False):
+    def fill_gd(self, gd, copy=False, requires_grad=True):
         pass
 
-    def fill_tan(self, tan, copy=False):
+    def fill_tan(self, tan, copy=False, requires_grad=True):
         pass
 
-    def fill_cotan(self, cotan, copy=False):
+    def fill_cotan(self, cotan, copy=False, requires_grad=True):
         pass
 
     gd = property(__get_gd, fill_gd)

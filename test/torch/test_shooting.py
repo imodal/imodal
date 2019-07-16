@@ -11,132 +11,107 @@ import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
+class TestShooting(unittest.TestCase):
+    # The different ODE solving methods we want to use and test
+    methods = ["torch_euler", "euler", "midpoint", "rk4"]
+    methods_it = [5, 5, 3, 3]
 
-# class TestShooting(unittest.TestCase):
-#     def setUp(self):
-#         self.it = 2
-#         self.m = 4
-#         self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
-#         self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-#         self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
-#         self.trans = im.DeformationModules.Translations(self.landmarks, 0.5)
-#         self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
-#         self.method = "rk4"
-
-#     def test_shooting(self):
-#         intermediates = im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
-
-#         self.assertIsInstance(self.h.module.manifold.gd, list)
-#         self.assertIsInstance(self.h.module.manifold.gd[0], torch.Tensor)
-#         self.assertIsInstance(self.h.module.manifold.cotan, list)
-#         self.assertIsInstance(self.h.module.manifold.cotan[0], torch.Tensor)
-
-#         self.assertEqual(self.h.module.manifold.gd[0].shape, self.gd.shape)
-#         self.assertEqual(self.h.module.manifold.cotan[0].shape, self.mom.shape)
-
-#         #self.assertEqual(len(intermediates), self.it)
-
-#     def test_shooting_zero(self):
-#         mom = torch.zeros_like(self.mom, requires_grad=True)
-#         self.h.module.manifold.fill_cotan([mom])
-#         im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
-
-#         self.assertTrue(torch.allclose(self.h.module.manifold.gd[0], self.gd))
-#         self.assertTrue(torch.allclose(self.h.module.manifold.cotan[0], mom))
-
-#     def test_shooting_rand(self):
-#         im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
-
-#         self.assertFalse(torch.allclose(self.h.module.manifold.gd[0], self.gd[0]))
-#         self.assertFalse(torch.allclose(self.h.module.manifold.cotan[0], self.mom[0]))
-
-#     # def test_shooting_precision(self):
-#     #     im.shooting.shoot(self.h, it=2000)
-#     #     gd_torchdiffeq = self.h.module.manifold.gd[0]
-#     #     mom_torchdiffeq = self.h.module.manifold.cotan[0]
-
-#     #     self.h.module.manifold.fill_gd([self.gd])
-#     #     self.h.module.manifold.fill_cotan([self.mom])
-#     #     im.shooting.shoot_euler(self.h, it=2000)
-#     #     print(gd_torchdiffeq)
-#     #     print(self.h.module.manifold.gd[0])
-
-#     #     self.assertTrue(torch.allclose(gd_torchdiffeq, self.h.module.manifold.gd[0], rtol=0.5))
-#     #     self.assertTrue(torch.allclose(mom_torchdiffeq, self.h.module.manifold.cotan[0], rtol=0.5))
-
-#     def test_gradcheck_shoot(self):
-#         def shoot(gd, mom):
-#             self.h.module.manifold.fill_gd([gd])
-#             self.h.module.manifold.fill_cotan([mom])
-
-#             im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
-
-#             return self.h.module.manifold.gd[0], self.h.module.manifold.cotan[0]
-
-#         self.gd.requires_grad_()
-#         self.mom.requires_grad_()
-
-#         # We multiply GD by 400. as it seems gradcheck is very sensitive to
-#         # badly conditioned problems
-#         # TODO: be sure it is because of that
-#         self.assertTrue(torch.autograd.gradcheck(shoot, (100.0*self.gd, self.mom), raise_exception=True))
-
-
-class TestShootingEuler(unittest.TestCase):
     def setUp(self):
-        self.it = 2
-        self.m = 4
-        self.gd = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.mom = torch.rand(self.m, 2, requires_grad=True).view(-1)
-        self.landmarks = im.Manifolds.Landmarks(2, self.m, gd=self.gd, cotan=self.mom)
-        self.trans = im.DeformationModules.Translations(self.landmarks, 0.5)
-        self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
-        self.method = "torch_euler"
+        self.nb_pts_silent = 4
+        self.nb_pts_trans = 2
+        self.dim = 2
+        self.gd_silent = torch.tensor([[1., 1.], [1., -1], [-1., -1.], [-1., 1.]], requires_grad=True)
+        self.cotan_silent = torch.tensor([[1., 1.], [1., 1], [-1., -1.], [-1., -1.]], requires_grad=True)
+        self.gd_trans = torch.tensor([[-1., 0.], [1., 0]], requires_grad=True)
+        self.cotan_trans = torch.tensor([[1., 0.], [-1., 0.]], requires_grad=True)
+
+    def _build_h(self, fill_cotan=True):
+        self.silent = im.DeformationModules.SilentLandmarks.build_from_points(self.gd_silent)
+        if fill_cotan:
+            self.silent.manifold.fill_cotan(self.cotan_silent.view(-1))
+
+        self.trans = im.DeformationModules.ImplicitModule0.build_from_points(self.dim, self.nb_pts_trans, 0.5, 0.01, gd=self.gd_trans.view(-1))
+        if fill_cotan:
+            self.trans.manifold.fill_cotan(self.cotan_trans.view(-1))
+
+        return im.HamiltonianDynamic.Hamiltonian([self.silent, self.trans])        
 
     def test_shooting(self):
-        intermediates = im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
+        for method, it in zip(self.methods, self.methods_it):
+            with self.subTest(method=method, it=it):
+                states, controls = im.HamiltonianDynamic.shoot(self._build_h(), it, method, intermediates=True)
 
-        self.assertIsInstance(self.h.module.manifold.gd, list)
-        self.assertIsInstance(self.h.module.manifold.gd[0], torch.Tensor)
-        self.assertIsInstance(self.h.module.manifold.cotan, list)
-        self.assertIsInstance(self.h.module.manifold.cotan[0], torch.Tensor)
+                self.assertEqual(len(states), it + 1)
 
-        self.assertEqual(self.h.module.manifold.gd[0].shape, self.gd.shape)
-        self.assertEqual(self.h.module.manifold.cotan[0].shape, self.mom.shape)
+                states2, controls2 = im.HamiltonianDynamic.shoot(self._build_h(), it, method, controls=controls, intermediates=True)
+                for control, control2 in zip(controls, controls2):
+                    self.assertFalse(control[0].requires_grad)
+                    self.assertFalse(control[1].requires_grad)
+                    self.assertFalse(control2[0].requires_grad)
+                    self.assertFalse(control2[1].requires_grad)
+                    self.assertTrue(torch.allclose(control[0], control2[0]))
+                    self.assertTrue(torch.allclose(control[1], control2[1]))
 
-        self.assertEqual(len(intermediates), self.it)
+                for state, state2 in zip(states, states2):
+                    self.assertFalse(state.gd[0].requires_grad)
+                    self.assertFalse(state.gd[1].requires_grad)
+                    self.assertFalse(state.cotan[0].requires_grad)
+                    self.assertFalse(state.cotan[1].requires_grad)
+                    self.assertFalse(state2.gd[0].requires_grad)
+                    self.assertFalse(state2.gd[1].requires_grad)
+                    self.assertFalse(state2.cotan[0].requires_grad)
+                    self.assertFalse(state2.cotan[1].requires_grad)
+                    self.assertTrue(torch.allclose(state.gd[0], state2.gd[0]))
+                    self.assertTrue(torch.allclose(state.gd[1], state2.gd[1]))
+                    self.assertTrue(torch.allclose(state.cotan[0], state2.cotan[0]))
+                    self.assertTrue(torch.allclose(state.cotan[1], state2.cotan[1]))
 
     def test_shooting_zero(self):
-        mom = torch.zeros_like(self.mom, requires_grad=True)
-        self.h.module.manifold.fill_cotan([mom])
-        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
+        for method, it in zip(self.methods, self.methods_it):
+            with self.subTest(method=method, it=it):
+                states, controls = im.HamiltonianDynamic.shoot(self._build_h(fill_cotan=False), it, method, intermediates=True)
 
-        self.assertTrue(torch.allclose(self.h.module.manifold.gd[0], self.gd))
-        self.assertTrue(torch.allclose(self.h.module.manifold.cotan[0], mom))
+                for state in states:
+                    self.assertTrue(torch.allclose(state.gd[0], self.gd_silent.view(-1)))
+                    self.assertTrue(torch.allclose(state.gd[1], self.gd_trans.view(-1)))
+                    self.assertTrue(torch.allclose(state.cotan[0], torch.zeros_like(state.cotan[0].view(-1))))
+                    self.assertTrue(torch.allclose(state.cotan[1], torch.zeros_like(state.cotan[1]).view(-1)))
 
-    def test_shooting_rand(self):
-        im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
+                for control in controls:
+                    self.assertTrue(torch.allclose(control[0], torch.zeros_like(control[0])))
+                    self.assertTrue(torch.allclose(control[1], torch.zeros_like(control[1])))
 
-        self.assertFalse(torch.allclose(self.h.module.manifold.gd[0], self.gd[0]))
-        self.assertFalse(torch.allclose(self.h.module.manifold.cotan[0], self.mom[0]))
+    # Compares torch_euler and euler methods.
+    def test_shooting_euler(self):
+        it = 20
+        states, controls = im.HamiltonianDynamic.shoot(self._build_h(), it, "torch_euler", intermediates=True)
+        states2, controls2 = im.HamiltonianDynamic.shoot(self._build_h(), it, "euler", intermediates=True)
+
+        for state, state2 in zip(states, states2):
+            self.assertTrue(torch.allclose(state.gd[0], state2.gd[0]))
+            self.assertTrue(torch.allclose(state.gd[1], state2.gd[1]))
+            self.assertTrue(torch.allclose(state.cotan[0], state2.cotan[0]))
+            self.assertTrue(torch.allclose(state.cotan[1], state2.cotan[1]))
+
+        for control, control2 in zip(controls, controls2):
+            self.assertTrue(torch.allclose(control[0], control2[0]))
+            self.assertTrue(torch.allclose(control[1], control2[1]))
+
 
     def test_gradcheck_shoot(self):
-        def shoot(gd, mom):
-            self.h.module.manifold.fill_gd([gd])
-            self.h.module.manifold.fill_cotan([mom])
+        for method, it in zip(self.methods, self.methods_it):
+            with self.subTest(method=method, it=it):
+                def shoot(gd_silent, gd_trans, cotan_silent, cotan_trans):
+                    h = self._build_h()
+                    h.module.manifold.fill_gd([gd_silent.view(-1), gd_trans.view(-1)])
+                    h.module.manifold.fill_cotan([cotan_silent.view(-1), cotan_trans.view(-1)])
 
-            im.HamiltonianDynamic.shoot(self.h, self.it, self.method)
+                    im.HamiltonianDynamic.shoot(h, it, method)
 
-            return self.h.module.manifold.gd[0], self.h.module.manifold.cotan[0]
+                    return h.module.manifold.gd[0], h.module.manifold.gd[1], h.module.manifold.cotan[0], h.module.manifold.cotan[1]
 
-        self.gd.requires_grad_()
-        self.mom.requires_grad_()
-
-        # We multiply GD by 400. as it seems gradcheck is very sensitive to
-        # badly conditioned problems
-        # TODO: be sure it is because of that
-        self.assertTrue(torch.autograd.gradcheck(shoot, (100.0*self.gd, self.mom), raise_exception=True))
-
+                self.assertTrue(torch.autograd.gradcheck(shoot, (self.gd_silent, self.gd_trans, self.cotan_silent, self.cotan_trans), raise_exception=True))
 
 if __name__ == '__main__':
     unittest.main()
+
