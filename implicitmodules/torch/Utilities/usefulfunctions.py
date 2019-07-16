@@ -2,6 +2,7 @@ import math
 from collections import Iterable
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse, FancyArrowPatch
 import torch
 from torchviz import make_dot
 
@@ -140,7 +141,7 @@ def point_side(origin, vec, pts):
     return torch.sign((b[0] - a[0])*(pts[1] - a[1]) - (b[1] - a[1])*(pts[0] - a[0]))
 
 def is_inside_shape(shape, points):
-    """Returns True if the point is inside the shape (a tensor of CCW points defining the shape)."""
+    """Returns True if the point is inside the convex shape (a tensor of CW points)."""
     closed = close_shape(shape)
     mask = torch.ones(points.shape[0], dtype=torch.uint8)
     for i in range(points.shape[0]):
@@ -168,6 +169,27 @@ def plot_grid(ax, gridx, gridy, **kwargs):
         ax.plot(gridx[i, :], gridy[i, :], **kwargs)
     for i in range(gridx.shape[1]):
         ax.plot(gridx[:, i], gridy[:, i], **kwargs)
+
+
+def plot_C_arrow(ax, pos, C, c_index=0, scale=1.):
+    for i in range(pos.shape[0]):
+        C_i = scale*C[i, :, c_index]
+
+        arrowstyle_x = "<->"
+        arrowstyle_y = "<->"
+        if C_i[0] <= 0.:
+            arrowstyle_x += ",head_length=-0.4"
+        if C_i[1] <= 0.:
+            arrowstyle_x += ",head_length=-0.4"
+
+        ax.add_patch(FancyArrowPatch((pos[i] - torch.tensor([C_i[0]/2, 0.])).tolist(), (pos[i] + torch.tensor([C_i[0]/2, 0.])).tolist(), arrowstyle=arrowstyle_x, mutation_scale=10))
+        ax.add_patch(FancyArrowPatch((pos[i] - torch.tensor([0., C_i[1]/2])).tolist(), (pos[i] + torch.tensor([0., C_i[1]/2])).tolist(), arrowstyle=arrowstyle_x, mutation_scale=10))
+
+
+def plot_C_ellipse(ax, pos, C, c_index=0, scale=1.):
+    for i in range(pos.shape[0]):
+        C_i = scale*C[i, :, c_index]
+        ax.add_artist(Ellipse(xy=pos[i], width=abs(C_i[0]), height=abs(C_i[1]), angle=0.))
 
 
 def make_grad_graph(tensor, filename):
