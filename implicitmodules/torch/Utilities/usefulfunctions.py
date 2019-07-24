@@ -1,9 +1,10 @@
 import math
 from collections import Iterable
 
+import numpy as np
+import torch
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, FancyArrowPatch
-import torch
 from torchviz import make_dot
 
 
@@ -171,7 +172,7 @@ def plot_grid(ax, gridx, gridy, **kwargs):
         ax.plot(gridx[:, i], gridy[:, i], **kwargs)
 
 
-def plot_C_arrow(ax, pos, C, c_index=0, scale=1.):
+def plot_C_arrow(ax, pos, C, R=None, c_index=0, scale=1., **kwargs):
     for i in range(pos.shape[0]):
         C_i = scale*C[i, :, c_index]
 
@@ -180,16 +181,31 @@ def plot_C_arrow(ax, pos, C, c_index=0, scale=1.):
         if C_i[0] <= 0.:
             arrowstyle_x += ",head_length=-0.4"
         if C_i[1] <= 0.:
-            arrowstyle_x += ",head_length=-0.4"
+            arrowstyle_y += ",head_length=-0.4"
 
-        ax.add_patch(FancyArrowPatch((pos[i] - torch.tensor([C_i[0]/2, 0.])).tolist(), (pos[i] + torch.tensor([C_i[0]/2, 0.])).tolist(), arrowstyle=arrowstyle_x, mutation_scale=10))
-        ax.add_patch(FancyArrowPatch((pos[i] - torch.tensor([0., C_i[1]/2])).tolist(), (pos[i] + torch.tensor([0., C_i[1]/2])).tolist(), arrowstyle=arrowstyle_x, mutation_scale=10))
+        if R is not None:
+            rotmat = R[i].numpy()
+        else:
+            rotmat = np.eye(2)
+
+        top_pos = np.dot(rotmat, np.array([0., C_i[1]/2.])) + pos[i].numpy()
+        bot_pos = np.dot(rotmat, -np.array([0., C_i[1]/2])) + pos[i].numpy()
+        left_pos = np.dot(rotmat, -np.array([C_i[0]/2, 0.])) + pos[i].numpy()
+        right_pos = np.dot(rotmat, np.array([C_i[0]/2, 0.])) + pos[i].numpy()
+
+        ax.add_patch(FancyArrowPatch(left_pos, right_pos, arrowstyle=arrowstyle_x, **kwargs))
+        ax.add_patch(FancyArrowPatch(bot_pos, top_pos, arrowstyle=arrowstyle_y, **kwargs))
 
 
-def plot_C_ellipse(ax, pos, C, c_index=0, scale=1.):
+def plot_C_ellipse(ax, pos, C, R=None, c_index=0, scale=1., **kwargs):
+    if R is not None:
+        angle = torch.atan2(R[:, 1, 0], R[:, 0, 0])/math.pi*180.
+    else:
+        angle = torch.zeros(C.shape[0])
+
     for i in range(pos.shape[0]):
         C_i = scale*C[i, :, c_index]
-        ax.add_artist(Ellipse(xy=pos[i], width=abs(C_i[0]), height=abs(C_i[1]), angle=0.))
+        ax.add_artist(Ellipse(xy=pos[i], width=abs(C_i[0].item()), height=abs(C_i[1].item()), angle=angle[i].item(), **kwargs))
 
 
 def make_grad_graph(tensor, filename):

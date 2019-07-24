@@ -1,4 +1,5 @@
 import time
+import contextlib
 
 import numpy as np
 import torch
@@ -24,33 +25,36 @@ class ModelFittingScipy(ModelFitting):
         last_costs = {}
         costs = []
 
+        shoot_method = 'euler'
+        shoot_it = 10
+
+        if 'shoot_method' in options:
+            shoot_method = options['shoot_method']
+            del options['shoot_method']
+
+        if 'shoot_it' in options:
+            shoot_it = options['shoot_it']
+            del options['shoot_it']
+
         # Function that will be optimized, returns the cost for a given state of the model.
         def closure(x):
-            x = self.__step_length * x.astype('float64')
-            self.__numpy_to_model(self.model, x)
+            #with torch.autograd.detect_anomaly():
+            with contextlib.suppress():
+                self.__numpy_to_model(self.model, x.astype('float64'))
 
-            self.__pytorch_optim.zero_grad()
+                self.__pytorch_optim.zero_grad()
 
-            # Call precompute callback if available
-            if self.model.precompute_callback is not None:
-                self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
+                # Call precompute callback if available
+                if self.model.precompute_callback is not None:
+                    self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
-            # Shooting + loss computation
-            method = "euler"
-            it = 10
+                # Shooting + loss computation
+                deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+                cost = self.__lam*attach_cost + deformation_cost
+                cost.backward()
+                c = cost.item()
 
-            if "method" in options:
-                method = options["method"]
-
-            if "it" in options:
-                it = options["it"]
-
-            deformation_cost, attach_cost = self.model.compute(target, it=it, method=method)
-            cost = self.__lam*attach_cost + deformation_cost
-            cost.backward()
-            c = cost.item()
-
-            dx_c = self.__step_length * self.__model_to_numpy(self.model, grad=True)
+                dx_c = self.__model_to_numpy(self.model, grad=True)
 
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost.item()
@@ -94,7 +98,7 @@ class ModelFittingScipy(ModelFitting):
             print("Final energy =", last_costs['cost'])
             print("Closure evaluations =", res['nfev'])
             print("Time elapsed =", time.time() - start)
-            print("Jacobian min max = ", np.min(res.jac), np.max(res.jac))
+            print("Jacobian min max =", np.min(res.jac), np.max(res.jac))
             print("Hessian condition number =", np.linalg.cond(res.hess_inv))
 
         return costs

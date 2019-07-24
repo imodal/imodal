@@ -21,14 +21,29 @@ class Attachement:
     def loss(self, x, y):
         raise NotImplementedError
 
+
+class CompoundAttachement(Attachement):
+    def __init__(self, attachment_list, weight=1.):
+        assert isinstance(attachment_list, Iterable)
+
+        self.__attachment_list = attachment_list
+        super().__init__(weight)
+
+    def loss(self, x, y):
+        return sum([attachment.loss(x, y) for attachment in self.__attachment_list])
+
+
 class EnergyAttachement(Attachement):
     """Energy Distance between two sampled probability measures."""
-    def __init__(self, weight):
-        super().__init__(weight=1.)
+    def __init__(self, weight=1.):
+        super().__init__(weight)
 
     def loss(self, x, y):
         x_i, a_i = x
         y_j, b_j = y
+        if a_i is None:
+            a_i = torch.ones(x_i.shape[0])
+            b_j = torch.ones(y_j.shape[0])
         K_xx = -distances(x_i, x_i)
         K_xy = -distances(x_i, y_j)
         K_yy = -distances(y_j, y_j)

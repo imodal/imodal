@@ -15,15 +15,15 @@ class Landmarks(Manifold):
         self.__dim = dim
         self.__numel_gd = nb_pts * dim
 
-        self.__gd = torch.zeros(nb_pts, dim, requires_grad=True).view(-1)
+        self.__gd = torch.zeros(self.__numel_gd, requires_grad=True)
         if isinstance(gd, torch.Tensor):
             self.fill_gd(gd.requires_grad_(), copy=False)
 
-        self.__tan = torch.zeros(nb_pts, dim, requires_grad=True).view(-1)
+        self.__tan = torch.zeros(self.__numel_gd, requires_grad=True)
         if isinstance(tan, torch.Tensor):
             self.fill_tan(tan.requires_grad_(), copy=False)
 
-        self.__cotan = torch.zeros(nb_pts, dim, requires_grad=True).view(-1)
+        self.__cotan = torch.zeros(self.__numel_gd, requires_grad=True)
         if isinstance(cotan, torch.Tensor):
             self.fill_cotan(cotan.requires_grad_(), copy=False)
 

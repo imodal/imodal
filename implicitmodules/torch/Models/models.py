@@ -14,11 +14,12 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
 class Model:
-    def __init__(self, modules, attachement, fit_moments, precompute_callback, other_parameters):
+    def __init__(self, modules, attachement, fit_moments, fit_gd, precompute_callback, other_parameters):
         self.__modules = modules
         self.__attachement = attachement
         self.__precompute_callback = precompute_callback
         self.__fit_moments = fit_moments
+        self.__fit_gd = fit_gd
 
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
         # We copy each parameters
@@ -93,9 +94,14 @@ class Model:
             for i in range(len(self.__modules)):
                 self.__parameters.extend(self.__init_manifold[i].unroll_cotan())
 
+        if self.__fit_gd is not None:
+            for i in range(len(self.__modules)):
+                if self.__fit_gd[i]:
+                    self.__parameters.extend(self.__init_manifold[i].unroll_gd())
+
         self.__parameters.extend(self.__init_other_parameters)
 
-    def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=20, intermediate=False):
+    def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=10, method="euler", intermediate=False):
         x, y = torch.meshgrid([
             torch.linspace(grid_origin[0], grid_origin[0]+grid_size[0], grid_resolution[0]),
             torch.linspace(grid_origin[1], grid_origin[1]+grid_size[1], grid_resolution[1])])
@@ -107,7 +113,7 @@ class Model:
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
-        intermediate_states= shoot(Hamiltonian([grid_silent, *compound]), 20, 'rk4')
+        intermediate_states, _= shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
 
         return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
@@ -116,9 +122,9 @@ class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
-    def __init__(self, source, modules, attachement, fit_moments=True, precompute_callback=None, other_parameters=[]):
+    def __init__(self, source, modules, attachement, fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=[]):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
-        
+
         # We first determinate the number of sources
         self.source_count = len(source)
 
@@ -134,10 +140,7 @@ class ModelPointsRegistration(Model):
                 self.weights.insert(i, None)
                 modules.insert(i, SilentLandmarks(Landmarks(2, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
 
-        super().__init__(modules, attachement, fit_moments, precompute_callback, other_parameters)
-
-        self.shooting_method = "euler"
-        self.shooting_it = 20
+        super().__init__(modules, attachement, fit_moments, fit_gd, precompute_callback, other_parameters)
 
     def compute(self, target, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
@@ -146,7 +149,6 @@ class ModelPointsRegistration(Model):
         compound.manifold.fill(self.init_manifold)
 
         # Shooting
-        # TODO: Iteraction count and method should be provided by the user.
         shoot(Hamiltonian(compound), it, method)
         deformation_cost = compound.cost()
 
@@ -158,7 +160,6 @@ class ModelPointsRegistration(Model):
             else:
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), None), (target[i], None)))
 
-        #abc_norm = torch.norm(self.parameters[-1])
         deformation_cost = deformation_cost
 
         return deformation_cost, sum(attach_costs)
