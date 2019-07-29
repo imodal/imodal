@@ -20,7 +20,11 @@ class Atlas:
 
         self.__models = []
         for i in range(self.__population_count):
-            self.__models.append(ModelPointsRegistration([template], copy.deepcopy(modules), attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters))
+            manifolds = [module.manifold.copy() for module in modules]
+            cur_modules = copy.copy(modules)
+            for module, man in zip(cur_modules, manifolds):
+                module.manifold.fill(man, copy=True)
+            self.__models.append(ModelPointsRegistration([template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters))
             if fit_gd is not None and i != 0:
                 for j in range(self.__n_modules):
                     if fit_gd[j]:
@@ -95,6 +99,6 @@ class Atlas:
         deformation_cost = sum(deformation_costs)# + translations_ht.cost()
         attach_cost = sum(attach_costs)
 
-        return deformation_cost, attach_cost0
+        return deformation_cost, attach_cost
 
 

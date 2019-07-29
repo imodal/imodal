@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.image
 import torch
 
@@ -132,6 +134,14 @@ def resample_image_to_smoothed(image, kernel=K_xy, sigma=1., normalize=False):
 
     return sample_from_smoothed_points((pixel_pos, image.view(-1)), image.shape, kernel=kernel,
                                        sigma=sigma, normalize=normalize)
+
+
+def fill_aabb(aabb, density):
+    nb_pts_x = int(math.sqrt(density)*aabb.width)
+    nb_pts_y = int(math.sqrt(density)*aabb.height)
+
+    pts_implicit1_x, pts_implicit1_y = torch.meshgrid([torch.linspace(aabb.xmin, aabb.xmax, nb_pts_x), torch.linspace(aabb.ymin, aabb.ymax, nb_pts_y)])
+    return grid2vec(pts_implicit1_x, pts_implicit1_y)
 
 
 def fill_area_uniform(area, aabb, spacing):

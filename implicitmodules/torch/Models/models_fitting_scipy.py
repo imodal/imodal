@@ -98,8 +98,6 @@ class ModelFittingScipy(ModelFitting):
             print("Final energy =", last_costs['cost'])
             print("Closure evaluations =", res['nfev'])
             print("Time elapsed =", time.time() - start)
-            print("Jacobian min max =", np.min(res.jac), np.max(res.jac))
-            print("Hessian condition number =", np.linalg.cond(res.hess_inv))
 
         return costs
 
