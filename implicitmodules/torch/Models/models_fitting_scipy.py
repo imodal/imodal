@@ -21,7 +21,7 @@ class ModelFittingScipy(ModelFitting):
     def reset(selt):
         pass
 
-    def fit(self, target, max_iter, method='BFGS', options={}, log_interval=10, disp=True):
+    def fit(self, target, max_iter, method='L-BFGS-B', options={}, log_interval=10, disp=True):
         last_costs = {}
         costs = []
 
