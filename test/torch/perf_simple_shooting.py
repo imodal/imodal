@@ -11,9 +11,9 @@ import implicitmodules.torch as im
 
 def simple_shooting(method, it):
     dim = 2
-    nb_pts_silent = 500
-    nb_pts_order0 = 200
-    nb_pts_order1 = 200
+    nb_pts_silent = 1000
+    nb_pts_order0 = 500
+    nb_pts_order1 = 500
 
     pts_silent = 100.*torch.rand(nb_pts_silent, dim)
     pts_order0 = 100.*torch.rand(nb_pts_order0, dim)
@@ -36,8 +36,9 @@ def simple_shooting(method, it):
         im.Manifolds.Stiefel(dim, nb_pts_order1,
                              gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())), C, sigma, nu, coeff)
 
-    im.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it,
-                                                            method=method)
+    with torch.autograd.no_grad():
+        im.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it,
+                                             method=method)
 
     return [silent.manifold.gd, order0.manifold.gd, order1.manifold.gd[0]]
 
@@ -53,7 +54,7 @@ def test_method(method, it, loops):
         scalar = torch.sum(torch.cat([out[0], out[1], out[2]]))
 
         start = time.time()
-        torch.autograd.backward(scalar)
+        #torch.autograd.backward(scalar)
         time_back.append(time.time() - start)
 
     return sum(time_shooting)/loops, sum(time_back)/loops
@@ -66,5 +67,5 @@ def method_summary(method, it, loops):
 
 
 torch.set_printoptions(precision=4)
-method_summary("torch_euler", 10, 5)
+method_summary("euler", 20, 1)
 

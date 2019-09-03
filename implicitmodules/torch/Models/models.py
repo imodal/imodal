@@ -122,8 +122,11 @@ class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
-    def __init__(self, source, modules, attachement, fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=[]):
+    def __init__(self, source, modules, attachement, fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
+
+        if other_parameters is None:
+            other_parameters = []
 
         # We first determinate the number of sources
         self.source_count = len(source)
