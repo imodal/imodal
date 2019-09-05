@@ -3,8 +3,9 @@ import math
 import matplotlib.image
 import torch
 
-from implicitmodules.torch.Kernels.kernels import K_xy
-from implicitmodules.torch.Utilities.usefulfunctions import AABB, grid2vec, indices2coords
+from implicitmodules.torch.Kernels import K_xy
+from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, indices2coords
+from implicitmodules.torch.Utilities.aabb import AABB
 
 
 def load_greyscale_image(filename):
@@ -143,31 +144,3 @@ def fill_aabb(aabb, density):
     pts_implicit1_x, pts_implicit1_y = torch.meshgrid([torch.linspace(aabb.xmin, aabb.xmax, nb_pts_x), torch.linspace(aabb.ymin, aabb.ymax, nb_pts_y)])
     return grid2vec(pts_implicit1_x, pts_implicit1_y)
 
-
-def fill_area_uniform(area, aabb, spacing):
-    """Fill a 2D area enclosed by aabb given by the area function (area(pos): return true if in the area, false otherwise)."""
-    x, y = torch.meshgrid([torch.arange(aabb.xmin, aabb.xmax, step=spacing),
-                           torch.arange(aabb.ymin, aabb.ymax, step=spacing)])
-    grid = grid2vec(x, y)
-    inside = area(grid).repeat(2, 1).transpose(0, 1)
-    mask = inside.eq(True)
-
-    return torch.masked_select(grid, inside).view(-1, 2)
-
-
-def fill_area_random(area, aabb, density):
-    """Fill an area enclosed by aabb randomly given by the area function (area(pos): return true if in the area, false otherwise) by rejection sampling."""
-
-    nb_pts = int(aabb.area * density)
-
-    points = torch.zeros(nb_pts, 2)
-
-    for i in range(0, nb_pts):
-        accepted = False
-        while(not accepted):
-            point = aabb.sample_random_point(1)
-            if torch.all(area(point)):
-                accepted = True
-                points[i, :] = point
-
-    return points

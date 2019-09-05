@@ -122,52 +122,6 @@ class TestSampling(unittest.TestCase):
         self.assertIsInstance(frame, torch.Tensor)
         self.assertTrue(frame.shape, frame_res)
 
-    def test_fill_area_uniform(self):
-        # Defines a square [0, 1]x[0, 1]
-        def area(pos):
-            return torch.where((pos[:, 0] >= 0.) & (pos[:, 0] <= 1.) &
-                               (pos[:, 1] >= 0.) & (pos[:, 1] <= 1.),
-                               torch.tensor([1.]), torch.tensor([0.])).byte()
-
-        def area_circle(pos):
-            return torch.where((torch.sqrt(pos[:, 0]**2 + pos[:, 1]**2) <= 0.5),
-                               torch.tensor([1.]), torch.tensor([0.])).byte()
-
-        # AABB made bigger on purpose in order to test the rejection
-        aabb = im.Utilities.AABB(-1., 2., -1., 2.)
-
-        filled = im.Utilities.fill_area_uniform(area, aabb, 0.2)
-        
-        self.assertIsInstance(filled, torch.Tensor)
-        self.assertEqual(filled.shape[0], 36)
-        self.assertTrue(torch.all(area(filled)))
-
-        filled_circle = im.Utilities.fill_area_uniform(area_circle, aabb, 0.2)
-        self.assertTrue(torch.all(area_circle(filled_circle)))
-
-    def test_fill_area_random(self):
-        # Defines a square [0, 1]x[0, 1]
-        def area(pos):
-            return torch.where((pos[:, 0] >= -0.5) & (pos[:, 0] <= 1.) &
-                               (pos[:, 1] >= 0.) & (pos[:, 1] <= 1.),
-                               torch.tensor([1.]), torch.tensor([0.])).byte()
-
-        def area_circle(pos):
-            return torch.where((torch.sqrt(pos[:, 0]**2 + pos[:, 1]**2) <= 0.5),
-                               torch.tensor([1.]), torch.tensor([0.])).byte()
-        
-        # AABB made bigger on purpose in order to test the rejection
-        aabb = im.Utilities.AABB(-1., 2., -1., 2.)
-
-        filled = im.Utilities.fill_area_random(area, aabb, 20)
-
-        self.assertIsInstance(filled, torch.Tensor)
-        self.assertTrue(torch.all(area(filled)))
-
-        filled_circle = im.Utilities.fill_area_random(area_circle, aabb, 100)
-
-        self.assertTrue(torch.all(area_circle(filled_circle)))
-
 
 if __name__ == '__main__':
     unittest.main()

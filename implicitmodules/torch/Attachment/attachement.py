@@ -4,7 +4,7 @@ import geomloss
 import torch
 
 from implicitmodules.torch.Kernels.kernels import distances, scal
-from implicitmodules.torch.Utilities.usefulfunctions import close_shape
+from implicitmodules.torch.Utilities.meshutils import close_shape
 
 
 class Attachement:
