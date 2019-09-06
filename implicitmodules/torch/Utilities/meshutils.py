@@ -239,7 +239,7 @@ def fill_area_uniform(area, enclosing_aabb, spacing, **kwargs):
 
 
 def fill_area_uniform_density(area, enclosing_aabb, density, **kwargs):
-    return fill_area_uniform(area, enclosing_aabb, 1./math.sqrt(density), kwargs)
+    return fill_area_uniform(area, enclosing_aabb, 1./math.sqrt(density), **kwargs)
 
 
 def fill_area_random(area, aabb, density):
