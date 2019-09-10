@@ -5,8 +5,31 @@ from scipy.spatial import ConvexHull
 
 
 def area_side(points, **kwargs):
-    # For side = 1, left
-    # For side = -1, right
+    """Marks points that are on one side of the specified separation line on the plan.
+
+    Returns a torch.BoolTensor marking points that are in side **side**. The seperation line can either be specified by two points **p0** and **p1**, or by **origin** and **direction**.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    p0 : torch.Tensor
+        First point tensor of dimension (2) defining the separation line.
+    p1 : torch.Tensor
+        Second point tensor of dimension (2) defining the separation line and thus its direction.
+    origin : torch.Tensor
+        Origin vector of dimension (2).
+    direction : torch.Tensor
+        Direction vector of dimension (2).
+    side : int, either +1 or -1, default=1
+        +1/-1 to select points to the left/right of the separation line.
+    intersect : bool, default=False
+        Set this to `True` if points on the line should be accounted inside the marking region.
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is at side **side** of the defined separation line.
+    """
     if 'origin' in kwargs and 'direction' in kwargs:
         origin = kwargs['origin']
         direction = kwargs['direction']
@@ -41,6 +64,24 @@ def area_side(points, **kwargs):
 
 
 def area_convex_hull(points, **kwargs):
+    """Marks points inside a computed convex hull.
+
+    Returns a torch.BoolTensor marking points that are inside the convex hull of **scatter**.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    scatter : torch.Tensor
+        Points tensor of dimension (:math:`M`, 2), with :math:`M` number of points, from which the convex hull will be computed.
+    intersect : bool, default=False
+        Set this to `True` if points on the line should be accounted inside the marking region.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the convex hull.
+    """
     if 'scatter' not in kwargs:
         raise RuntimeError("area_convex_hull(): missing argument 'scatter'.")
 
@@ -56,6 +97,26 @@ def area_convex_hull(points, **kwargs):
 
 
 def area_convex_shape(points, **kwargs):
+    """Marks points inside a convex shape.
+
+    Returns a torch.BoolTensor marking points that are inside the convex shape **shape**.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    shape : torch.Tensor
+        Point tensor of dimension (:math:`M`, 2), with :math:`M` number of points, that defines the convex shape.
+    side : either +1 or -1, default=1
+        If set to +1/-1 shape is defined as CW/CCW.
+    intersect : bool, default=False
+        Set this to `True` if points on the line should be accounted inside the marking region.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the convex hull.
+    """
     if 'shape' not in kwargs:
         raise RuntimeError("area_convex_shape(): missing argument 'shape'.")
 
@@ -86,6 +147,26 @@ def area_convex_shape(points, **kwargs):
 
 
 def area_shape(points, **kwargs):
+    """Marks points inside a shape.
+
+    Returns a torch.BoolTensor marking points that are inside the shape **shape**. Shape does not need to be convex and can overlap itself.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    shape : torch.Tensor
+        Shape.
+    side : either +1 or -1, default=1
+        If set to +1/-1 shape is defined as CW/CCW.
+    intersect : bool, default=False
+        Set this to `True` if points on the line should be accounted inside the marking region.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the shape.
+    """
     if 'shape' not in kwargs:
         raise RuntimeError("area_shape(): missing argument 'shape'.")
 
@@ -100,12 +181,30 @@ def area_shape(points, **kwargs):
     out = torch.zeros(points.shape[0], dtype=torch.bool)
 
     for i in range(points.shape[0]):
-        out[i] = (winding_order(points[i], shape, side) >= 1)
+        out[i] = (winding_order(points[i], shape, side) != 0)
 
     return out
 
 
 def area_polyline_outline(points, **kwargs):
+    """Marks points that are in the neighborhood of a polyline.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    polyline : torch.Tensor
+        Point tensor of dimension (:math:`M`, 2), with :math:`M` number of vertices, that defines the polyline.
+    width : float, default=0.
+        Width of the polyline.
+    close : bool, default=False
+        Set to `True` in order to close the polyline.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the shape.
+    """
     if 'polyline' not in kwargs:
         raise RuntimeError("area_polyline_outline(): missing argument 'polyline'.")
 
@@ -135,6 +234,25 @@ def area_polyline_outline(points, **kwargs):
 
 
 def area_disc(points, **kwargs):
+    """Marks points that are inside the specified disc in the plan.
+
+    Returns a boolean tensor.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    center : torch.Tensor
+        Point tensor of dimension (2) that defines the center of the disc.
+    radius : float
+        Radius of the disc.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the shape.
+
+    """
     if 'center' not in kwargs:
         raise RuntimeError("area_disc(): missing argument 'center'.")
 
@@ -149,6 +267,20 @@ def area_disc(points, **kwargs):
 
 
 def area_AABB(points, **kwargs):
+    """Marks points that are inside the specified AABB in the plan.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    aabb : Utilities.AABB
+        The AABB that marks the area.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the shape.
+    """
     if 'aabb' not in kwargs:
         raise RuntimeError("area_AABB(): missing argument 'aabb'.")
 
@@ -158,6 +290,28 @@ def area_AABB(points, **kwargs):
 
 
 def area_segment(points, **kwargs):
+    """Marks points that are inside the neighborhood of the specified segment in the plan.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Point tensor of dimension (:math:`N`, 2), with :math:`N` number of points, that will be marked.
+    p0 : torch.Tensor
+        First point defining the separation line.
+    p1 : torch.Tensor
+        Second point defining the separation line and thus its direction.
+    origin : torch.Tensor
+        Origin vector.
+    direction : torch.Tensor
+        Direction vector.
+    width : torch.Tensor
+        Width of the segment.
+
+    Returns
+    -------
+    torch.BoolTensor
+        Bool tensor of dimension :math:`N`, with :math:`i` `True` if point :math:`i` is inside the shape.
+    """
     if 'origin' in kwargs and 'direction' in kwargs:
         origin = kwargs['origin']
         direction = kwargs['direction']
@@ -187,15 +341,56 @@ def area_segment(points, **kwargs):
     return out
 
 
-def close_shape(x):
-    return torch.cat([x, x[0, :].view(1, -1)], dim=0)
+def close_shape(shape):
+    """Returns the closed shape.
+
+    Parameters
+    ----------
+    shape : torch.Tensor
+        Shape tensor of dimension (:math:`N`), with :math:`N` number of vertices, that will be closed.
+
+    Returns
+    -------
+    torch.Tensor
+        The closed shape.
+    """
+    return torch.cat([shape, shape[0, :].view(1, -1)], dim=0)
 
 
-def is_shape_closed(x):
-    return torch.all(x[0] == x[-1])
+def is_shape_closed(shape):
+    """Returns `True` if the input shape is closed.
+
+    Parameters
+    ----------
+    shape : torch.Tensor
+        Shape tensor of dimension (:math:`N`, 2), with :math:`N` number of vertices, that will be closed.
+
+    Returns
+    -------
+    bool
+        `True` if **shape** is closed, `False` otherwise.
+
+    """
+    return torch.all(shape[0] == shape[-1])
 
 
 def distance_segment(point, p0, p1):
+    """Returns the minimal distance between a point and a segment.
+
+    Parameters
+    ----------
+    point : torch.Tensor
+        Point tensor of dimension (2) from which distance is computed.
+    p0 : torch.Tensor
+        First point defining the segment.
+    p1 : torch.Tensor
+        Second point defining the segment.
+
+    Returns
+    -------
+    float
+        The minimal distance between the point and the segment.
+    """
     dist = torch.dist(p0, p1).item()**2
     if dist == 0.:
         return torch.dist(p0, point).item()
@@ -206,12 +401,46 @@ def distance_segment(point, p0, p1):
 
 
 def point_side(point, p0, p1):
+    """Returns the side of a point relative to a line.
+
+    Parameters
+    ----------
+    point : torch.Tensor
+        Point tensor of dimension (2) from which side will be computed.
+    p0 : torch.Tensor
+        First point defining the line.
+    p1 : torch.Tensor
+        Second point defining the line, and thus it's direction.
+
+    Returns
+    -------
+    int
+        -1/+1 if the point is on the left/right. 0 if the point is exactly on the line.
+    """
     return torch.sign((p1[0] - p0[0])*(point[1] - p0[1]) - (p1[1] - p0[1])*(point[0] - p0[0]))
 
 
 def winding_order(point, shape, side):
-    # Assumes shape is closed
+    """Returns the winding order of a point relative to a shape.
 
+    Notes
+    -----
+    This function assumes the shape is closed.
+
+    Parameters
+    ----------
+    point : torch.Tensor
+        Point tensor of dimension (2) around which the winding order will be computed.
+    shape : torch.Tensor
+    Shape tensor of dimension (:math:`N`), with :math:`N` number of vertices, from which the winding order will be computed.
+    side : int, either +1 or -1
+        Set to +1/-1 if shape is defined CCW/CW.
+
+    Returns
+    -------
+    int
+        The computed winding order.
+    """
     wn = 0
     for i in range(shape.shape[0] - 1):
         if shape[i, 1] <= point[1]:
@@ -227,36 +456,129 @@ def winding_order(point, shape, side):
 
 
 def extract_convex_hull(points):
-    """Returns a CCW convex hull."""
+    """Extracts a convex hull from a set of points.
+
+    Notes
+    -----
+    The output shape is CCW defined. Uses Scipy internaly.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points, from which the convex hull will be computed.
+
+    Returns
+    -------
+    torch.Tensor
+        The resulting convex hull, of dimension (:math:`M`, 2), with :math:`M` the number of points the convex hull contains.
+    """
     hull = ConvexHull(points.numpy())
     return points[hull.vertices]
 
 
 def fill_area_uniform(area, enclosing_aabb, spacing, **kwargs):
-    """Fill a 2D area enclosed by aabb given by the area function (area(pos): return true if in the area, false otherwise)."""
+    """Uniformly fills a 2D area enclosed given by a callable.
+
+    The area callable should have the following signature:
+    
+
+    Parameters
+    ----------
+    area : callable
+        Callable defining the area that will be filled.
+    enclosing_aabb : Utilities.AABB
+        Bounding box enclosing the `area` callable function.
+    spacing : float
+        Distance between points.
+    kwargs : dict
+        Arguments passed to the `area` callable function.
+
+    Returns
+    -------
+    torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points.
+
+    """
     grid = enclosing_aabb.fill_uniform(spacing)
     return grid[area(grid, **kwargs)]
 
 
 def fill_area_uniform_density(area, enclosing_aabb, density, **kwargs):
+    """Fill a 2D area enclosed by aabb given by the area function uniformly.
+
+    Parameters
+    ----------
+    area : callable
+        Callable defining the area that will be filled.
+    enclosing_aabb : Utilities.AABB
+        AABB.
+    density : float
+        Density of points.
+    kwargs : dict
+        Arguments passed to the area function.
+
+    Returns
+    -------
+    torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points.
+    """
     return fill_area_uniform(area, enclosing_aabb, 1./math.sqrt(density), **kwargs)
 
 
-def fill_area_random(area, aabb, density):
-    """Fill an area enclosed by aabb randomly given by the area function (area(pos): return true if in the area, false otherwise) by rejection sampling."""
+def fill_area_random(area, aabb, N, **kwargs):
+    """Randomly fill a 2D area enclosed by aabb given by the area function.
 
-    nb_pts = int(aabb.area * density)
+    The random process follows a Poisson distribution. Sampling is done using a rejection sampling algorithm.
 
-    points = torch.zeros(nb_pts, 2)
+    Parameters
+    ----------
+    area : callable
+        Callable defining the area that will be filled.
+    enclosing_aabb : Utilities.AABB
+        Bounding box enclosing the `area` callable function.
+    N : int
+        Number of points to generate.
+    kwargs : dictpp
+        Arguments passed to the area function.
 
-    for i in range(0, nb_pts):
+    Returns
+    -------
+    torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points.
+    """
+    points = torch.zeros(N, 2)
+
+    for i in range(0, N):
         accepted = False
         while(not accepted):
-            point = aabb.sample_random_point(1)
-            if torch.all(area(point)):
+            point = aabb.fill_random(1)
+            if torch.all(area(point, **kwargs)):
                 accepted = True
                 points[i, :] = point
 
     return points
 
+
+def fill_area_random_density(area, aabb, density, **kwargs):
+    """Randomly fill a 2D area enclosed by aabb given by the area function.
+
+    The random process follows a Poisson distribution. Sampling is done using a rejection sampling algorithm.
+
+    Parameters
+    ----------
+    area : callable
+        Callable defining the area that will be filled.
+    enclosing_aabb : Utilities.AABB
+        Bounding box enclosing the `area` callable function.
+    density : int
+        Density of points to generate.
+    kwargs : dict
+        Arguments passed to the area function.
+
+    Returns
+    -------
+    torch.Tensor
+        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points.
+    """
+    return fill_area_random(area, aabb, int(aabb.area * density), **kwargs)
 

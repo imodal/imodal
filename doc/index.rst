@@ -17,6 +17,7 @@ Table of content
    :caption: Implicit Modules
 
    modules/index
+   documentation/index
 
 .. toctree::
    :maxdepth: 2

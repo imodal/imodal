@@ -20,9 +20,12 @@ class AABB:
         return cls(points[:, 0].min(), points[:, 0].max(),
                    points[:, 1].min(), points[:, 1].max())
     
-    def sample_random_point(self, N):
+    def fill_random(self, N):
         """Returns a [N, dim] vector of Poisson distributed points inside the area enclosed by the AABB."""
         return torch.tensor([self.width, self.height]) * torch.rand(N, 2) + torch.tensor([self.xmin, self.ymin])
+
+    def fill_random_density(self, density):
+        return self.fill_random(int(self.area*density))
 
     def fill_uniform(self, spacing):
         x, y = torch.meshgrid([torch.arange(self.xmin, self.xmax, step=spacing),

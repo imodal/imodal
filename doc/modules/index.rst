@@ -1,7 +1,7 @@
 =======
 Modules
 =======
-What a module is?
+What are modules?
 -----------------
 
 A deformation is a structure that can generate vector fields of :math:`\mathbb R^d` (with :math:`d = 1, 2, 3` fixed). Theoretically, it is defined by 2 spaces and 3 functions:
@@ -75,7 +75,7 @@ Let :math:`P` be an fixed integer, the deformation modules generating a sum of :
 
 
 Implicit modules of order 0
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This module is **implicit** in the sense that its field generator is defined implicitely. 
 

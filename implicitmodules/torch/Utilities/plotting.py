@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse, FancyArrowPatch
+from matplotlib.patches import Ellipse, FancyArrowPatch, Rectangle, PathPatch
+from matplotlib.path import Path
 
 def plot_tensor_scatter(x, alpha=1., scale=64.):
     """Scatter plot points in the format: ([x, y], scale) or ([x, y]) (in that case you can specify scale)"""
@@ -55,4 +56,20 @@ def plot_C_ellipse(ax, pos, C, R=None, c_index=0, scale=1., **kwargs):
     for i in range(pos.shape[0]):
         C_i = scale*C[i, :, c_index]
         ax.add_artist(Ellipse(xy=pos[i], width=abs(C_i[0].item()), height=abs(C_i[1].item()), angle=angle[i].item(), **kwargs))
+
+def plot_aabb(ax, aabb, **kwargs):
+    ax.add_artist(Rectangle((aabb.ymin, aabb.xmin), aabb.width, aabb.height, fill=False, **kwargs))
+
+def plot_polyline(ax, polyline, close=False, **kwargs):
+    codes = [Path.MOVETO]
+    codes.extend([Path.LINETO]*(len(polyline)-1))
+
+    polyline = polyline.tolist()
+
+    if close:
+        codes.append(Path.CLOSEPOLY)
+        polyline.append((0., 0.))
+
+    path = Path(polyline, codes)
+    ax.add_artist(PathPatch(path, **kwargs))
 
