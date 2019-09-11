@@ -9,7 +9,7 @@ from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 
 
 class Atlas:
-    def __init__(self, template, modules, attachement, population_count, sigma_ht=1., fit_gd=None, optimise_template=False, precompute_callback=None, model_precompute_callback=None, other_parameters=None):
+    def __init__(self, template, modules, attachement, population_count, lam=1., sigma_ht=1., fit_gd=None, optimise_template=False, precompute_callback=None, model_precompute_callback=None, other_parameters=None):
         if other_parameters is None:
             other_parameters = []
 
@@ -21,6 +21,7 @@ class Atlas:
         self.__n_modules = len(modules)
         self.__sigma_ht = sigma_ht
         self.__optimise_template = optimise_template
+        self.__lam = lam
 
         self.__models = []
         for i in range(self.__population_count):
@@ -28,7 +29,7 @@ class Atlas:
             cur_modules = copy.copy(modules)
             for module, man in zip(cur_modules, manifolds):
                 module.manifold.fill(man, copy=True)
-            self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters))
+            self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
             if fit_gd is not None and i != 0:
                 for j in range(self.__n_modules):
                     if fit_gd[j]:
@@ -59,6 +60,10 @@ class Atlas:
     @property
     def precompute_callback(self):
         return self.__precompute_callback
+
+    @property
+    def lam(self):
+        return self.__lam
 
     def compute_parameters(self):
         """ Updates the parameter list sent to the optimizer. """
@@ -91,21 +96,29 @@ class Atlas:
 
             shoot(Hamiltonian([translations_ht]), it, method)
 
+        costs = []
         deformation_costs = []
         attach_costs = []
+
         for i in range(self.__population_count):
             if self.__optimise_template:
                 self.__models[i]._Model__init_manifold[0].gd = translations_ht.manifold.gd
 
             if self.__models[i].precompute_callback is not None:
-                self.__models[i].precompute_callback(self.__models[i].modules, self.__models[i].parameters)
-            deformation_cost, attach_cost = self.__models[i].compute([target[i]], it=it, method=method)
+                self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
+            cost, deformation_cost, attach_cost = self.__models[i].compute([target[i]], it=it, method=method)
+
+            costs.append(cost)
             deformation_costs.append(deformation_cost)
             attach_costs.append(attach_cost)
 
-        deformation_cost = sum(deformation_costs)# + translations_ht.cost()
-        attach_cost = sum(attach_costs)
+            # Quick fix used to manualy free up the gradient tree
+            del cost
 
-        return deformation_cost, attach_cost
+        deformation_cost = sum(deformation_costs)
+        attach_cost = sum(attach_costs)
+        cost = sum(costs)
+
+        return cost, deformation_cost, attach_cost
 
 

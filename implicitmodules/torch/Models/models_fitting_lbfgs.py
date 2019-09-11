@@ -7,12 +7,10 @@ from .models_fitting import ModelFitting
 
 
 class ModelFittingLBFGS(ModelFitting):
-    def __init__(self, model, step_length, lam, history_size=10, line_search='Wolfe'):
-        super().__init__(model)
+    def __init__(self, model, step_length, histroy_size=10, post_iteration_callback=None):
+        super().__init__(model, post_iteration_callback)
         self.__history_size = history_size
         self.__step_length = step_length
-        self.__line_search = line_search
-        self.__lam = lam
 
         self.reset()
 
@@ -29,7 +27,7 @@ class ModelFittingLBFGS(ModelFitting):
                 self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
             # Shooting + loss computation
-            deformation_cost, attach_cost = self.model.compute(target)
+            cost, deformation_cost, attach_cost = self.model.compute(target)
             cost = self.__lam*attach_cost + deformation_cost
 
             # Save for printing purpose

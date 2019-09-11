@@ -14,12 +14,16 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
 class Model:
-    def __init__(self, modules, attachement, fit_moments, fit_gd, precompute_callback, other_parameters):
+    def __init__(self, modules, attachement, fit_moments, fit_gd, lam, precompute_callback, other_parameters):
         self.__modules = modules
         self.__attachement = attachement
         self.__precompute_callback = precompute_callback
         self.__fit_moments = fit_moments
         self.__fit_gd = fit_gd
+        self.__lam = lam
+
+        if other_parameters is None:
+            other_parameters = []
 
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
         # We copy each parameters
@@ -58,6 +62,10 @@ class Model:
     @property
     def parameters(self):
         return self.__parameters
+
+    @property
+    def lam(self):
+        return self.__lam
 
     def gradcheck(self, target, l):
         def energy(*param):
@@ -122,7 +130,7 @@ class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
-    def __init__(self, source, modules, attachement, fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
+    def __init__(self, source, modules, attachement, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
 
         if other_parameters is None:
@@ -143,7 +151,7 @@ class ModelPointsRegistration(Model):
                 self.weights.insert(i, None)
                 modules.insert(i, SilentLandmarks(Landmarks(2, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
 
-        super().__init__(modules, attachement, fit_moments, fit_gd, precompute_callback, other_parameters)
+        super().__init__(modules, attachement, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
     def compute(self, target, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
@@ -163,8 +171,13 @@ class ModelPointsRegistration(Model):
             else:
                 attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), None), (target[i], None)))
 
-        deformation_cost = deformation_cost
+        attach_cost = self.lam*sum(attach_costs)
+        c = deformation_cost + attach_cost
+        cost = c.detach()
+        c.backward()
 
-        return deformation_cost, sum(attach_costs)
+        del c
+
+        return cost, deformation_cost.detach(), attach_cost.detach()
 
 

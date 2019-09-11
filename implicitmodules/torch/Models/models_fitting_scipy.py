@@ -8,11 +8,10 @@ import scipy.optimize
 from .models_fitting import ModelFitting
 
 class ModelFittingScipy(ModelFitting):
-    def __init__(self, model, step_length, lam, post_iteration_callback=None):
-        super().__init__(model)
+    def __init__(self, model, step_length, post_iteration_callback=None):
+        super().__init__(model, post_iteration_callback)
 
         self.__step_length = step_length
-        self.__lam = lam
 
         self.__pytorch_optim = torch.optim.SGD(self.model.parameters, lr=step_length)
 
@@ -49,19 +48,16 @@ class ModelFittingScipy(ModelFitting):
                     self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
                 # Shooting + loss computation
-                deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
-                cost = self.__lam*attach_cost + deformation_cost
-                cost.backward()
-                c = cost.item()
+                cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
 
                 dx_c = self.__model_to_numpy(self.model, grad=True)
 
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost.item()
-            last_costs['attach_cost'] = self.__lam*attach_cost.item()
+            last_costs['attach_cost'] = attach_cost.item()
             last_costs['cost'] = cost.item()
 
-            return (c, dx_c)
+            return (cost.item(), dx_c)
 
         self.__it = 1
 
