@@ -64,7 +64,8 @@ class TestAABB(unittest.TestCase):
 
         self.assertIsInstance(sampled, torch.Tensor)
         self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
-        self.assertTrue(torch.all(aabb.is_inside(sampled)))
+        # Conversion need to validate test on torch version 1.1
+        self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
 
     def test_aabb_fill_uniform_density(self):
         aabb = im.Utilities.AABB(0., 1., 0., 2.)
@@ -76,7 +77,8 @@ class TestAABB(unittest.TestCase):
 
         self.assertIsInstance(sampled, torch.Tensor)
         self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
-        self.assertTrue(torch.all(aabb.is_inside(sampled)))
+        # Conversion need to validate test on torch version 1.1
+        self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
 
     def test_aabb_fill_random(self):
         aabb = im.Utilities.AABB(0., 1., 0., 1.)
