@@ -141,8 +141,6 @@ class TestSilentPoints2D(unittest.TestCase):
         self.assertIsInstance(self.silent_points.controls, torch.Tensor)
         self.assertEqual(self.silent_points.controls.shape, torch.tensor([]).shape)
 
-    # TODO :
-    @unittest.expectedFailure
     def test_gradcheck_call(self):
         def call(gd, controls, points):
             self.silent_points.fill_controls(controls)
@@ -154,9 +152,8 @@ class TestSilentPoints2D(unittest.TestCase):
         self.gd.requires_grad_()
         self.controls.requires_grad_()
 
-        self.assertTrue(torch.autograd.gradcheck(call, (self.gd, self.controls, points), raise_exception=False))
+        self.assertTrue(torch.autograd.gradcheck(call, (self.gd, self.controls, points), raise_exception=True))
 
-    @unittest.expectedFailure
     def test_gradcheck_cost(self):
         def cost(gd, controls):
             self.silent_points.fill_controls(controls)
@@ -181,7 +178,7 @@ class TestSilentPoints2D(unittest.TestCase):
         self.gd.requires_grad_()
         self.mom.requires_grad_()
 
-        self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (self.gd, self.mom), raise_exception=False))
+        self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (self.gd, self.mom), raise_exception=True))
 
 
 class CompoundTest2D(unittest.TestCase):
@@ -297,3 +294,4 @@ class CompoundTest2D(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

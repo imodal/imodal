@@ -37,13 +37,17 @@ class SilentLandmarks(DeformationModule):
     def fill_controls_zero(self):
         pass
 
+    # Experimental: requires_grad=True
+    # Disable if necessary
     def __call__(self, points):
         """Applies the generated vector field on given points."""
-        return torch.zeros_like(points)
+        return torch.zeros_like(points, requires_grad=True)
 
+    # Experimental: requires_grad=True
+    # Disable if necessary
     def cost(self):
         """Returns the cost."""
-        return torch.tensor(0.)
+        return torch.tensor(0., requires_grad=True)
 
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs. For SilentLandmarks, does nothing."""

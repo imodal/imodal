@@ -55,14 +55,48 @@ class TestAABB(unittest.TestCase):
         self.assertFalse(is_inside[3])
         self.assertFalse(is_inside[4])
 
-    def test_aabb_sample_random_point(self):
-        points = torch.randn(4, 2)
-        aabb = im.Utilities.AABB.build_from_points(points)
+    def test_aabb_fill_uniform(self):
+        aabb = im.Utilities.AABB(0., 1., 0., 2.)
 
-        sampled = aabb.sample_random_point(100)
+        spacing = 0.2
+        sampled = aabb.fill_uniform(spacing)
+        nb_pts = int(aabb.area/spacing/spacing)
 
         self.assertIsInstance(sampled, torch.Tensor)
-        self.assertTrue(sampled.shape, torch.Size([100, 2]))
+        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
+        self.assertTrue(torch.all(aabb.is_inside(sampled)))
+
+    def test_aabb_fill_uniform_density(self):
+        aabb = im.Utilities.AABB(0., 1., 0., 2.)
+
+        # Inconsistant test, only works with some values of density. Maybe because of rounding when converting density to spacing or vice versa. Low importance so we do not bother.
+        density = 25.
+        sampled = aabb.fill_uniform_density(density)
+        nb_pts = int(aabb.area*density)
+
+        self.assertIsInstance(sampled, torch.Tensor)
+        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
+        self.assertTrue(torch.all(aabb.is_inside(sampled)))
+
+    def test_aabb_fill_random(self):
+        aabb = im.Utilities.AABB(0., 1., 0., 1.)
+
+        nb_pts = 100
+
+        sampled = aabb.fill_random(nb_pts)
+
+        self.assertIsInstance(sampled, torch.Tensor)
+        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
         self.assertTrue(all(aabb.is_inside(sampled)))
 
+    def test_aabb_fill_random(self):
+        aabb = im.Utilities.AABB(0., 1., 0., 2.)
+
+        density = 50.
+        nb_pts = int(aabb.area*density)
+        sampled = aabb.fill_random_density(density)
+
+        self.assertIsInstance(sampled, torch.Tensor)
+        self.assertTrue(sampled.shape, torch.Size([nb_pts, 2]))
+        self.assertTrue(all(aabb.is_inside(sampled)))
 
