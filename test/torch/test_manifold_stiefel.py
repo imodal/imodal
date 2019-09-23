@@ -1,8 +1,6 @@
 import os.path
 import sys
 
-import implicitmodules.torch.DeformationModules.Translation
-
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
@@ -127,7 +125,7 @@ class TestStiefel(unittest.TestCase):
 
         nb_pts_mod = 15
         landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
-        trans = implicitmodules.torch.DeformationModules.Translation.Translations(landmarks_mod, 1.5)
+        trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
         man = stiefel.infinitesimal_action(trans.field_generator())
@@ -139,7 +137,7 @@ class TestStiefel(unittest.TestCase):
 
         nb_pts_mod = 15
         landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
-        trans = implicitmodules.torch.DeformationModules.Translation.Translations(landmarks_mod, 1.5)
+        trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
         inner_prod = stiefel.inner_prod_field(trans.field_generator())

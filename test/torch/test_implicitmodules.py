@@ -131,6 +131,10 @@ class TestImplicitModule1(unittest.TestCase):
         self.assertIsInstance(speed, torch.Tensor)
         self.assertEqual(speed.shape, points.shape)
 
+        d_speed = self.implicit(points, k=1)
+
+        self.assertIsInstance(d_speed, torch.Tensor)
+
     def test_field_generator(self):
         self.assertIsInstance(self.implicit.field_generator(), im.StructuredFields.StructuredField_p)
 
