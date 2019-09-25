@@ -3,8 +3,6 @@ import time
 from collections import Iterable
 
 import torch
-import torch.optim
-from .LBFGS import FullBatchLBFGS
 
 from implicitmodules.torch.DeformationModules import CompoundModule, SilentLandmarks
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
@@ -155,6 +153,12 @@ class ModelPointsRegistration(Model):
 
     def compute(self, target, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
+        # Call precompute callback if available
+        # TODO: maybe do this in Model and not ModelPointsRegistration ?
+        pc_cost = None
+        if self.precompute_callback is not None:
+            pc_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
+
         # We first create and fill the compound module we will shoot
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
@@ -173,9 +177,11 @@ class ModelPointsRegistration(Model):
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost
+        if pc_cost is not None:
+            c = c + pc_cost
+
         cost = c.detach()
         c.backward()
-
         del c
 
         return cost, deformation_cost.detach(), attach_cost.detach()
