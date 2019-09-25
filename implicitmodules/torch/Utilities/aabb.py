@@ -78,6 +78,10 @@ class AABB:
     def area(self):
         return (self.__xmax - self.__xmin) * (self.ymax - self.ymin)
 
+    @property
+    def center(self):
+        return torch.tensor([0.5*(self.__xmax+self.__xmin), 0.5*(self.__ymax+self.__ymin)])
+
     def squared(self):
         """Squares the AABB."""
         enlarge = .1
@@ -89,4 +93,11 @@ class AABB:
         self.__ymin = ymiddle - diam
         self.__xmax = xmiddle + diam
         self.__ymax = ymiddle + diam
+
+    def scale(self, factor):
+        center = self.center
+        self.__xmin = factor*(self.__xmin - center[0]) + center[0]
+        self.__xmax = factor*(self.__xmax - center[0]) + center[0]
+        self.__ymin = factor*(self.__ymin - center[1]) + center[1]
+        self.__ymax = factor*(self.__ymax - center[1]) + center[1]
 

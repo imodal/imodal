@@ -37,20 +37,13 @@ class ModelFittingScipy(ModelFitting):
 
         # Function that will be optimized, returns the cost for a given state of the model.
         def closure(x):
-            #with torch.autograd.detect_anomaly():
-            with contextlib.suppress():
-                self.__numpy_to_model(self.model, x.astype('float64'))
+            self.__numpy_to_model(self.model, x.astype('float64'))
+            self.__pytorch_optim.zero_grad()
 
-                self.__pytorch_optim.zero_grad()
+            # Shooting + loss computation
+            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
 
-                # Call precompute callback if available
-                if self.model.precompute_callback is not None:
-                    self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
-
-                # Shooting + loss computation
-                cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
-
-                dx_c = self.__model_to_numpy(self.model, grad=True)
+            dx_c = self.__model_to_numpy(self.model, grad=True)
 
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost.item()
