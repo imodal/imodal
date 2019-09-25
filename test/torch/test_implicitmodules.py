@@ -16,7 +16,7 @@ class TestImplicitModule0(unittest.TestCase):
         self.nu = 0.01
         self.nb_pts = 10
         self.dim = 2
-        self.sigma = 0.5
+        self.sigma = 0.1
         self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
         self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
         self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
@@ -119,7 +119,7 @@ class TestImplicitModule1(unittest.TestCase):
         self.controls = torch.rand(self.dim_controls)
         self.C = torch.rand(self.nb_pts, self.dim, self.dim_controls)
         self.nu = 1e-3
-        self.sigma = 1.0
+        self.sigma = 0.001
 
         self.implicit = im.DeformationModules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
         self.implicit.fill_controls(self.controls)
@@ -187,8 +187,6 @@ class TestImplicitModule1(unittest.TestCase):
 
         self.assertTrue(torch.allclose(d_controls, torch.zeros_like(d_controls)))
 
-
-    @unittest.skip("Ill formed test.")
     def test_gradcheck_compute_geodesic_control(self):
         def compute_geodesic_control(gd_pts, gd_mat, mom_pts, mom_mat):
             self.implicit.manifold.fill_gd((gd_pts, gd_mat))
