@@ -34,6 +34,8 @@ def K_xy(x, y, sigma):
 
 
 def gauss_kernel(x, k, sigma):
+    device = x.device
+    dim = x.shape[1]
     if k == 0:
         return (-torch.sum((x/sigma)**2/2, dim=1)).exp()
     if k == 1:
@@ -43,9 +45,11 @@ def gauss_kernel(x, k, sigma):
     if k == 2:
         sigma2 = sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
-        return (k_0.view(-1, 1, 1).repeat(1, 2, 2) * (-torch.eye(2).repeat(x.shape[0], 1, 1)
+        return (k_0.view(-1, 1, 1).repeat(1, 2, 2) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1)
                                                       + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
+        raise NotImplementedError("gauss_kernel(): k >= 3 not supported!")
+        """
         sigma2 = sigma * sigma
         sigma3 = sigma * sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
@@ -53,6 +57,7 @@ def gauss_kernel(x, k, sigma):
         return (-torch.einsum('kij, kl->kijl', k_2, x / sigma) + k_0.view(-1, 1, 1, 1).repeat(1, 2, 2, 2)
                 * (torch.transpose(torch.tensordot(x / sigma, torch.eye(2), dims=0), 1, 2)
                    + torch.tensordot(x / sigma, torch.eye(2), dims=0))) / sigma3
+        """
 
 # def keops_gauss_kernel(sigma, dtype=torch.float32):
 #     p = torch.tensor([1/sigma/sigma])

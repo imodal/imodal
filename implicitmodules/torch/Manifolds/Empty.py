@@ -8,6 +8,9 @@ class EmptyManifold(Manifold):
     def __init__(self):
         super().__init__()
 
+    def to(self, device):
+        pass
+
     def copy(self, requires_grad=True):
         return EmptyManifold()
 

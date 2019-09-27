@@ -7,6 +7,7 @@ def set_compute_backend(backend):
     if backend != 'torch' and backend != 'keops':
         raise RuntimeError("Backend", backend, " not supported!")
 
+    global __compute_backend
     __compute_backend = backend
 
 

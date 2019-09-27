@@ -17,12 +17,20 @@ class ImplicitModule0(DeformationModule):
         self.__nu = nu
         self.__coeff = coeff
         self.__dim_controls = self.__manifold.dim * self.__manifold.nb_pts
-        self.__controls = torch.zeros(self.__dim_controls)
+        self.__controls = torch.zeros(self.__dim_controls, device=manifold.device)
 
     @classmethod
     def build_from_points(cls, dim, nb_pts, sigma, nu, coeff=1., gd=None, tan=None, cotan=None):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff)
+
+    def to(self, device):
+        self.__manifold.to(device)
+        self.__controls.to(device)
+
+    @property
+    def device(self):
+        return self.__manifold.device
 
     @property
     def manifold(self):
@@ -63,20 +71,20 @@ class ImplicitModule0(DeformationModule):
     def cost(self):
         """Returns the cost."""
         K_q = K_xx(self.manifold.gd.view(-1, self.__manifold.dim), self.__sigma)
-        m = torch.mm(K_q + self.__nu * torch.eye(self.__manifold.nb_pts), self.__controls.view(-1, self.__manifold.dim))
+        m = torch.mm(K_q + self.__nu * torch.eye(self.__manifold.nb_pts, device=self.device), self.__controls.view(-1, self.__manifold.dim))
         return 0.5 * self.__coeff * torch.dot(m.view(-1), self.__controls.view(-1))
 
     def compute_geodesic_control(self, man):
-        r"""Computes geodesic control from \delta \in H^\ast."""
+        """Computes geodesic control from \delta \in H^\ast."""
         vs = self.adjoint(man)
-        K_q = K_xx(self.manifold.gd.view(-1, self.__manifold.dim), self.__sigma) + self.__nu * torch.eye(self.__manifold.nb_pts)
+        K_q = K_xx(self.manifold.gd.view(-1, self.__manifold.dim), self.__sigma) + self.__nu * torch.eye(self.__manifold.nb_pts, device=self.device)
 
         controls, _ = torch.solve(vs(self.manifold.gd.view(-1, self.manifold.dim)), K_q)
         self.__controls = controls.contiguous().view(-1) / self.__coeff
 
     def field_generator(self):
         return StructuredField_0(self.__manifold.gd.view(-1, self.__manifold.dim),
-                                 self.__controls.view(-1, self.__manifold.dim), self.__sigma)
+                                 self.__controls.view(-1, self.__manifold.dim), self.__sigma, device=self.device)
 
     def adjoint(self, manifold):
         return manifold.cot_to_vs(self.__sigma)

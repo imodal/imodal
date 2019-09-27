@@ -8,13 +8,15 @@ from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredFi
 
 
 class Stiefel(Manifold):
-    def __init__(self, dim, nb_pts, gd=None, tan=None, cotan=None):
+    def __init__(self, dim, nb_pts, gd=None, tan=None, cotan=None, device=None):
         assert (gd is None) or (isinstance(gd, Iterable) and (len(gd) == 2))
         assert (tan is None) or (isinstance(tan, Iterable) and (len(tan) == 2))
         assert (cotan is None) or (isinstance(cotan, Iterable) and (len(cotan) == 2))
         assert (gd is None) or ((gd[0].shape[0] == dim * nb_pts) and (gd[1].shape[0] == dim * dim * nb_pts))
         assert (tan is None) or ((tan[0].shape[0] == dim * nb_pts) and (tan[1].shape[0] == dim * dim * nb_pts))
         assert (cotan is None) or ((cotan[0].shape[0] == dim * nb_pts) and (cotan[1].shape[0] == dim * dim * nb_pts))
+
+        self.__device = self.__find_device(gd, tan, cotan, device)
 
         self.__dim = dim
         self.__nb_pts = nb_pts
@@ -29,20 +31,73 @@ class Stiefel(Manifold):
         if gd is not None:
             self.fill_gd(gd, copy=False)
         else:
-            self.__gd = (torch.zeros(self.__numel_gd_points, requires_grad=True),
-                         torch.zeros(self.__numel_gd_mat, requires_grad=True))
+            self.__gd = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
+                         torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
 
+        # TODO: tan is only rarely used. Maybe do something about this?
         if tan is not None:
             self.fill_tan(tan, copy=False)
         else:
-            self.__tan = (torch.zeros(self.__numel_gd_points, requires_grad=True),
-                          torch.zeros(self.__numel_gd_mat, requires_grad=True))
+            self.__tan = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
+                          torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
 
         if cotan is not None:
             self.fill_cotan(cotan, copy=False)
         else:
-            self.__cotan = (torch.zeros(self.__numel_gd_points, requires_grad=True),
-                            torch.zeros(self.__numel_gd_mat, requires_grad=True))
+            self.__cotan = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
+                            torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
+
+    def __find_device(self, gd, tan, cotan, device):
+        if device is None:
+            # Device is not specified, we need to get it from the tensors
+            cur_device = None
+            if gd is not None:
+                if gd[0].device != gd[1].device:
+                    raise RuntimeError("Stiefel.__init__(): gd[0] and gd[1] are not on the same device.")
+                cur_device = gd[0].device
+            elif tan is not None:
+                if tan[0].device != tan[1].device:
+                    raise RuntimeError("Stiefel.__init__(): tan[0] and tan[1] are not on the same device.")
+                cur_device = tan.device
+            elif cotan is not None:
+                if cotan[0].device != cotan[1].device:
+                    raise RuntimeError("Stiefel.__init__(): cotan[0] and cotan[1] are not on the same device.")
+                cur_device = cotan.device
+            else:
+                return None
+
+            # We now compare the device with the other tensors and see if it corresponds
+            if ((gd is not None) and ((gd[0].device != cur_device) or (gd[1].device != cur_device))):
+                raise RuntimeError("Stiefel.__init__(): gd is not on device" + str(device))
+            if ((tan is not None) and ((tan[0].device != cur_device) or (tan[1].device != cur_device))):
+                raise RuntimeError("Stiefel.__init__(): tan is not on device" + str(device))
+            if ((cotan is not None) and ((cotan[0].device != cur_device) or (cotan[1].device != cur_device))):
+                raise RuntimeError("Stiefel.__init__(): cotan is not on device" + str(device))
+
+            return cur_device
+
+        else:
+            if gd is not None:
+                gd[0].to(device=device)
+                gd[1].to(device=device)
+            if tan is not None:
+                tan[0].to(device=device)
+                tan[1].to(device=device)
+            if cotan is not None:
+                cotan[0].to(device=device)
+                cotan[1].to(device=device)
+
+            return device
+
+    def to(self, device):
+        self.__device = device
+        self.__gd.to(device)
+        self.__tan.to(device)
+        self.__cotan.to(device)
+
+    @property
+    def device(self):
+        return self.__device
 
     def copy(self, requires_grad=True):
         out = Stiefel(self.__dim, self.__nb_pts)

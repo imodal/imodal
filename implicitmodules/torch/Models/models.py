@@ -119,7 +119,7 @@ class Model:
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
-        intermediate_states, _= shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
+        intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
 
         return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
