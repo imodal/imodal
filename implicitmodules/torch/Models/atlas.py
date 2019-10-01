@@ -9,9 +9,21 @@ from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 
 
 class Atlas:
-    def __init__(self, template, modules, attachement, population_count, lam=1., sigma_ht=1., fit_gd=None, optimise_template=False, precompute_callback=None, model_precompute_callback=None, other_parameters=None):
+    def __init__(self, template, modules, attachement, population_count, lam=1., sigma_ht=1., fit_gd=None, optimise_template=False, precompute_callback=None, model_precompute_callback=None, other_parameters=None, compute_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
+
+        if compute_mode != 'sequential' and compute_mode != 'parallel' and compute_mode != 'heterogeneous':
+            raise RuntimeError("Atlas.__init__(): compute_mode " + compute_mode + " not recognised!")
+
+        if compute_mode == 'sequential':
+            self.__compute_func = self.__compute_sequential
+        elif compute_mode == 'parallel':
+            self.__compute_func = self.__compute_parallel
+        else:
+            raise RuntimeError("Atlas: heterogeneous computing not supported yet!")
+
+        self.__compute_mode = compute_mode
 
         self.__population_count = population_count
         self.__template = template
@@ -40,6 +52,10 @@ class Atlas:
             self.__cotan_ht = torch.zeros_like(template).view(-1).requires_grad_()
 
         self.compute_parameters()
+
+    @property
+    def compute_mode(self):
+        return self.__compute_mode
 
     @property
     def models(self):
@@ -83,14 +99,17 @@ class Atlas:
         if self.__optimise_template:
             self.__parameters.append(self.__cotan_ht)
 
-    def compute_template(self, it=10, method="euler"):
+    def compute_template(self, it=10, method='euler'):
         translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
         shoot(Hamiltonian([translations_ht]), it, method)
 
         return translations_ht.manifold.gd.detach().view(-1, 2)
 
-    def compute(self, target, it=10, method="euler"):
+    def compute(self, target, it=10, method='euler'):
+        return self.__compute_func(target, it, method)
+        
+    def __compute_sequential(self, target, it, method):
         if self.__optimise_template:
             translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
@@ -120,5 +139,8 @@ class Atlas:
         cost = sum(costs)
 
         return cost, deformation_cost, attach_cost
+
+    def __compute_parallel(self, target, it, method):
+        pass
 
 
