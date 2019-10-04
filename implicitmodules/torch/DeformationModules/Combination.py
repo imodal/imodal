@@ -81,7 +81,7 @@ class CompoundModule(DeformationModule, Iterable):
         return sum(cost_list)
     
     def compute_geodesic_control(self, man):
-        r"""Computes geodesic control from \delta \in H^\ast."""
+        """Computes geodesic control from \delta \in H^\ast."""
         for i in range(self.nb_module):
             self.__module_list[i].compute_geodesic_control(man)
     

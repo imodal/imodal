@@ -10,13 +10,13 @@ import torch
 
 import implicitmodules.torch as im
 
-im.Utilities.set_compute_backend('torch')
+im.Utilities.set_compute_backend('keops')
 
 
 def simple_shooting(method, it, device):
     dim = 2
-    nb_pts_silent = 1000
-    nb_pts_order0 = 300
+    nb_pts_silent = 500
+    nb_pts_order0 = 200
     nb_pts_order1 = 100
 
     pts_silent = 100.*torch.rand(nb_pts_silent, dim, device=device)
@@ -69,5 +69,5 @@ def method_summary(method, it, loops, device):
 
 
 torch.set_printoptions(precision=4)
-method_summary('euler', 10, 1, 'cuda')
+method_summary('euler', 1, 1, 'cuda')
 
