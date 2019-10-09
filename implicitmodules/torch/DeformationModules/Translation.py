@@ -49,10 +49,9 @@ class Translations(DeformationModule):
     def fill_controls_zero(self):
         self.__controls = torch.zeros(self.__dim_controls)
 
-    def __call__(self, points):
+    def __call__(self, points, k=0):
         """Applies the generated vector field on given points."""
-        K_q = K_xy(points, self.__manifold.gd.view(-1, self.__manifold.dim), self.__sigma)
-        return torch.mm(K_q, self.__controls.view(-1, self.__manifold.dim))
+        return self.field_generator()(points, k)
 
     def cost(self):
         """Returns the cost."""

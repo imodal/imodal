@@ -25,7 +25,7 @@ class StructuredField_0(SupportStructuredField):
             self.__compute_reduction = self.__compute_reduction_torch
         elif backend == 'keops':
             self.__keops_backend = 'CPU'
-            if self.__device != 'cpu':
+            if str(self.__device) != 'cpu':
                 self.__keops_backend = 'GPU'
             self.__compute_reduction = self.__compute_reduction_keops
             self.__keops_sigma = torch.tensor([1./self.__sigma/self.__sigma], dtype=support.dtype, device=self.__device)

@@ -14,7 +14,7 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 class TestShooting(unittest.TestCase):
     # The different ODE solving methods we want to use and test
     methods = ["torch_euler", "euler", "midpoint", "rk4"]
-    methods_it = [5, 5, 3, 3]
+    methods_it = [2, 2, 2, 2]
 
     def setUp(self):
         self.nb_pts_silent = 4
@@ -83,7 +83,7 @@ class TestShooting(unittest.TestCase):
 
     # Compares torch_euler and euler methods.
     def test_shooting_euler(self):
-        it = 20
+        it = 2
         states, controls = im.HamiltonianDynamic.shoot(self._build_h(), it, "torch_euler", intermediates=True)
         states2, controls2 = im.HamiltonianDynamic.shoot(self._build_h(), it, "euler", intermediates=True)
 
@@ -111,6 +111,29 @@ class TestShooting(unittest.TestCase):
                     return h.module.manifold.gd[0], h.module.manifold.gd[1], h.module.manifold.cotan[0], h.module.manifold.cotan[1]
 
                 self.assertTrue(torch.autograd.gradcheck(shoot, (self.gd_silent, self.gd_trans, self.cotan_silent, self.cotan_trans), raise_exception=True))
+
+    @unittest.expectedFailure
+    def test_gradcheck_shoot_controls(self):
+        for method, it in zip(self.methods, self.methods_it):
+            with self.subTest(method=method, it=it):
+                def shoot(gd_silent, gd_trans, cotan_silent, cotan_trans):
+                    h = self._build_h()
+                    h.module.manifold.fill_gd([gd_silent.view(-1).detach().requires_grad_(),
+                                               gd_trans.view(-1).detach().requires_grad_()])
+                    h.module.manifold.fill_cotan([cotan_silent.view(-1).detach().requires_grad_(),
+                                                  cotan_trans.view(-1).detach().requires_grad_()])
+
+                    _, controls = im.HamiltonianDynamic.shoot(h, it, method, intermediates=True)
+
+                    h = self._build_h()
+                    h.module.manifold.fill_gd([gd_silent.view(-1), gd_trans.view(-1)])
+                    h.module.manifold.fill_cotan([cotan_silent.view(-1), cotan_trans.view(-1)])
+
+                    im.HamiltonianDynamic.shoot(h, it, method, controls=controls)
+
+                    return h.module.manifold.gd[0], h.module.manifold.gd[1], h.module.manifold.cotan[0], h.module.manifold.cotan[1]
+
+                self.assertTrue(torch.autograd.gradcheck(shoot, (self.gd_silent, self.gd_trans, self.cotan_silent, self.cotan_trans), raise_exception=True))        
 
 if __name__ == '__main__':
     unittest.main()
