@@ -58,10 +58,6 @@ class ImplicitModule0(DeformationModule):
         return self.__nu
 
     @property
-    def coeff(self):
-        return self.__coeff
-
-    @property
     def dim_controls(self):
         return self.__dim_controls
 
@@ -71,6 +67,13 @@ class ImplicitModule0(DeformationModule):
     def fill_controls(self, controls):
         self.__controls = controls
 
+    def __get_coeff(self):
+        return self.__coeff
+
+    def __set_coeff(self, coeff):
+        self.__coeff = coeff
+
+    coeff = property(__get_coeff, __set_coeff)
     controls = property(__get_controls, fill_controls)
 
     def fill_controls_zero(self):

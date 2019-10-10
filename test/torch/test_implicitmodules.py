@@ -220,11 +220,11 @@ class TestImplicitModule12D_control4(make_test_implicitmodule1(2, 4)):
     pass
 
 
-# class TestImplicitModule13D_control1(make_test_implicitmodule1(3, 1)):
-#     pass
+class TestImplicitModule13D_control1(make_test_implicitmodule1(3, 1)):
+    pass
 
-# class TestImplicitModule13D_control4(make_test_implicitmodule1(3, 1)):
-#     pass
+class TestImplicitModule13D_control4(make_test_implicitmodule1(3, 4)):
+    pass
 
 
 if __name__ == '__main__':

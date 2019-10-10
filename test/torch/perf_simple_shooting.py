@@ -15,9 +15,10 @@ im.Utilities.set_compute_backend('keops')
 
 def simple_shooting(method, it, device):
     dim = 2
-    nb_pts_silent = 500
-    nb_pts_order0 = 200
-    nb_pts_order1 = 100
+
+    nb_pts_silent = 1000
+    nb_pts_order0 = 1000
+    nb_pts_order1 = 1000
 
     pts_silent = 100.*torch.rand(nb_pts_silent, dim, device=device)
     pts_order0 = 100.*torch.rand(nb_pts_order0, dim, device=device)
@@ -69,5 +70,6 @@ def method_summary(method, it, loops, device):
 
 
 torch.set_printoptions(precision=4)
-method_summary('euler', 1, 1, 'cuda')
+
+method_summary('euler', 1, 1, 'cpu')
 

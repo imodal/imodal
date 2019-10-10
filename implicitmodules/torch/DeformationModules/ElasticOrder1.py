@@ -18,6 +18,7 @@ class ImplicitModule1(DeformationModule):
         self.__nu = nu
         self.__coeff = coeff
         self.__dim_controls = C.shape[2]
+        self.__sym_dim = int(self.manifold.dim * (self.manifold.dim + 1) / 2)
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
     @classmethod
@@ -42,10 +43,6 @@ class ImplicitModule1(DeformationModule):
         return self.__C
 
     @property
-    def coeff(self):
-        return self.__coeff
-
-    @property
     def sigma(self):
         return self.__sigma
 
@@ -65,7 +62,14 @@ class ImplicitModule1(DeformationModule):
         self.__compute_sks()
         self.__compute_moments()
 
+    def __get_coeff(self):
+        return self.__coeff
+
+    def __set_coeff(self, coeff):
+        self.__coeff = coeff
+
     controls = property(__get_controls, fill_controls)
+    coeff = property(__get_coeff, __set_coeff)
 
     def fill_controls_zero(self):
         self.fill_controls(torch.zeros(self.__dim_controls, device=self.device))
@@ -84,7 +88,7 @@ class ImplicitModule1(DeformationModule):
         d_vx = vs(self.__manifold.gd[0].view(-1, self.__manifold.dim), k=1)
 
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
-        S = torch.tensordot(S, eta(device=self.device), dims=2)
+        S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
 
         self.__compute_sks()
 
@@ -103,22 +107,22 @@ class ImplicitModule1(DeformationModule):
         return manifold.cot_to_vs(self.__sigma)
 
     def __compute_aqh(self, h):
-        R = self.__manifold.gd[1].view(-1, 2, 2)
+        R = self.__manifold.gd[1].view(-1, self.manifold.dim, self.manifold.dim)
 
-        return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.__C, h, torch.eye(self.__manifold.dim, device=self.device).repeat(self.__manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(device=self.device))
+        return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.__C, h, torch.eye(self.__manifold.dim, device=self.device).repeat(self.__manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(self.manifold.dim, device=self.device))
 
     def __compute_sks(self):
-        self.__sks = compute_sks(self.__manifold.gd[0].view(-1, self.__manifold.dim), self.sigma, 1) + self.__nu * torch.eye(3 * self.__manifold.nb_pts, device=self.device)
+        self.__sks = compute_sks(self.__manifold.gd[0].view(-1, self.__manifold.dim), self.sigma, 1) + self.__nu * torch.eye(self.__sym_dim * self.__manifold.nb_pts, device=self.device)
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.__controls)
         lambdas, _ = torch.solve(self.__aqh.view(-1, 1), self.__sks)
         self.__lambdas = lambdas.contiguous()
-        self.__moments = torch.tensordot(self.__lambdas.view(-1, 3), torch.transpose(eta(device=self.device), 0, 2), dims=1)
+        self.__moments = torch.tensordot(self.__lambdas.view(-1, self.__sym_dim), torch.transpose(eta(self.manifold.dim, device=self.device), 0, 2), dims=1)
 
     def __compute_aqkiaq(self):
-        lambdas = torch.zeros(self.__dim_controls, 3 * self.__manifold.nb_pts, device=self.device)
-        aq = torch.zeros(3 * self.__manifold.nb_pts, self.__dim_controls, device=self.device)
+        lambdas = torch.zeros(self.__dim_controls, self.__sym_dim * self.__manifold.nb_pts, device=self.device)
+        aq = torch.zeros(self.__sym_dim * self.__manifold.nb_pts, self.__dim_controls, device=self.device)
         for i in range(self.__dim_controls):
             h = torch.zeros(self.__dim_controls, device=self.device)
             h[i] = 1.
