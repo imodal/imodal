@@ -1,3 +1,5 @@
+import time
+
 import torch
 from torch.autograd import grad
 from torchdiffeq import odeint as odeint
@@ -62,6 +64,7 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
     # Returns (\partial H \over \partial p, -\partial H \over \partial q)
     class TorchDiffEqHamiltonianGrad(Hamiltonian, torch.nn.Module):
         def __init__(self, module):
+            self.intermediates = False
             self.in_controls = None
             self.out_controls = []
             self.it = 0
@@ -77,22 +80,43 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
                         gd.append(x[0][index:index+m.manifold.dim_gd[i]].requires_grad_())
                         mom.append(x[1][index:index+m.manifold.dim_gd[i]].requires_grad_())
                         index = index + m.manifold.dim_gd[i]
-
+                    
                 self.module.manifold.fill_gd(self.module.manifold.roll_gd(gd))
                 self.module.manifold.fill_cotan(self.module.manifold.roll_cotan(mom))
 
-                # If controls are provided, use them, else we use compute the geodesic controls.
+                # If controls are provided, use them, else we compute the geodesic controls.
                 if self.in_controls is not None:
                     self.module.fill_controls(self.in_controls[self.it])
                 else:
                     self.geodesic_controls()
 
-                self.out_controls.append(list(map(lambda x: x.detach().clone(), self.module.controls)))
+                if self.intermediates:
+                    self.out_controls.append(list(map(lambda x: x.detach().clone(), self.module.controls)))
 
+                # start = time.perf_counter()
+                # delta = grad(super().apply_mom(),
+                #              [*self.module.manifold.unroll_gd(),
+                #               *self.module.manifold.unroll_cotan()],
+                #              create_graph=True, allow_unused=True)
+                # elapsed = time.perf_counter() - start
+
+                # print("apply_mod()", elapsed)
+
+                # start = time.perf_counter()
+                # delta1 = grad(super().module.cost(),
+                #              [*self.module.manifold.unroll_gd(),
+                #               *self.module.manifold.unroll_cotan()],
+                #              create_graph=True, allow_unused=True)
+                # elapsed = time.perf_counter() - start
+                # print("cost()", elapsed)
+
+                #start = time.perf_counter()
                 delta = grad(super().__call__(),
                              [*self.module.manifold.unroll_gd(),
                               *self.module.manifold.unroll_cotan()],
                              create_graph=True, allow_unused=True)
+                #elapsed = time.perf_counter() - start
+                #print("call()", elapsed)
 
                 gd_out = delta[:int(len(delta)/2)]
                 mom_out = delta[int(len(delta)/2):]
@@ -107,10 +131,14 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
 
     init_manifold = h.module.manifold.copy()
     H = TorchDiffEqHamiltonianGrad.from_hamiltonian(h)
+    H.intermediates = intermediates
     H.in_controls = controls
 
     x_0 = torch.cat(list(map(lambda x: x.view(-1), [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
     x_1 = odeint(H, x_0, torch.linspace(0., 1., steps), method=method)
+
+    # print("end odeint")
+    # print("result", x_1.requires_grad)
 
     gd, mom = [], []
     index = 0

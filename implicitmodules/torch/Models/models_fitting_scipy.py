@@ -26,6 +26,7 @@ class ModelFittingScipy(ModelFitting):
 
         shoot_method = 'euler'
         shoot_it = 10
+        bounds = None
 
         if 'shoot_method' in options:
             shoot_method = options['shoot_method']
@@ -34,6 +35,10 @@ class ModelFittingScipy(ModelFitting):
         if 'shoot_it' in options:
             shoot_it = options['shoot_it']
             del options['shoot_it']
+
+        if 'bounds' in options:
+            bounds = options['bounds']
+            del options['bounds']
 
         # Function that will be optimized, returns the cost for a given state of the model.
         def closure(x):
@@ -77,7 +82,7 @@ class ModelFittingScipy(ModelFitting):
             print("Initial energy = %.3f" % last_costs['cost'])
 
         start = time.time()
-        res = scipy.optimize.minimize(closure, x_0, method=method, jac=True, options=step_options, callback=callback)
+        res = scipy.optimize.minimize(closure, x_0, method=method, jac=True, options=step_options, callback=callback, bounds=bounds)
 
         self.__numpy_to_model(self.model, res.x)
 
@@ -89,6 +94,9 @@ class ModelFittingScipy(ModelFitting):
             print("Time elapsed =", time.time() - start)
 
         return costs
+
+    def vector_size(self):
+        return sum([param.detach().view(-1).shape[0] for param in self.model.parameters])
 
     def __model_to_numpy(self, model, grad=False):
         """ Converts model parameters into a single state vector. """

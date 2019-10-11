@@ -37,12 +37,10 @@ class TestCompareKernels(unittest.TestCase):
         self.assertTrue(np.allclose(gauss_kernel(X, 0, 1.).numpy(), my_vker(x, 0, 1.)))
         self.assertTrue(np.allclose(gauss_kernel(X, 1, 1.).numpy(), my_vker(x, 1, 1.)))
         self.assertTrue(np.allclose(gauss_kernel(X, 2, 1.).numpy(), my_vker(x, 2, 1.)))
-        self.assertTrue(np.allclose(gauss_kernel(X, 3, 1.).numpy(), my_vker(x, 3, 1.)))
         
         self.assertTrue(np.allclose(gauss_kernel(X, 0, sigma).numpy(), my_vker(x, 0, sigma)))
         self.assertTrue(np.allclose(gauss_kernel(X, 1, sigma).numpy(), my_vker(x, 1, sigma)))
         self.assertTrue(np.allclose(gauss_kernel(X, 2, sigma).numpy(), my_vker(x, 2, sigma)))
-        self.assertTrue(np.allclose(gauss_kernel(X, 3, sigma).numpy(), my_vker(x, 3, sigma)))
 
 
     def test_sks(self):

@@ -18,6 +18,13 @@ class SilentLandmarks(DeformationModule):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(pts.shape[1], pts.shape[0], gd=pts.view(-1)))
 
+    def to(self, device):
+        self.__manifold.to(device)
+
+    @property
+    def device(self):
+        return self.__manifold.device
+
     @property
     def dim_controls(self):
         return 0
@@ -41,21 +48,21 @@ class SilentLandmarks(DeformationModule):
     # Disable if necessary
     def __call__(self, points):
         """Applies the generated vector field on given points."""
-        return torch.zeros_like(points, requires_grad=True)
+        return torch.zeros_like(points, requires_grad=True, device=self.device)
 
     # Experimental: requires_grad=True
     # Disable if necessary
     def cost(self):
         """Returns the cost."""
-        return torch.tensor(0., requires_grad=True)
+        return torch.tensor(0., requires_grad=True, device=self.device)
 
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs. For SilentLandmarks, does nothing."""
         pass
 
     def field_generator(self):
-        return StructuredField_Null()
+        return StructuredField_Null(device=self.device)
 
     def adjoint(self, manifold):
-        return StructuredField_Null()
+        return StructuredField_Null(device=self.device)
 

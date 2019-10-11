@@ -119,7 +119,7 @@ class Model:
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
-        intermediate_states, _= shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
+        intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
 
         return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
 
@@ -130,6 +130,8 @@ class ModelPointsRegistration(Model):
     """
     def __init__(self, source, modules, attachement, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
+
+        self.__dim = modules[0].manifold.dim
 
         if other_parameters is None:
             other_parameters = []
@@ -143,11 +145,11 @@ class ModelPointsRegistration(Model):
             if isinstance(source[i], tuple):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(2, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(Landmarks(2, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
 
         super().__init__(modules, attachement, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
@@ -171,9 +173,9 @@ class ModelPointsRegistration(Model):
         attach_costs = []
         for i in range(self.source_count):
             if self.weights[i] is not None:
-                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), self.weights[i]), target[i]))
+                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i]), target[i]))
             else:
-                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, 2), None), (target[i], None)))
+                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, self.__dim), None), (target[i], None)))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost
@@ -185,5 +187,23 @@ class ModelPointsRegistration(Model):
         del c
 
         return cost, deformation_cost.detach(), attach_cost.detach()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

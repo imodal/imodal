@@ -12,6 +12,13 @@ class CompoundManifold(Manifold):
         self.__len_gd = sum([m.len_gd for m in self.__manifold_list])
         self.__dim_gd = tuple(sum((m.dim_gd for m in self.__manifold_list), ()))
 
+    def to(self, device):
+        [man.to(device) for man in self.__manifold_list]
+
+    @property
+    def device(self):
+        return self.__manifold_list[0].device
+
     def copy(self, requires_grad=True):
         manifold_list = [m.copy(requires_grad=requires_grad) for m in self.__manifold_list]
         return CompoundManifold(manifold_list)
