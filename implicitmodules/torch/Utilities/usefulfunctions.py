@@ -3,14 +3,14 @@ import math
 import torch
 from torchviz import make_dot
 
-def grid2vec(x, y):
+def grid2vec(*argv):
     """Convert a grid of points (such as given by torch.meshgrid) to a tensor of vectors."""
-    return torch.cat([x.contiguous().view(1, -1), y.contiguous().view(1, -1)], 0).t().contiguous()
+    return torch.cat([argv[i].contiguous().view(1, -1) for i in range(len(argv))], 0).t().contiguous()
 
 
-def vec2grid(vec, nx, ny):
+def vec2grid(vec, *argv):
     """Convert a tensor of vectors to a grid of points."""
-    return vec.t()[0].view(nx, ny).contiguous(), vec.t()[1].view(nx, ny).contiguous()
+    return tuple((vec.t()[i].view(argv).contiguous()).contiguous() for i in range(len(argv)))
 
 
 def indices2coords(indices, shape, pixel_size=torch.tensor([1., 1.])):

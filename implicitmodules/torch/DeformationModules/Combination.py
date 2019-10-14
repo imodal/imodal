@@ -12,6 +12,13 @@ class CompoundModule(DeformationModule, Iterable):
         assert isinstance(module_list, Iterable)
         super().__init__()
         self.__module_list = [*module_list]
+
+    def to(self, device):
+        [mod.to(device) for mod in self.__module_list]
+
+    @property
+    def device(self):
+        return self.__module_list[0].device
     
     @property
     def module_list(self):
@@ -74,7 +81,7 @@ class CompoundModule(DeformationModule, Iterable):
         return sum(cost_list)
     
     def compute_geodesic_control(self, man):
-        r"""Computes geodesic control from \delta \in H^\ast."""
+        """Computes geodesic control from \delta \in H^\ast."""
         for i in range(self.nb_module):
             self.__module_list[i].compute_geodesic_control(man)
     

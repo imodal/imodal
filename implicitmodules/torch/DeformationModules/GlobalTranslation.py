@@ -28,8 +28,15 @@ class GlobalTranslation(DeformationModule):
 
     def fill_controls(self, controls):
         self.__controls = controls.clone()
+    
+    def __get_coeff(self):
+        return self.__coeff
+
+    def __set_coeff(self, coeff):
+        self.__coeff = coeff
 
     controls = property(__get_controls, fill_controls)
+    coeff = property(__get_coeff, __set_coeff)
 
     def fill_controls_zero(self):
         self.fill_controls(torch.zeros_like(self.__controls))
