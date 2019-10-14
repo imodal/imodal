@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from implicitmodules.torch.Models import Model, ModelPointsRegistration
-from implicitmodules.torch.DeformationModules import ImplicitModule0
+from implicitmodules.torch.DeformationModules import create_deformation_module
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 
 
@@ -84,7 +84,7 @@ class Atlas:
             self.__parameters.append(self.__cotan_ht)
 
     def compute_template(self, it=10, method="euler"):
-        translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
+        #translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
         shoot(Hamiltonian([translations_ht]), it, method)
 

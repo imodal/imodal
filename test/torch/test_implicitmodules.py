@@ -11,7 +11,7 @@ import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
-def make_test_implicitmodule0(dim):
+def make_test_implicitmodule0(dim, backend):
     class TestImplicitModule0(unittest.TestCase):
         def setUp(self):
             self.nu = 0.01
@@ -20,8 +20,8 @@ def make_test_implicitmodule0(dim):
             self.gd = torch.rand(self.nb_pts, dim).view(-1)
             self.mom = torch.rand(self.nb_pts, dim).view(-1)
             self.controls = torch.rand(self.nb_pts, dim).view(-1)
-            self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-            self.implicit = im.DeformationModules.ImplicitModule0(self.landmarks, self.sigma, self.nu)
+
+            self.implicit = im.DeformationModules.create_deformation_module('implicit_order_0', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, nu=self.nu, gd=self.gd, cotan=self.mom)
 
         def test_call(self):
             points = torch.rand(100, dim)
@@ -108,28 +108,35 @@ def make_test_implicitmodule0(dim):
     return TestImplicitModule0
 
 
-class TestImplicitModule02D(make_test_implicitmodule0(2)):
+class TestImplicitModule02D_Torch(make_test_implicitmodule0(2, 'torch')):
     pass
 
 
-class TestImplicitModule03D(make_test_implicitmodule0(3)):
+class TestImplicitModule03D_Torch(make_test_implicitmodule0(3, 'torch')):
     pass
 
 
-def make_test_implicitmodule1(dim, dim_controls):
+# class TestImplicitModule02D_KeOps(make_test_implicitmodule0(2, 'keops')):
+#     pass
+
+
+# class TestImplicitModule03D_KeOps(make_test_implicitmodule0(3, 'keops')):
+#     pass
+
+
+def make_test_implicitmodule1(dim, dim_controls, backend):
     class TestImplicitModule1(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 7
             self.gd = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
             self.tan = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
             self.cotan = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
-            self.stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
             self.controls = torch.rand(dim_controls)
             self.C = torch.rand(self.nb_pts, dim, dim_controls)
             self.nu = 1e-3
             self.sigma = 0.001
 
-            self.implicit = im.DeformationModules.ImplicitModule1(self.stiefel, self.C, self.sigma, self.nu)
+            self.implicit = im.DeformationModules.create_deformation_module('implicit_order_1', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, C=self.C, nu=self.nu, gd=self.gd, tan=self.tan, cotan=self.cotan)
             self.implicit.fill_controls(self.controls)
 
         def test_call(self):
@@ -213,18 +220,36 @@ def make_test_implicitmodule1(dim, dim_controls):
     return TestImplicitModule1
 
 
-class TestImplicitModule12D_control1(make_test_implicitmodule1(2, 1)):
-    pass
-
-class TestImplicitModule12D_control4(make_test_implicitmodule1(2, 4)):
+class TestImplicitModule12D_control1_Torch(make_test_implicitmodule1(2, 1, 'torch')):
     pass
 
 
-class TestImplicitModule13D_control1(make_test_implicitmodule1(3, 1)):
+class TestImplicitModule12D_control4_Torch(make_test_implicitmodule1(2, 2, 'torch')):
     pass
 
-class TestImplicitModule13D_control4(make_test_implicitmodule1(3, 4)):
+
+class TestImplicitModule13D_control1_Torch(make_test_implicitmodule1(3, 1, 'torch')):
     pass
+
+
+class TestImplicitModule13D_control4_Torch(make_test_implicitmodule1(3, 2, 'torch')):
+    pass
+
+
+# class TestImplicitModule12D_control1_KeOps(make_test_implicitmodule1(2, 1, 'keops')):
+#     pass
+
+
+# class TestImplicitModule12D_control4_KeOps(make_test_implicitmodule1(2, 4, 'keops')):
+#     pass
+
+
+# class TestImplicitModule13D_control1_KeOps(make_test_implicitmodule1(3, 1, 'keops')):
+#     pass
+
+
+# class TestImplicitModule13D_control4_KeOps(make_test_implicitmodule1(3, 4, 'keops')):
+#     pass
 
 
 if __name__ == '__main__':

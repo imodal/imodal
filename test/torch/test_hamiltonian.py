@@ -21,7 +21,7 @@ def make_test_hamiltonian(dim):
             self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
             self.controls = 100.*torch.rand_like(self.gd)
 
-            self.trans = im.DeformationModules.Translations(self.landmarks, self.sigma)
+            self.trans = im.DeformationModules.Translations_Torch(self.landmarks, self.sigma)
             self.trans.fill_controls(self.controls)
 
             self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
@@ -120,7 +120,7 @@ def make_test_hamiltoniancompound(dim):
             self.controls_silent = torch.tensor([])
             self.controls = [self.controls_trans, self.controls_silent]
 
-            self.trans = im.DeformationModules.Translations(self.landmarks_trans, self.sigma)
+            self.trans = im.DeformationModules.Translations_Torch(self.landmarks_trans, self.sigma)
             self.trans.fill_controls(self.controls[0])
             self.silent = im.DeformationModules.SilentLandmarks(self.landmarks_silent)
 
