@@ -212,7 +212,7 @@ class Stiefel(Manifold):
         self.__cotan = (-self.__cotan[0], -self.__cotan[1])
 
     def cot_to_vs(self, sigma, backend=None):
-        v0 = StructuredField_0(self.__gd[0].view(-1, self.__dim), self.__cotan[0].view(-1, self.__dim), sigma, backend=None)
+        v0 = StructuredField_0(self.__gd[0].view(-1, self.__dim), self.__cotan[0].view(-1, self.__dim), sigma, backend=backend)
         R = torch.einsum('nik, njk->nij', self.__cotan[1].view(-1, self.__dim, self.__dim), self.__gd[1].view(-1, self.__dim, self.__dim))
 
         vm = StructuredField_m(self.__gd[0].view(-1, self.__dim), R, sigma, backend=backend)

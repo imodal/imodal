@@ -111,27 +111,27 @@ class Translations_KeOps(Translations):
         if str(self.device) != 'cpu':
             self.__keops_backend = 'GPU'
 
-        self.__keops_sigma = torch.tensor([sigma], dtype=manifold.gd.dtype, device=manifold.gd.device)
+        self.__keops_invsigmasq = torch.tensor([1/sigma**2], dtype=manifold.gd.dtype, device=manifold.gd.device)
 
         self.dim = manifold.dim
-        formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*p | p)/IntCst(2)"
-        alias_cost = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "p=Vj("+str(self.dim)+")", "S=Pm(1)"]
+        formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*px | py)/IntCst(2)"
+        alias_cost = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "px=Vi(" + str(self.dim)+")", "py=Vj("+str(self.dim)+")", "S=Pm(1)"]
         self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0, dtype=self.__keops_dtype)
 
-        formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*vs"
-        alias_cgc = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "vs=Vj("+str(self.dim) + ")", "S=Pm(1)"]
-        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "vs", axis=1, dtype=self.__keops_dtype)
+        formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*X"
+        alias_cgc = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "X=Vj("+str(self.dim) + ")", "S=Pm(1)"]
+        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype=self.__keops_dtype)
 
     @property
     def backend(self):
         return 'keops'
 
     def cost(self):
-        return self.reduction_cost(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), self.controls.reshape(-1, self.dim), self.__keops_sigma, backend=self.__keops_backend).sum()
+        return self.reduction_cost(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), self.controls.reshape(-1, self.dim), self.controls.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend).sum()
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)(self.manifold.gd.view(-1, self.dim))
-        self.fill_controls(self.solve_cgc(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), vs.reshape(-1, self.dim), self.__keops_sigma, backend=self.__keops_backend))
+        self.fill_controls(self.solve_cgc(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), vs.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend, alpha=0.))
 
 
 register_deformation_module_builder('translations', {'torch': Translations_Torch.build, 'keops': Translations_KeOps.build})

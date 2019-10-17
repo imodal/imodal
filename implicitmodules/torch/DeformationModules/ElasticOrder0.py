@@ -1,5 +1,7 @@
 import torch
 
+from pykeops.torch import Genred, KernelSolve
+
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
 from implicitmodules.torch.Kernels.kernels import K_xx
 from implicitmodules.torch.Manifolds import Landmarks
@@ -115,17 +117,34 @@ class ImplicitModule0_Torch(ImplicitModule0):
 
 class ImplicitModule0_KeOps(ImplicitModule0):
     def __init__(self, manifold, sigma, nu, coeff=1.):
-        super().__init__(manifold, sigma, nu, coeff=coeff)
+        super().__init__(manifold, sigma, nu, coeff=1.)
+
+        self.__keops_dtype = str(manifold.gd.dtype).split(".")[1]
+        self.__keops_backend = 'CPU'
+        if str(self.device) != 'cpu':
+            self.__keops_backend = 'GPU'
+
+        self.__keops_invsigmasq = torch.tensor([1/sigma**2], dtype=manifold.gd.dtype, device=manifold.gd.device)
+
+        self.dim = manifold.dim
+        formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*px | py)"
+        alias_cost = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "px=Vi(" + str(self.dim)+")", "py=Vj("+str(self.dim)+")", "S=Pm(1)"]
+        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0, dtype=self.__keops_dtype)
+
+        formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*X"
+        alias_cgc = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "X=Vj("+str(self.dim) + ")", "S=Pm(1)"]
+        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype=self.__keops_dtype)
 
     @property
     def backend(self):
         return 'keops'
 
     def cost(self):
-        raise NotImplementedError
+        return 0.5 * self.coeff * (1. * self.reduction_cost(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), self.controls.reshape(-1, self.dim), self.controls.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend)).sum() + (self.nu*self.controls**2).sum()
 
     def compute_geodesic_control(self, man):
-        raise NotImplementedError
+        vs = self.adjoint(man)(self.manifold.gd.view(-1, self.dim))
+        self.fill_controls(self.solve_cgc(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), vs.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend, alpha=self.nu)/self.coeff)
 
 
 register_deformation_module_builder('implicit_order_0', {'torch': ImplicitModule0_Torch.build, 'keops': ImplicitModule0_KeOps.build})
