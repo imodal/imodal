@@ -81,33 +81,33 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
     def dim(self):
         return 3
 
-
-class VarifoldAttachment3D_Torch(VarifoldAttachment3D):
-    def __init__(self, sigmas, weight=1.):
-        super().__init__(sigmas, weight=weight)
-
     def cost_varifold(self, source, target, sigma):
-        def convolve(x, y, p, sigma):
-            def binet(x):
-                return x * x
-
-            K = K_xy(x[0], y[0], sigma)
-            return torch.mm(K * binet(torch.mm(x[1], y[1].T)), p)
-
-        def varifold_scalar_product(x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
-            return torch.dot(lengths_x.view(-1), convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
-
         vertices_x, faces_x = source
-
         vertices_y, faces_y = target
 
         centers_x, normals_x, lengths_x = compute_centers_normals_lengths(vertices_x, faces_x)
         centers_y, normals_y, lengths_y = compute_centers_normals_lengths(vertices_y, faces_y)
         normalized_x, normalized_y = normals_x / lengths_x, normals_y / lengths_y
 
-        return varifold_scalar_product(centers_x, centers_x, lengths_x, lengths_x, normalized_x, normalized_x, sigma)\
-            + varifold_scalar_product(centers_y, centers_y, lengths_y, lengths_y, normalized_y, normalized_y, sigma)\
-            - 2 * varifold_scalar_product(centers_x, centers_y, lengths_x, lengths_y, normalized_x, normalized_y, sigma)
+        return self.varifold_scalar_product(centers_x, centers_x, lengths_x, lengths_x, normalized_x, normalized_x, sigma) \
+            + self.varifold_scalar_product(centers_y, centers_y, lengths_y, lengths_y, normalized_y, normalized_y, sigma) \
+            - 2. * self.varifold_scalar_product(centers_x, centers_y, lengths_x, lengths_y, normalized_x, normalized_y, sigma)
+
+
+class VarifoldAttachment3D_Torch(VarifoldAttachment3D):
+    def __init__(self, sigmas, weight=1.):
+        super().__init__(sigmas, weight=weight)
+
+    def __convolve(self, x, y, p, sigma):
+        def binet(x):
+            return x * x
+
+        K = K_xy(x[0], y[0], sigma)
+        return torch.mm(K * binet(torch.mm(x[1], y[1].T)), p)
+
+    def varifold_scalar_product(self, x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
+        return torch.dot(lengths_x.view(-1), self.__convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
+
 
 #'id': Kernel('gaussian(x,y) * linear(u,v)**2'),
 class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):
@@ -117,8 +117,7 @@ class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):
         # Keops kernels are stored here
         self.__K = {}
 
-    def cost_varifold(self, source, target, sigma):
-        # If a keops kernel can not be found for a particular sigma
+    def varifold_scalar_product(self, x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
         if sigma not in self.__K:
             def GaussLinKernel(sigma):
                 def K(x, y, u, v, b):
@@ -127,21 +126,12 @@ class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):
                         'gamma': (1 / (sigma * sigma), None),
                         'backend': 'auto'
                     }
-                    return kernel_product(params, (x, u), (y, v), b, dtype=str(source[0].dtype).split('.')[1])
+                    return kernel_product(params, (x, u), (y, v), b, dtype=str(x[0].dtype).split('.')[1])
                 return K
 
-            self.__K[sigma] = GaussLinKernel(torch.tensor([sigma], dtype=source[0].dtype, device=source[0].device))
+            self.__K[sigma] = GaussLinKernel(torch.tensor([sigma], dtype=x[0].dtype, device=x[0].device))
 
-        vertices_x, faces_x = source
-        vertices_y, faces_y = target
-
-        centers_x, normals_x, lengths_x = compute_centers_normals_lengths(vertices_x, faces_x)
-        centers_y, normals_y, lengths_y = compute_centers_normals_lengths(vertices_y, faces_y)
-        normalized_x, normalized_y = normals_x / lengths_x, normals_y / lengths_y
-
-        return (lengths_x * self.__K[sigma](centers_x, centers_x, normalized_x, normalized_x, lengths_x)).sum()\
-            + (lengths_y * self.__K[sigma](centers_y, centers_y, normalized_y, normalized_y, lengths_y)).sum()\
-            - 2 * (lengths_x * self.__K[sigma](centers_x, centers_y, normalized_x, normalized_y, lengths_y)).sum()
+        return (lengths_x * self.__K[sigma](x, y, normalized_x, normalized_y, lengths_y)).sum()
 
 
 def VarifoldAttachment(dim, sigmas, weight=1., backend=None):
