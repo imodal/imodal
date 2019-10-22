@@ -175,7 +175,7 @@ def make_test_implicitmodule1(dim, dim_controls, backend):
             self.gd[0].requires_grad_()
             self.gd[1].requires_grad_()
             self.controls.requires_grad_()
-            points = torch.rand(100, dim, requires_grad=True)
+            points = torch.rand(10, dim, requires_grad=True)
 
             self.assertTrue(torch.autograd.gradcheck(call, (self.gd[0], self.gd[1], self.controls, points), raise_exception=False))
 
