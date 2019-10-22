@@ -26,8 +26,8 @@ class VarifoldAttachmentBase(Attachment):
     def cost_varifold(self, source, target, sigma):
         raise NotImplementedError
 
-    def loss(self, source, target):
-        return sum([self.cost_varifold(source, target, sigma) for sigma in self.__sigmas])
+    def loss(self, source):
+        return sum([self.cost_varifold(source, sigma) for sigma in self.__sigmas])
 
 
 class VarifoldAttachment2D(Attachment):
@@ -81,17 +81,25 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
     def dim(self):
         return 3
 
-    def cost_varifold(self, source, target, sigma):
-        vertices_x, faces_x = source
-        vertices_y, faces_y = target
+    def precompute(self):
+        vertices_target, faces_target = self.target
+        self.centers_target, normals_target, self.lengths_target = compute_centers_normals_lengths(vertices_target, faces_target)
+        self.normalized_target = normals_target / self.lengths_target
 
-        centers_x, normals_x, lengths_x = compute_centers_normals_lengths(vertices_x, faces_x)
-        centers_y, normals_y, lengths_y = compute_centers_normals_lengths(vertices_y, faces_y)
-        normalized_x, normalized_y = normals_x / lengths_x, normals_y / lengths_y
+        self.__target_precomputed = {}
 
-        return self.varifold_scalar_product(centers_x, centers_x, lengths_x, lengths_x, normalized_x, normalized_x, sigma) \
-            + self.varifold_scalar_product(centers_y, centers_y, lengths_y, lengths_y, normalized_y, normalized_y, sigma) \
-            - 2. * self.varifold_scalar_product(centers_x, centers_y, lengths_x, lengths_y, normalized_x, normalized_y, sigma)
+        for sigma in self.sigmas:
+            self.__target_precomputed[sigma] = self.varifold_scalar_product(self.centers_target, self.centers_target, self.lengths_target, self.lengths_target, self.normalized_target, self.normalized_target, sigma)
+
+    def cost_varifold(self, source, sigma):
+        vertices_source, faces_source = source
+
+        centers_source, normals_source, lengths_source = compute_centers_normals_lengths(vertices_source, faces_source)
+        normalized_source = normals_source / lengths_source
+
+        return self.__target_precomputed[sigma]\
+            + self.varifold_scalar_product(centers_source, centers_source, lengths_source, lengths_source, normalized_source, normalized_source, sigma)\
+            - 2. * self.varifold_scalar_product(centers_source, self.centers_target, lengths_source, self.lengths_target, normalized_source, self.normalized_target, sigma)
 
 
 class VarifoldAttachment3D_Torch(VarifoldAttachment3D):

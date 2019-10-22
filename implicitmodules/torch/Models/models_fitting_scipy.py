@@ -1,11 +1,11 @@
 import time
-import contextlib
 
 import numpy as np
 import torch
 import scipy.optimize
 
 from .models_fitting import ModelFitting
+from implicitmodules.torch.Attachment import CompoundAttachment
 
 class ModelFittingScipy(ModelFitting):
     def __init__(self, model, step_length, post_iteration_callback=None):
@@ -71,6 +71,8 @@ class ModelFittingScipy(ModelFitting):
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
 
             self.__it = self.__it + 1
+
+        CompoundAttachment(self.model.attachments).target = target
 
         step_options = {'disp': disp, 'maxiter': max_iter}
         step_options.update(options)
