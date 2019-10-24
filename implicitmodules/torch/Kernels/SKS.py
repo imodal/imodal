@@ -42,5 +42,5 @@ def compute_sks(x, sigma, order):
         K = torch.tensordot(K, eta(dim, device=device), dims=([1, 2], [0, 1]))
         return K.view(N, N, sym_dim, sym_dim).contiguous().permute([0, 2, 1, 3]).contiguous().view(sym_dim * N, sym_dim * N)
     else:
-        NotImplementedError
+        raise NotImplementedError
 

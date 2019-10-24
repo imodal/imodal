@@ -44,8 +44,7 @@ def gauss_kernel(x, k, sigma):
     if k == 2:
         sigma2 = sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
-        return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1)
-                                                      + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
+        return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1) + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
         raise NotImplementedError("gauss_kernel(): k >= 3 not supported!")
 

@@ -144,7 +144,7 @@ class ImplicitModule0_KeOps(ImplicitModule0):
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)(self.manifold.gd.view(-1, self.dim))
-        self.fill_controls(self.solve_cgc(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), vs.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend, alpha=self.nu)/self.coeff)
+        self.fill_controls(self.solve_cgc(self.manifold.gd.reshape(-1, self.dim), self.manifold.gd.reshape(-1, self.dim), vs.reshape(-1, self.dim), self.__keops_invsigmasq, backend=self.__keops_backend, alpha=self.nu).flatten()/self.coeff)
 
 
 register_deformation_module_builder('implicit_order_0', {'torch': ImplicitModule0_Torch.build, 'keops': ImplicitModule0_KeOps.build})
