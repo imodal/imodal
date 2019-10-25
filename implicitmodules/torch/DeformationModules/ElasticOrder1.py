@@ -198,7 +198,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
 
     @property
     def backend(self):
-        return 'torch'
+        return 'keops'
 
     def cost(self):
         return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
