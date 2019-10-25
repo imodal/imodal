@@ -31,7 +31,7 @@ class ImplicitModule1(DeformationModule):
         return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), C, sigma, nu, coeff)
 
     @classmethod
-    def build(cls, dim, nb_pts, C, sigma, nu, gd=None, tan=None, cotan=None, coeff=1.):
+    def build(cls, dim, nb_pts, C, sigma, nu=0., gd=None, tan=None, cotan=None, coeff=1.):
         """Builds the Translations deformation module from tensors."""
         return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), C, sigma, nu, coeff)
 

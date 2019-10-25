@@ -16,9 +16,9 @@ im.Utilities.set_compute_backend('keops')
 def simple_shooting(method, it, device):
     dim = 2
 
-    nb_pts_silent = 1000
-    nb_pts_order0 = 1000
-    nb_pts_order1 = 1000
+    nb_pts_silent = 2000
+    nb_pts_order0 = 2000
+    nb_pts_order1 = 2000
 
     pts_silent = 100.*torch.rand(nb_pts_silent, dim, device=device)
     pts_order0 = 100.*torch.rand(nb_pts_order0, dim, device=device)
@@ -34,13 +34,14 @@ def simple_shooting(method, it, device):
     p_R = torch.rand(nb_pts_order1, 2, 2, device=device)
 
     silent = im.DeformationModules.SilentLandmarks(im.Manifolds.Landmarks(dim, nb_pts_silent, gd=pts_silent.view(-1).requires_grad_()))
-    order0 = im.DeformationModules.ImplicitModule0(im.Manifolds.Landmarks(dim, nb_pts_order0, gd=pts_order0.view(-1).requires_grad_()), sigma, nu, coeff)
-    order1 = im.DeformationModules.ImplicitModule1(im.Manifolds.Stiefel(dim, nb_pts_order1, gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_())), C, sigma, nu, coeff)
+    order0 = im.DeformationModules.create_deformation_module('implicit_order_0', dim=dim, nb_pts=nb_pts_order0, sigma=sigma, nu=nu, gd=pts_order0.view(-1).requires_grad_())
+    order1 = im.DeformationModules.create_deformation_module('implicit_order_1', dim=dim, nb_pts=nb_pts_order1, C=C, sigma=sigma, nu=nu, gd=(pts_order1.view(-1).requires_grad_(), R.view(-1).requires_grad_()))
 
     #with torch.autograd.no_grad():
-    im.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([silent, order0, order1]), it=it, method=method)
+    im.HamiltonianDynamic.shooting.shoot(im.HamiltonianDynamic.Hamiltonian([order1]), it=it, method=method)
 
     return [silent.manifold.gd, order0.manifold.gd, order1.manifold.gd[0]]
+    #return [order1.manifold.gd[0]]
 
 
 def test_method(method, it, loops, device):
@@ -54,7 +55,7 @@ def test_method(method, it, loops, device):
         out = simple_shooting(method, it, device)
         time_shooting.append(time.time() - start)
 
-        scalar = torch.sum(torch.cat([out[0], out[1], out[2]]))
+        scalar = torch.sum(torch.cat(out))
 
         start = time.time()
         torch.autograd.backward(scalar)
@@ -71,5 +72,5 @@ def method_summary(method, it, loops, device):
 
 torch.set_printoptions(precision=4)
 
-method_summary('euler', 1, 1, 'cpu')
+method_summary('euler', 10, 1, 'cuda')
 
