@@ -4,7 +4,7 @@ import math
 from pykeops.torch import Genred, KernelSolve
 
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
-from implicitmodules.torch.Kernels.SKS import eta, compute_sks
+from implicitmodules.torch.Kernels.SKS import eta, compute_sks, A
 from implicitmodules.torch.Manifolds import Stiefel
 from implicitmodules.torch.StructuredFields import StructuredField_p
 
@@ -183,7 +183,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
         self.__keops_invsigmasq = torch.tensor([1./sigma**2], dtype=manifold.gd[0].dtype, device=self.device)
         self.__keops_eye = torch.eye(self.dim, device=self.device, dtype=manifold.gd[0].dtype).flatten()
 
-        self.__A = self.__compute_A(self.dim, device=self.device, dtype=manifold.gd[0].dtype).flatten()
+        self.__keops_A = A(self.dim, device=self.device, dtype=manifold.gd[0].dtype).flatten()
 
         formula_solve_sks = "TensorDot(TensorDot((-S*Exp(-S*SqNorm2(x_i - y_j)*IntInv(2))*(S*TensorDot(x_i - y_j, x_i - y_j, Ind({dim}), Ind({dim}), Ind(), Ind()) - eye)), A, Ind({dim}, {dim}), Ind({dim}, {dim}, {symdim}, {symdim}), Ind(0, 1), Ind(0, 1)), X, Ind({symdim}, {symdim}), Ind({symdim}), Ind(0), Ind(0))".format(dim=self.dim, symdim=self.sym_dim)
 
@@ -192,7 +192,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
                            "X=Vj({symdim})".format(symdim=self.sym_dim),
                            "eye=Pm({dimsq})".format(dimsq=self.dim*self.dim),
                            "S=Pm(1)",
-                           "A=Pm({dima})".format(dima=self.__A.numel())]
+                           "A=Pm({dima})".format(dima=self.__keops_A.numel())]
 
         self.solve_sks = KernelSolve(formula_solve_sks, alias_solve_sks, "X", axis=1, dtype=self.__keops_dtype)
 
@@ -203,81 +203,6 @@ class ImplicitModule1_KeOps(ImplicitModule1):
     def cost(self):
         return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
 
-    def __compute_A(self, dim, dtype, device):
-        cst = -math.sqrt(2.)/2.
-        if dim == 2:
-            A = torch.zeros(2, 2, 3, 3, device=device, dtype=dtype)
-
-            # A[0, 0]
-            A[0, 0, 0, 0] = 1.
-            A[0, 0, 1, 1] = 2.
-
-            # A[1, 1]
-            A[1, 1, 1, 1] = 2.
-            A[1, 1, 2, 2] = 1.
-
-            # A[0, 1]
-            A[0, 1, 0, 1] = cst
-            A[0, 1, 1, 0] = cst
-            A[0, 1, 1, 2] = cst
-            A[0, 1, 2, 1] = cst
-
-            # A[1, 0]
-            A[1, 0] = A[0, 1]
-
-            return A
-        elif dim == 3:
-            A = torch.zeros(3, 3, 6, 6, device=device, dtype=dtype)
-
-            # A[0, 0]
-            A[0, 0, 0, 0] = 1.
-            A[0, 0, 3, 3] = 2.
-            A[0, 0, 4, 4] = 2.
-
-            # A[1, 1]
-            A[1, 1, 1, 1] = 1.
-            A[1, 1, 3, 3] = 2.
-            A[1, 1, 5, 5] = 2.
-
-            # A[2, 2]
-            A[2, 2, 2, 2] = 1.
-            A[2, 2, 4, 4] = 2.
-            A[2, 2, 5, 5] = 2.
-
-            # A[0, 1]
-            A[0, 1, 0, 3] = cst
-            A[0, 1, 3, 0] = cst
-            A[0, 1, 1, 3] = cst
-            A[0, 1, 3, 1] = cst
-            A[0, 1, 4, 5] = -1.
-            A[0, 1, 5, 4] = -1.
-
-            # A[1, 0]
-            A[1, 0] = A[0, 1]
-
-            # A[0, 2]
-            A[0, 2, 0, 4] = cst
-            A[0, 2, 4, 0] = cst
-            A[0, 2, 4, 2] = cst
-            A[0, 2, 2, 4] = cst
-            A[0, 2, 4, 5] = -1.
-            A[0, 2, 5, 4] = -1.
-
-            # A[1, 2]
-            A[1, 2, 1, 5] = cst
-            A[1, 2, 5, 1] = cst
-            A[1, 2, 2, 5] = cst
-            A[1, 2, 5, 2] = cst
-            A[1, 2, 3, 4] = -1.
-            A[1, 2, 4, 3] = -1.
-
-            # A[2, 1]
-            A[2, 1] = A[1, 2]
-
-            return A
-        else:
-            raise NotImplementedError
-
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
         d_vx = vs(self.manifold.gd[0].view(-1, self.manifold.dim), k=1)
@@ -285,7 +210,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
 
-        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__A, backend=self.__keops_backend, alpha=self.nu)
+        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
         c, _ = torch.solve(torch.mm(aq.t(), tlambdas.view(-1, 1)), aqkiaq)
@@ -302,7 +227,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.controls)
-        self.__lambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.__aqh, self.__keops_eye, self.__keops_invsigmasq, self.__A, backend=self.__keops_backend, alpha=self.nu)
+        self.__lambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.__aqh, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
         self.moments = torch.tensordot(self.__lambdas.view(-1, self.sym_dim), torch.transpose(eta(self.manifold.dim, device=self.device), 0, 2), dims=1)
 
     def __compute_aqkiaq(self):
@@ -314,7 +239,7 @@ class ImplicitModule1_KeOps(ImplicitModule1):
             aqi = self.__compute_aqh(h).view(-1)
             aq[:, i] = aqi
 
-            lambdas[i, :] = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), aqi.view(-1, self.sym_dim), self.__keops_eye, self.__keops_invsigmasq, self.__A, backend=self.__keops_backend, alpha=self.nu).view(-1)
+            lambdas[i, :] = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), aqi.view(-1, self.sym_dim), self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu).view(-1)
 
         return (aq, torch.mm(lambdas, aq))
 
