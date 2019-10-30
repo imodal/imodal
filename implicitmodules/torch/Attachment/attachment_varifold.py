@@ -48,13 +48,13 @@ class VarifoldAttachment2D_Torch(VarifoldAttachmentBase):
             vx, vy = cx[1:nx + 1, :] - x, cy[1:ny + 1, :] - y
             mx, my = (cx[1:nx + 1, :] + x) / 2, (cy[1:ny + 1, :] + y) / 2
 
-            xy = torch.tensordot(torch.transpose(torch.tensordot(mx, my, dims=0), 1, 2), torch.eye(2))
+            xy = torch.tensordot(torch.transpose(torch.tensordot(mx, my, dims=0), 1, 2), torch.eye(2, dtype=source.dtype, device=source.device))
 
             d2 = torch.sum(mx * mx, dim=1).reshape(nx, 1).repeat(1, ny) + torch.sum(my * my, dim=1).repeat(nx, 1) - 2 * xy
 
             kxy = torch.exp(-d2 / (2 * sigma ** 2))
 
-            vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2)) ** 2
+            vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2, dtype=source.dtype, device=source.device)) ** 2
 
             nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
             nvy = torch.sqrt(torch.sum(vy * vy, dim=1))

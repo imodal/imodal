@@ -20,7 +20,7 @@ class ModelFittingScipy(ModelFitting):
     def reset(selt):
         pass
 
-    def fit(self, target, max_iter, method='L-BFGS-B', options={}, log_interval=10, disp=True):
+    def fit(self, target, max_iter, method='L-BFGS-B', options={}, log_interval=1, disp=True):
         last_costs = {}
         costs = []
 
@@ -106,6 +106,7 @@ class ModelFittingScipy(ModelFitting):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
+            print([(param.shape, param.grad) for param in self.model.parameters])
             tensors = [param.grad.data.view(-1).cpu().numpy() for param in self.model.parameters]
         else:
             tensors = [param.data.view(-1).cpu().numpy() for param in self.model.parameters]

@@ -175,7 +175,7 @@ class ModelPointsRegistration(Model):
             if self.weights[i] is not None:
                 attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i])))
             else:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), None)))
+                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__dim)))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost
