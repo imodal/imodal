@@ -11,13 +11,16 @@ import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
-def make_test_shooting(dim):
+def make_test_shooting(dim, backend):
     class TestShooting(unittest.TestCase):
         # The different ODE solving methods we want to use and test
         methods = ["torch_euler", "euler", "midpoint", "rk4"]
         methods_it = [2, 2, 2, 2]
 
         def setUp(self):
+            self.sigma = 0.5
+            self.nu = 0.001
+
             self.nb_pts_silent = 2
             self.nb_pts_trans = 2
 
@@ -27,11 +30,13 @@ def make_test_shooting(dim):
             self.cotan_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
 
         def _build_h(self, fill_cotan=True):
-            self.silent = im.DeformationModules.SilentLandmarks.build_from_points(self.gd_silent)
+            #self.silent = im.DeformationModules.SilentLandmarks.build_from_points(self.gd_silent)
+            self.silent = im.DeformationModules.create_deformation_module('silent_points', backend=backend, dim=dim, nb_pts=self.nb_pts_silent, gd=self.gd_silent.view(-1))
             if fill_cotan:
                 self.silent.manifold.fill_cotan(self.cotan_silent.view(-1))
 
-            self.trans = im.DeformationModules.ImplicitModule0.build_from_points(dim, self.nb_pts_trans, 0.5, 0.01, gd=self.gd_trans.view(-1))
+            #self.trans = im.DeformationModules.ImplicitModule0.build_from_points(dim, self.nb_pts_trans, 0.5, 0.01, gd=self.gd_trans.view(-1))
+            self.trans = im.DeformationModules.create_deformation_module('implicit_order_0', backend=backend, dim=dim, nb_pts=self.nb_pts_trans, sigma=self.sigma, nu=self.nu, gd=self.gd_trans.view(-1))
             if fill_cotan:
                 self.trans.manifold.fill_cotan(self.cotan_trans.view(-1))
 
@@ -139,11 +144,11 @@ def make_test_shooting(dim):
     return TestShooting
 
 
-class TestShooting2D(make_test_shooting(2)):
+class TestShooting2D(make_test_shooting(2, 'torch')):
     pass
 
 
-class TestShooting3D(make_test_shooting(3)):
+class TestShooting3D(make_test_shooting(3, 'torch')):
     pass
 
 

@@ -11,7 +11,7 @@ import implicitmodules.torch as im
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
-def make_test_translations(dim):
+def make_test_translations(dim, backend):
     class TestTranslations(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
@@ -19,8 +19,7 @@ def make_test_translations(dim):
             self.gd = torch.rand(self.nb_pts, dim).view(-1)
             self.mom = torch.rand(self.nb_pts, dim).view(-1)
             self.controls = torch.rand(self.nb_pts, dim).view(-1)
-            self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-            self.trans = im.DeformationModules.Translations(self.landmarks, self.sigma)
+            self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, gd=self.gd, cotan=self.mom)
 
         def test_call(self):
             points = torch.rand(100, dim)
@@ -106,27 +105,38 @@ def make_test_translations(dim):
 
     return TestTranslations
 
-class TestTranslations2D(make_test_translations(2)):
+
+class TestTranslations2D(make_test_translations(2, 'torch')):
     pass
 
 
-class TestTranslations3D(make_test_translations(3)):
+class TestTranslations3D(make_test_translations(3, 'torch')):
     pass
+
+
+# class TestTranslations2D(make_test_translations(2, 'keops')):
+#     pass
+
+
+# class TestTranslations3D(make_test_translations(3, 'keops')):
+#     pass
+
+
 
 def make_test_silentpoints(dim):
     class TestSilentPoints(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
-            self.dim = 3
-            self.gd = torch.rand(self.nb_pts, self.dim).view(-1)
-            self.mom = torch.rand(self.nb_pts, self.dim).view(-1)
-            self.controls = torch.rand(self.nb_pts, self.dim).view(-1)
-            self.landmarks = im.Manifolds.Landmarks(self.dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-            self.silent_points = im.DeformationModules.SilentLandmarks(self.landmarks)
-            self.silent_points.fill_controls(self.controls)
+            self.gd = torch.rand(self.nb_pts, dim).view(-1)
+            self.mom = torch.rand(self.nb_pts, dim).view(-1)
+            self.controls = torch.rand(self.nb_pts, dim).view(-1)
+            #self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
+            #self.silent_points = im.DeformationModules.SilentLandmarks(self.landmarks)
+            self.silent_points = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts, gd=self.gd)
+            #self.silent_points.fill_controls(self.controls)
 
         def test_call(self):
-            points = torch.rand(100, self.dim)
+            points = torch.rand(100, dim)
 
             result = self.silent_points(points)
 
@@ -157,7 +167,7 @@ def make_test_silentpoints(dim):
 
                 return self.silent_points(points)
 
-            points = torch.rand(10, self.dim, requires_grad=True)
+            points = torch.rand(10, dim, requires_grad=True)
             self.gd.requires_grad_()
             self.controls.requires_grad_()
 
@@ -192,32 +202,27 @@ def make_test_silentpoints(dim):
     return TestSilentPoints
 
 
-class TestSilentPoints2D(make_test_silentpoints(2)):
+class TestSilentPoints2D_Torch(make_test_silentpoints(2)):
     pass
 
 
-class TestSilentPoints3D(make_test_silentpoints(3)):
+class TestSilentPoints3D_Torch(make_test_silentpoints(3)):
     pass
 
 
-def make_test_compound(dim):
+def make_test_compound(dim, backend):
     class TestCompound(unittest.TestCase):
         def setUp(self):
-            self.dim = 3
             self.sigma = 0.5
             self.nb_pts_trans = 5
             self.nb_pts_silent = 12
             self.nb_pts = self.nb_pts_silent + self.nb_pts_trans
-            self.gd_trans = torch.rand(self.nb_pts_trans, self.dim).view(-1)
-            self.mom_trans = torch.rand(self.nb_pts_trans, self.dim).view(-1)
-            self.gd_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
-            self.mom_silent = torch.rand(self.nb_pts_silent, self.dim).view(-1)
-            self.landmarks_trans = im.Manifolds.Landmarks(self.dim, self.nb_pts_trans, gd=self.gd_trans,
-                                                          cotan=self.mom_trans)
-            self.landmarks_silent = im.Manifolds.Landmarks(self.dim, self.nb_pts_silent, gd=self.gd_silent,
-                                                           cotan=self.mom_silent)
-            self.trans = im.DeformationModules.Translations(self.landmarks_trans, self.sigma)
-            self.silent = im.DeformationModules.SilentLandmark.SilentLandmarks(self.landmarks_silent)
+            self.gd_trans = torch.rand(self.nb_pts_trans, dim).view(-1)
+            self.mom_trans = torch.rand(self.nb_pts_trans, dim).view(-1)
+            self.gd_silent = torch.rand(self.nb_pts_silent, dim).view(-1)
+            self.mom_silent = torch.rand(self.nb_pts_silent, dim).view(-1)
+            self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts_trans, sigma=self.sigma, gd=self.gd_trans, cotan=self.mom_trans)
+            self.silent = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
             self.compound = im.DeformationModules.CompoundModule([self.silent, self.trans])
             self.controls_trans = torch.rand_like(self.gd_trans)
             self.controls = [None, self.controls_trans]
@@ -225,12 +230,12 @@ def make_test_compound(dim):
 
         def test_compound(self):
             self.assertEqual(self.compound.module_list, [self.silent, self.trans])
-            self.assertEqual(self.compound.dim_controls, self.dim*self.nb_pts_trans)
+            self.assertEqual(self.compound.dim_controls, dim*self.nb_pts_trans)
 
             self.assertEqual(self.compound.manifold.nb_pts, self.nb_pts)
 
         def test_call(self):
-            points = torch.rand(100, self.dim)
+            points = torch.rand(100, dim)
             self.compound.fill_controls(self.controls)
 
             result = self.compound(points)
@@ -270,7 +275,7 @@ def make_test_compound(dim):
             self.gd_silent.requires_grad_()
             self.gd_trans.requires_grad_()
             self.controls_trans.requires_grad_()
-            points = torch.rand(100, self.dim, requires_grad=True)
+            points = torch.rand(100, dim, requires_grad=True)
 
             self.assertTrue(torch.autograd.gradcheck(call, (self.gd_silent, self.gd_trans, self.controls_trans, points), raise_exception=False))
 
@@ -314,12 +319,20 @@ def make_test_compound(dim):
     return TestCompound
 
 
-class TestCompound2D(make_test_compound(2)):
+class TestCompound2D(make_test_compound(2, 'torch')):
     pass
 
 
-class TestCompound3D(make_test_compound(3)):
+class TestCompound3D(make_test_compound(3, 'torch')):
     pass
+
+
+# class TestCompound2D(make_test_compound(2, 'keops')):
+#     pass
+
+
+# class TestCompound3D(make_test_compound(3, 'keops')):
+#     pass
 
 
 if __name__ == '__main__':

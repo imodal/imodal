@@ -134,8 +134,8 @@ class CompoundManifold(Manifold):
         for m in self.__manifold_list:
             m.negate_cotan()
 
-    def cot_to_vs(self, sigma):
-        return CompoundStructuredField([m.cot_to_vs(sigma) for m in self.__manifold_list])
+    def cot_to_vs(self, sigma, backend=None):
+        return CompoundStructuredField([m.cot_to_vs(sigma, backend=backend) for m in self.__manifold_list])
 
     def inner_prod_field(self, field):
         return sum([m.inner_prod_field(field) for m in self.__manifold_list])

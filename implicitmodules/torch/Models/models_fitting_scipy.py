@@ -1,11 +1,11 @@
 import time
-import contextlib
 
 import numpy as np
 import torch
 import scipy.optimize
 
 from .models_fitting import ModelFitting
+from implicitmodules.torch.Attachment import CompoundAttachment
 
 class ModelFittingScipy(ModelFitting):
     def __init__(self, model, step_length, post_iteration_callback=None):
@@ -20,7 +20,7 @@ class ModelFittingScipy(ModelFitting):
     def reset(selt):
         pass
 
-    def fit(self, target, max_iter, method='L-BFGS-B', options={}, log_interval=10, disp=True):
+    def fit(self, target, max_iter, method='L-BFGS-B', options={}, log_interval=1, disp=True):
         last_costs = {}
         costs = []
 
@@ -72,6 +72,8 @@ class ModelFittingScipy(ModelFitting):
 
             self.__it = self.__it + 1
 
+        CompoundAttachment(self.model.attachments).target = target
+
         step_options = {'disp': disp, 'maxiter': max_iter}
         step_options.update(options)
 
@@ -104,6 +106,7 @@ class ModelFittingScipy(ModelFitting):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
+            print([(param.shape, param.grad) for param in self.model.parameters])
             tensors = [param.grad.data.view(-1).cpu().numpy() for param in self.model.parameters]
         else:
             tensors = [param.data.view(-1).cpu().numpy() for param in self.model.parameters]

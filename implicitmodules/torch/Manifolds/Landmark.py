@@ -191,7 +191,6 @@ class Landmarks(Manifold):
         tan = field(self.__gd.view(-1, self.__dim)).view(-1)
         return Landmarks(self.__dim, self.__nb_pts, gd=self.__gd, tan=tan, device=self.device)
 
-    def cot_to_vs(self, sigma):
-        return StructuredField_0(self.__gd.view(-1, self.__dim),
-                                 self.__cotan.view(-1, self.__dim), sigma, device=self.device)
+    def cot_to_vs(self, sigma, backend=None):
+        return StructuredField_0(self.__gd.view(-1, self.__dim), self.__cotan.view(-1, self.__dim), sigma, device=self.device, backend=backend)
 

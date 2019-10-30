@@ -6,7 +6,7 @@ from .models_fitting import ModelFitting
 from implicitmodules.torch.Attachment import CompoundAttachment
 
 
-class ModelFittingLBFGS(ModelFitting):
+class ModelFittingGradientDescent(ModelFitting):
     def __init__(self, model, step_length, history_size=10, post_iteration_callback=None):
         super().__init__(model, post_iteration_callback)
         self.__history_size = history_size
@@ -15,7 +15,7 @@ class ModelFittingLBFGS(ModelFitting):
         self.reset()
 
     def reset(self):
-        self.__optim = torch.optim.LBFGS(self.model.parameters, lr=self.__step_length, history_size=self.__history_size, line_search_fn='strong_wolfe')
+        self.__optim = torch.optim.SGD(self.model.parameters, lr=self.__step_length)
 
     def fit(self, target, max_iter, options={}, log_interval=1, disp=True):
         last_costs = {}
@@ -78,7 +78,7 @@ class ModelFittingLBFGS(ModelFitting):
         print("="*80)
         print("End of the optimisation process.")
         print("Final energy =", last_costs['cost'])
-        #print("Closure evaluations =", closure_count)
+        print("Closure evaluations =", closure_count)
         print("Time elapsed =", time.time() - start)
 
         return costs

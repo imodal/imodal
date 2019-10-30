@@ -582,3 +582,12 @@ def fill_area_random_density(area, aabb, density, **kwargs):
     """
     return fill_area_random(area, aabb, int(aabb.area * density), **kwargs)
 
+
+def compute_centers_normals_lengths(vertices, faces):
+    v0, v1, v2 = vertices.index_select(0, faces[:, 0]), vertices.index_select(0, faces[:, 1]), vertices.index_select(0, faces[:, 2])
+    centers = 0.5 * (v0 + v1 + v2)
+    normals = 0.5 * torch.cross(v1 - v0, v2 - v0)
+    lengths = (normals**2).sum(dim=1)[:, None].sqrt()
+    return centers, normals, lengths
+
+
