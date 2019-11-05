@@ -2,7 +2,7 @@ import torch
 
 from implicitmodules.torch.StructuredFields import ConstantField
 from implicitmodules.torch.Manifolds import EmptyManifold
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
+from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
 
 
 class GlobalTranslation(DeformationModule):
@@ -10,6 +10,10 @@ class GlobalTranslation(DeformationModule):
     def __init__(self, dim, coeff=1.):
         self.__controls = torch.zeros(dim)
         self.__coeff = coeff
+
+    @classmethod
+    def build(cls, dim, coeff=1.):
+        return cls(dim, coeff=coeff)
 
     @property
     def dim_controls(self):
@@ -62,4 +66,7 @@ class GlobalTranslation(DeformationModule):
 
     def field_generator(self):
         return ConstantField(self.__controls)
+
+
+register_deformation_module_builder('global_translation', GlobalTranslation.build)
 

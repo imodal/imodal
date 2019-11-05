@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 
 from implicitmodules.torch.Models import Model, ModelPointsRegistration
-from implicitmodules.torch.DeformationModules import ImplicitModule0
+from implicitmodules.torch.DeformationModules import create_deformation_module
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 
 

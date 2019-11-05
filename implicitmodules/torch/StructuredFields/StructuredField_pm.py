@@ -66,14 +66,14 @@ class StructuredField_pm(SupportStructuredField):
 
         if k == 0:
             kernel_formula = "S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(x - y)"
-            formula = "TensorDot(" + kernel_formula + ", p, Ind("+str(dim)+"), Ind("+str(dim)+", "+str(dim)+"), Ind(0), Ind(1))"
+            formula = "TensorDot({kernel_formula}, p, Ind({dim}), Ind({dim}, {dim}), Ind(0), Ind(1))".format(kernel_formula=kernel_formula, dim=dim)
             alias = ["x=Vi("+str(dim)+")", "y=Vj("+str(dim)+")", "p=Vj("+str(dim*dim)+")", "S=Pm(1)"]
             reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(points.dtype).split(".")[1])
             return reduction(points.reshape(-1, dim), self.support.reshape(-1, dim), P.reshape(-1, dim*dim), self.__keops_sigma, backend=self.__keops_backend).reshape(-1, dim)
 
         if k == 1:
-            kernel_formula = "-S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(S*TensorDot(x-y, x-y, Ind("+str(dim)+"), Ind("+str(dim)+"), Ind(), Ind())-eye)"
-            formula = "TensorDot("+ kernel_formula + ", p, Ind("+str(dim)+", "+str(dim)+"), Ind("+str(dim)+", "+str(dim)+"),Ind(1),Ind(1))"
+            kernel_formula = "-S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(S*TensorDot(x-y, x-y, Ind({dim}), Ind({dim}), Ind(), Ind())-eye)".format(dim=dim)
+            formula = "TensorDot({kernel_formula}, p, Ind({dim}, {dim}), Ind({dim}, {dim}), Ind(1),Ind(1))".format(kernel_formula=kernel_formula, dim=dim)
             alias = ["x=Vi("+str(dim)+")", "y=Vj("+str(dim)+")", "p=Vj("+str(dim*dim)+")", "eye=Pm("+str(dim*dim)+")", "S=Pm(1)"]
             reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(points.dtype).split(".")[1])
             return reduction(points.reshape(-1, dim), self.support.reshape(-1, dim), P.reshape(-1, dim*dim), torch.eye(dim, dtype=self.support.dtype, device=self.device).reshape(-1), self.__keops_sigma, backend=self.__keops_backend).reshape(-1, dim, dim).transpose(1, 2).contiguous()

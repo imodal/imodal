@@ -73,7 +73,7 @@ def make_test_landmarks(dim):
 
             nb_pts_mod = 15
             landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
-            trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
+            trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
             trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
             man = landmarks.infinitesimal_action(trans.field_generator())
@@ -86,7 +86,7 @@ def make_test_landmarks(dim):
 
             nb_pts_mod = 15
             landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
-            trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
+            trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
             trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
             inner_prod = landmarks.inner_prod_field(trans.field_generator())
@@ -151,7 +151,7 @@ def make_test_landmarks(dim):
         def test_gradcheck_action(self):
             def action(gd, controls):
                 landmarks.fill_gd(gd)
-                module = im.DeformationModules.Translations(landmarks, 2.)
+                module = im.DeformationModules.Translations_Torch(landmarks, 2.)
                 module.fill_controls(controls)
                 man = landmarks.infinitesimal_action(module.field_generator())
                 return man.gd, man.tan, man.cotan
@@ -165,7 +165,7 @@ def make_test_landmarks(dim):
         def test_gradcheck_inner_prod_field(self):
             def inner_prod_field(gd, controls):
                 landmarks.fill_gd(gd)
-                module = im.DeformationModules.Translations(landmarks, 2.)
+                module = im.DeformationModules.Translations_Torch(landmarks, 2.)
                 module.fill_controls(controls)
                 return landmarks.inner_prod_field(module.field_generator())
 
@@ -261,7 +261,7 @@ def make_test_compound(dim):
         def test_action(self):
             nb_pts_mod = 15
             landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
-            trans = im.DeformationModules.Translations(landmarks_mod, 1.5)
+            trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
 
             man = self.compound.infinitesimal_action(trans.field_generator())
 
@@ -325,9 +325,9 @@ def make_test_compound(dim):
 
         def test_gradcheck_action(self):
             def action(gd0, gd1, controls0, controls1):
-                module0 = im.DeformationModules.Translations.build_from_points(dim, self.nb_pts0, 1., gd=gd0)
+                module0 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts0, 1., gd=gd0)
                 module0.fill_controls(controls0)
-                module1 = im.DeformationModules.Translations.build_from_points(dim, self.nb_pts1, 1., gd=gd1)
+                module1 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts1, 1., gd=gd1)
                 module1.fill_controls(controls1)
 
                 man = self.compound.infinitesimal_action(
@@ -346,9 +346,9 @@ def make_test_compound(dim):
             def inner_prod_field(*tensors):
                 gd = tensors[:2]
                 controls = tensors[2:]
-                module0 = im.DeformationModules.Translations.build_from_points(dim, self.nb_pts0, 1., gd=gd[0])
+                module0 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts0, 1., gd=gd[0])
                 module0.fill_controls(controls[0])
-                module1 = im.DeformationModules.Translations.build_from_points(dim, self.nb_pts1, 1., gd=gd[1])
+                module1 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts1, 1., gd=gd[1])
                 module1.fill_controls(controls[1])
 
                 return self.compound.inner_prod_field(

@@ -1,4 +1,5 @@
 import math
+import copy
 
 import torch
 
@@ -19,29 +20,6 @@ class AABB:
 
         return cls(points[:, 0].min(), points[:, 0].max(),
                    points[:, 1].min(), points[:, 1].max())
-    
-    def fill_random(self, N):
-        """Returns a [N, dim] vector of Poisson distributed points inside the area enclosed by the AABB."""
-        return torch.tensor([self.width, self.height]) * torch.rand(N, 2) + torch.tensor([self.xmin, self.ymin])
-
-    def fill_random_density(self, density):
-        return self.fill_random(int(self.area*density))
-
-    def fill_uniform(self, spacing):
-        x, y = torch.meshgrid([torch.arange(self.xmin, self.xmax, step=spacing),
-                               torch.arange(self.ymin, self.ymax, step=spacing)])
-
-        return grid2vec(x, y)
-
-    def fill_uniform_density(self, density):
-        return self.fill_uniform(1./math.sqrt(density))
-
-    def is_inside(self, points):
-        return torch.where((points[:, 0] >= self.__xmin) &
-                           (points[:, 0] <= self.xmax) &
-                           (points[:, 1] >= self.__ymin) &
-                           (points[:, 1] <= self.ymax),
-                           torch.tensor([1.]), torch.tensor([0.])).type(dtype=torch.bool)
 
     def __getitem__(self, key):
         return self.get_list()[key]
@@ -75,14 +53,37 @@ class AABB:
         return self.__ymax - self.__ymin
 
     @property
-    def area(self):
-        return (self.__xmax - self.__xmin) * (self.ymax - self.ymin)
-
-    @property
     def center(self):
         return torch.tensor([0.5*(self.__xmax+self.__xmin), 0.5*(self.__ymax+self.__ymin)])
 
-    def squared(self):
+    @property
+    def area(self):
+        return (self.__xmax - self.__xmin) * (self.ymax - self.ymin)
+
+    def fill_random(self, N, dtype=None, device=None):
+        """Returns a [N, dim] vector of Poisson distributed points inside the area enclosed by the AABB."""
+        return torch.tensor([self.width, self.height], dtype=dtype, device=device) * torch.rand(N, 2) + torch.tensor([self.xmin, self.ymin], dtype=dtype, device=device)
+
+    def fill_random_density(self, density, dtype=None, device=None):
+        return self.fill_random(int(self.area*density), dtype=dtype, device=device)
+
+    def fill_uniform(self, spacing, dtype=None, device=None):
+        x, y = torch.meshgrid([torch.arange(self.xmin, self.xmax, step=spacing, dtype=dtype),
+                               torch.arange(self.ymin, self.ymax, step=spacing, dtype=dtype)])
+
+        return grid2vec(x, y).to(device=device)
+
+    def fill_uniform_density(self, density, dtype=None, device=None):
+        return self.fill_uniform(1./math.sqrt(density), dtype=dtype, device=device)
+
+    def is_inside(self, points):
+        return torch.where((points[:, 0] >= self.__xmin) &
+                           (points[:, 0] <= self.xmax) &
+                           (points[:, 1] >= self.__ymin) &
+                           (points[:, 1] <= self.ymax),
+                           torch.tensor([1.]), torch.tensor([0.])).type(dtype=torch.bool)
+
+    def squared_(self):
         """Squares the AABB."""
         enlarge = .1
         xmiddle = (self.__xmin + self.__xmax) / 2
@@ -94,10 +95,42 @@ class AABB:
         self.__xmax = xmiddle + diam
         self.__ymax = ymiddle + diam
 
-    def scale(self, factor):
+    def squared(self):
+        """Returns a squared AABB."""
+        out = copy.copy(self)
+        
+        enlarge = .1
+        xmiddle = (self.__xmin + self.__xmax) / 2.
+        ymiddle = (self.__ymin + self.__ymax) / 2.
+    
+        diam = max(abs(self.__xmin - self.__xmax) / 2, abs(self.__ymin - self.__ymax) / 2) * (1 + enlarge)
+        out.__xmin = xmiddle - diam
+        out.__ymin = ymiddle - diam
+        out.__xmax = xmiddle + diam
+        out.__ymax = ymiddle + diam
+
+        return out
+
+    def scale_(self, factor):
+        """
+        TODO: Add documentation.
+        """
         center = self.center
         self.__xmin = factor*(self.__xmin - center[0]) + center[0]
         self.__xmax = factor*(self.__xmax - center[0]) + center[0]
         self.__ymin = factor*(self.__ymin - center[1]) + center[1]
         self.__ymax = factor*(self.__ymax - center[1]) + center[1]
+
+    def scale(self, factor):
+        """
+        TODO: Add documentation.
+        """
+        out = copy.copy(self)
+        center = self.center
+        out.__xmin = factor*(self.__xmin - center[0]) + center[0]
+        out.__xmax = factor*(self.__xmax - center[0]) + center[0]
+        out.__ymin = factor*(self.__ymin - center[1]) + center[1]
+        out.__ymax = factor*(self.__ymax - center[1]) + center[1]
+
+        return out
 

@@ -110,9 +110,9 @@ class TestAABB(unittest.TestCase):
         aabb = im.Utilities.AABB(1., 3., 1., 5.)
         self.assertTrue(torch.allclose(aabb.center, torch.tensor([2., 3.])))
 
-    def test_aabb_scale(self):
+    def test_aabb_scale_self(self):
         aabb = im.Utilities.AABB(-2., 2., -2., 2.)
-        aabb.scale(2)
+        aabb.scale_(2)
 
         self.assertTrue(math.isclose(aabb.xmin, -4.))
         self.assertTrue(math.isclose(aabb.xmax, 4.))
@@ -120,7 +120,24 @@ class TestAABB(unittest.TestCase):
         self.assertTrue(math.isclose(aabb.ymax, 4.))
 
         aabb = im.Utilities.AABB(1., 3., 1., 5.)
-        aabb.scale(2)
+        aabb.scale_(2)
+
+        self.assertTrue(math.isclose(aabb.xmin, 0.))
+        self.assertTrue(math.isclose(aabb.xmax, 4.))
+        self.assertTrue(math.isclose(aabb.ymin, -1.))
+        self.assertTrue(math.isclose(aabb.ymax, 7.))
+
+    def test_aabb_scale(self):
+        aabb = im.Utilities.AABB(-2., 2., -2., 2.)
+        aabb = aabb.scale(2)
+
+        self.assertTrue(math.isclose(aabb.xmin, -4.))
+        self.assertTrue(math.isclose(aabb.xmax, 4.))
+        self.assertTrue(math.isclose(aabb.ymin, -4.))
+        self.assertTrue(math.isclose(aabb.ymax, 4.))
+
+        aabb = im.Utilities.AABB(1., 3., 1., 5.)
+        aabb = aabb.scale(2)
 
         self.assertTrue(math.isclose(aabb.xmin, 0.))
         self.assertTrue(math.isclose(aabb.xmax, 4.))

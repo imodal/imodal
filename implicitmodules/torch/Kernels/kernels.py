@@ -1,6 +1,5 @@
 import torch
-# from pykeops.torch import Kernel, kernel_product, Genred
-# from pykeops.torch.kernel_product.formula import *
+from pykeops.torch import Formula, kernel_formulas
 
 
 def scal(x, y):
@@ -45,35 +44,15 @@ def gauss_kernel(x, k, sigma):
     if k == 2:
         sigma2 = sigma * sigma
         k_0 = gauss_kernel(x, 0, sigma)
-        return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1)
-                                                      + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
+        return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1) + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
         raise NotImplementedError("gauss_kernel(): k >= 3 not supported!")
-        """
-        sigma2 = sigma * sigma
-        sigma3 = sigma * sigma * sigma
-        k_0 = gauss_kernel(x, 0, sigma)
-        k_2 = gauss_kernel(x, 2, sigma) * sigma2
-        return (-torch.einsum('kij, kl->kijl', k_2, x / sigma) + k_0.view(-1, 1, 1, 1).repeat(1, 2, 2, 2)
-                * (torch.transpose(torch.tensordot(x / sigma, torch.eye(2), dims=0), 1, 2)
-                   + torch.tensordot(x / sigma, torch.eye(2), dims=0))) / sigma3
-        """
 
-# def keops_gauss_kernel(sigma, dtype=torch.float32):
-#     p = torch.tensor([1/sigma/sigma])
-#     def K(x, y, b):
-#         d = 2
-#         formula = 'Exp(-p*SqDist(x, y))*b'
-#         variables = ['x = Vx('+str(d)+')',
-#                      'y = Vy('+str(d)+')',
-#                      'b = Vy('+str(d)+')',
-#                      'p = Pm(1)']
 
-#         cuda_type = "float32"
-#         if(dtype is torch.float64):
-#             cuda_type = "float64"
-
-#         my_routine = Genred(formula, variables, reduction_op='Sum', axis=1, cuda_type=cuda_type)
-#         return my_routine(x, y, b, p, backend="auto")
-#     return K
+# Adds the RBF kernel used by Implicitmodules into PyKeOps
+kernel_formulas['gaussian2'] = Formula(
+    formula_sum="Exp( -(WeightedSqDist({G},{X},{Y})*IntInv(2)))",
+    routine_sum=lambda gxmy2=None, **kwargs: (-gxmy2/2.).exp(),
+    formula_log="(-(WeightedSqDist({G},{X},{Y}))*IntInv(2))",
+    routine_log=lambda gxmy2=None, **kwargs: -gxmy2/2.)
 

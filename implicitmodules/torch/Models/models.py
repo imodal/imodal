@@ -12,9 +12,9 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
 class Model:
-    def __init__(self, modules, attachement, fit_moments, fit_gd, lam, precompute_callback, other_parameters):
+    def __init__(self, modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters):
         self.__modules = modules
-        self.__attachement = attachement
+        self.__attachments = attachments
         self.__precompute_callback = precompute_callback
         self.__fit_moments = fit_moments
         self.__fit_gd = fit_gd
@@ -38,8 +38,8 @@ class Model:
         return self.__modules
 
     @property
-    def attachement(self):
-        return self.__attachement
+    def attachments(self):
+        return self.__attachments
 
     @property
     def precompute_callback(self):
@@ -128,7 +128,7 @@ class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
-    def __init__(self, source, modules, attachement, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
+    def __init__(self, source, modules, attachments, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
 
         self.__dim = modules[0].manifold.dim
@@ -151,7 +151,7 @@ class ModelPointsRegistration(Model):
                 self.weights.insert(i, None)
                 modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
 
-        super().__init__(modules, attachement, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
+        super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
     def compute(self, target, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
@@ -173,9 +173,9 @@ class ModelPointsRegistration(Model):
         attach_costs = []
         for i in range(self.source_count):
             if self.weights[i] is not None:
-                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i]), target[i]))
+                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i])))
             else:
-                attach_costs.append(self.attachement[i]((compound[i].manifold.gd.view(-1, self.__dim), None), (target[i], None)))
+                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__dim)))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost
@@ -187,23 +187,4 @@ class ModelPointsRegistration(Model):
         del c
 
         return cost, deformation_cost.detach(), attach_cost.detach()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
