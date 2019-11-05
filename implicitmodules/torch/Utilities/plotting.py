@@ -4,6 +4,7 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, FancyArrowPatch, Rectangle, PathPatch
 from matplotlib.path import Path
+import math
 
 def plot_tensor_scatter(x, alpha=1., scale=64.):
     """Scatter plot points in the format: ([x, y], scale) or ([x, y]) (in that case you can specify scale)"""
