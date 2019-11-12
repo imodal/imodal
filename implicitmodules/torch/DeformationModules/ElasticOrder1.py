@@ -209,11 +209,13 @@ class ImplicitModule1_KeOps(ImplicitModule1):
 
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
-
+        print(' S computed') 
         tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
-
+        print('tlambdas computed')
         (aq, aqkiaq) = self.__compute_aqkiaq()
+        print('aqkiaq computed')
         c, _ = torch.solve(torch.mm(aq.t(), tlambdas.view(-1, 1)), aqkiaq)
+        print('controls computed')
         self.controls = c.reshape(-1)
         self.__compute_moments()
 

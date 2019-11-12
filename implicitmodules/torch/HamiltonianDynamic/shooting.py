@@ -29,15 +29,20 @@ def shoot_euler(h, it, controls=None, intermediates=False):
         intermediate_controls = []
 
     for i in range(it):
+        print(' start iteration  ' + str(i))
         if controls is not None:
             h.module.fill_controls(controls[i])
         else:
             h.geodesic_controls()
 
+        print('iteration  ' + str(i) + ' controls computation done ' )
         l = [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()]
 
         delta = list(grad(h(), l, create_graph=True, allow_unused=True))
 
+        print('iteration  ' + str(i) + ' hamiltonian gradient computed ' )
+        
+        
         # Nulls are replaced by zero tensors
         for i in range(len(delta)):
             if delta[i] is None:
@@ -124,7 +129,7 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
                 self.it = self.it + 1
 
                 return torch.cat(list(map(lambda x: x.view(-1), [*mom_out, *list(map(lambda x: -x, gd_out))])), dim=0).view(2, -1)
-
+    print('step  ' + str(it))
     steps = it + 1
     if intermediates:
         intermediate_controls = []
