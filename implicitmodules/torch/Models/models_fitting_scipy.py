@@ -106,7 +106,7 @@ class ModelFittingScipy(ModelFitting):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
-            print([(param.shape, param.grad) for param in self.model.parameters])
+            #print([(param.shape, param.grad) for param in self.model.parameters])
             tensors = [param.grad.data.view(-1).cpu().numpy() for param in self.model.parameters]
         else:
             tensors = [param.data.view(-1).cpu().numpy() for param in self.model.parameters]
