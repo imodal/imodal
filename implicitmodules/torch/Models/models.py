@@ -65,6 +65,10 @@ class Model:
     def lam(self):
         return self.__lam
 
+    @property
+    def attachments(self):
+        return self.__attachments
+
     def gradcheck(self, target, l):
         def energy(*param):
             parameters = list(param)
@@ -153,7 +157,7 @@ class ModelPointsRegistration(Model):
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
-    def compute(self, target, it=10, method="euler"):
+    def compute(self, it=10, method="euler"):
         """ Does shooting. Outputs compute deformation and attach cost. """
         # Call precompute callback if available
         # TODO: maybe do this in Model and not ModelPointsRegistration ?

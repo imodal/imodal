@@ -90,7 +90,7 @@ class Atlas:
 
         return translations_ht.manifold.gd.detach().view(-1, 2)
 
-    def compute(self, target, it=10, method="euler"):
+    def compute(self, it=10, method="euler"):
         if self.__optimise_template:
             translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
@@ -106,7 +106,7 @@ class Atlas:
 
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
-            cost, deformation_cost, attach_cost = self.__models[i].compute([target[i]], it=it, method=method)
+            cost, deformation_cost, attach_cost = self.__models[i].compute(it=it, method=method)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
