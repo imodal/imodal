@@ -15,10 +15,10 @@ def make_test_translations(dim, backend):
     class TestTranslations(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
-            self.sigma = 0.5
-            self.gd = torch.rand(self.nb_pts, dim).view(-1)
-            self.mom = torch.rand(self.nb_pts, dim).view(-1)
-            self.controls = torch.rand(self.nb_pts, dim).view(-1)
+            self.sigma = 0.001
+            self.gd = torch.randn(self.nb_pts, dim, requires_grad=True)
+            self.mom = torch.randn(self.nb_pts, dim, requires_grad=True)
+            self.controls = torch.rand(self.nb_pts, dim, requires_grad=True)
             self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, gd=self.gd, cotan=self.mom)
 
         def test_call(self):
@@ -106,20 +106,20 @@ def make_test_translations(dim, backend):
     return TestTranslations
 
 
-class TestTranslations2D(make_test_translations(2, 'torch')):
+class TestTranslations2D_Torch(make_test_translations(2, 'torch')):
     pass
 
 
-class TestTranslations3D(make_test_translations(3, 'torch')):
+class TestTranslations3D_Torch(make_test_translations(3, 'torch')):
     pass
 
 
-# class TestTranslations2D(make_test_translations(2, 'keops')):
-#     pass
+class TestTranslations2D_KeOps(make_test_translations(2, 'keops')):
+    pass
 
 
-# class TestTranslations3D(make_test_translations(3, 'keops')):
-#     pass
+class TestTranslations3D_KeOps(make_test_translations(3, 'keops')):
+    pass
 
 
 
@@ -127,13 +127,9 @@ def make_test_silentpoints(dim):
     class TestSilentPoints(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
-            self.gd = torch.rand(self.nb_pts, dim).view(-1)
-            self.mom = torch.rand(self.nb_pts, dim).view(-1)
-            self.controls = torch.rand(self.nb_pts, dim).view(-1)
-            #self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
-            #self.silent_points = im.DeformationModules.SilentLandmarks(self.landmarks)
+            self.gd = torch.rand(self.nb_pts, dim, requires_grad=True)
+            self.mom = torch.rand(self.nb_pts, dim, requires_grad=True)
             self.silent_points = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts, gd=self.gd)
-            #self.silent_points.fill_controls(self.controls)
 
         def test_call(self):
             points = torch.rand(100, dim)
@@ -161,29 +157,25 @@ def make_test_silentpoints(dim):
             self.assertEqual(self.silent_points.controls.shape, torch.tensor([]).shape)
 
         def test_gradcheck_call(self):
-            def call(gd, controls, points):
-                self.silent_points.fill_controls(controls)
+            def call(gd, points):
                 self.silent_points.manifold.fill_gd(gd)
 
                 return self.silent_points(points)
 
             points = torch.rand(10, dim, requires_grad=True)
             self.gd.requires_grad_()
-            self.controls.requires_grad_()
 
-            self.assertTrue(torch.autograd.gradcheck(call, (self.gd, self.controls, points), raise_exception=True))
+            self.assertTrue(torch.autograd.gradcheck(call, (self.gd, points), raise_exception=True))
 
         def test_gradcheck_cost(self):
-            def cost(gd, controls):
-                self.silent_points.fill_controls(controls)
+            def cost(gd):
                 self.silent_points.manifold.fill_gd(gd)
 
                 return self.silent_points.cost()
 
             self.gd.requires_grad_()
-            self.controls.requires_grad_()
 
-            self.assertTrue(torch.autograd.gradcheck(cost, (self.gd, self.controls), raise_exception=False))
+            self.assertTrue(torch.autograd.gradcheck(cost, (self.gd,), raise_exception=False))
 
         def test_gradcheck_compute_geodesic_control(self):
             def compute_geodesic_control(gd, mom):
@@ -202,25 +194,25 @@ def make_test_silentpoints(dim):
     return TestSilentPoints
 
 
-class TestSilentPoints2D_Torch(make_test_silentpoints(2)):
+class TestSilentPoints2D(make_test_silentpoints(2)):
     pass
 
 
-class TestSilentPoints3D_Torch(make_test_silentpoints(3)):
+class TestSilentPoints3D(make_test_silentpoints(3)):
     pass
 
 
 def make_test_compound(dim, backend):
     class TestCompound(unittest.TestCase):
         def setUp(self):
-            self.sigma = 0.5
+            self.sigma = 0.001
             self.nb_pts_trans = 5
             self.nb_pts_silent = 12
             self.nb_pts = self.nb_pts_silent + self.nb_pts_trans
-            self.gd_trans = torch.rand(self.nb_pts_trans, dim).view(-1)
-            self.mom_trans = torch.rand(self.nb_pts_trans, dim).view(-1)
-            self.gd_silent = torch.rand(self.nb_pts_silent, dim).view(-1)
-            self.mom_silent = torch.rand(self.nb_pts_silent, dim).view(-1)
+            self.gd_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
+            self.mom_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
+            self.gd_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
+            self.mom_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
             self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts_trans, sigma=self.sigma, gd=self.gd_trans, cotan=self.mom_trans)
             self.silent = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
             self.compound = im.DeformationModules.CompoundModule([self.silent, self.trans])
@@ -229,8 +221,7 @@ def make_test_compound(dim, backend):
             self.compound.fill_controls(self.controls)
 
         def test_compound(self):
-            self.assertEqual(self.compound.module_list, [self.silent, self.trans])
-            self.assertEqual(self.compound.dim_controls, dim*self.nb_pts_trans)
+            self.assertEqual(self.compound.modules, [self.silent, self.trans])
 
             self.assertEqual(self.compound.manifold.nb_pts, self.nb_pts)
 
@@ -319,20 +310,20 @@ def make_test_compound(dim, backend):
     return TestCompound
 
 
-class TestCompound2D(make_test_compound(2, 'torch')):
+class TestCompound2D_Torch(make_test_compound(2, 'torch')):
     pass
 
 
-class TestCompound3D(make_test_compound(3, 'torch')):
+class TestCompound3D_Torch(make_test_compound(3, 'torch')):
     pass
 
 
-# class TestCompound2D(make_test_compound(2, 'keops')):
-#     pass
+class TestCompound2D_KeOps(make_test_compound(2, 'keops')):
+    pass
 
 
-# class TestCompound3D(make_test_compound(3, 'keops')):
-#     pass
+class TestCompound3D_KeOps(make_test_compound(3, 'keops')):
+    pass
 
 
 if __name__ == '__main__':

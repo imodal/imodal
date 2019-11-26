@@ -77,10 +77,10 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
 
                 for m in self.module:
                     for i in range(m.manifold.len_gd):
-                        gd.append(x[0][index:index+m.manifold.dim_gd[i]].requires_grad_())
-                        mom.append(x[1][index:index+m.manifold.dim_gd[i]].requires_grad_())
+                        gd.append(x[0][index:index+m.manifold.dim_gd[i]].view(-1, h.dim).requires_grad_())
+                        mom.append(x[1][index:index+m.manifold.dim_gd[i]].view(-1, h.dim).requires_grad_())
                         index = index + m.manifold.dim_gd[i]
-                    
+
                 self.module.manifold.fill_gd(self.module.manifold.roll_gd(gd))
                 self.module.manifold.fill_cotan(self.module.manifold.roll_cotan(mom))
 
@@ -119,8 +119,8 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
     index = 0
     for m in h.module:
         for i in range(m.manifold.len_gd):
-            gd.append(x_1[-1, 0, index:index+m.manifold.dim_gd[i]])
-            mom.append(x_1[-1, 1, index:index+m.manifold.dim_gd[i]])
+            gd.append(x_1[-1, 0, index:index+m.manifold.dim_gd[i]].view(-1, m.dim))
+            mom.append(x_1[-1, 1, index:index+m.manifold.dim_gd[i]].view(-1, m.dim))
             index = index + m.manifold.dim_gd[i]
 
     h.module.manifold.fill_gd(h.module.manifold.roll_gd(gd))
@@ -134,8 +134,8 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
             index = 0
             for m in h.module:
                 for j in range(m.manifold.len_gd):
-                    gd.append(x_1[i, 0, index:index+m.manifold.dim_gd[j]].detach())
-                    mom.append(x_1[i, 1, index:index+m.manifold.dim_gd[j]].detach())
+                    gd.append(x_1[i, 0, index:index+m.manifold.dim_gd[j]].detach().view(-1, m.dim))
+                    mom.append(x_1[i, 1, index:index+m.manifold.dim_gd[j]].detach().view(-1, m.dim))
                     index = index + m.manifold.dim_gd[j]
 
             intermediate_states.append(init_manifold.copy())

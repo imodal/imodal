@@ -12,9 +12,9 @@ class Stiefel(Manifold):
         assert (gd is None) or (isinstance(gd, Iterable) and (len(gd) == 2))
         assert (tan is None) or (isinstance(tan, Iterable) and (len(tan) == 2))
         assert (cotan is None) or (isinstance(cotan, Iterable) and (len(cotan) == 2))
-        assert (gd is None) or ((gd[0].shape[0] == dim * nb_pts) and (gd[1].shape[0] == dim * dim * nb_pts))
-        assert (tan is None) or ((tan[0].shape[0] == dim * nb_pts) and (tan[1].shape[0] == dim * dim * nb_pts))
-        assert (cotan is None) or ((cotan[0].shape[0] == dim * nb_pts) and (cotan[1].shape[0] == dim * dim * nb_pts))
+        assert (gd is None) or ((gd[0].shape == torch.Size([nb_pts, dim])) and (gd[1].shape == torch.Size([nb_pts, dim, dim])))
+        assert (tan is None) or ((tan[0].shape == torch.Size([nb_pts, dim])) and (tan[1].shape == torch.Size([nb_pts, dim, dim])))
+        assert (cotan is None) or ((cotan[0].shape == torch.Size([nb_pts, dim])) and (cotan[1].shape == torch.Size([nb_pts, dim, dim])))
 
         self.__device = self.__find_device(gd, tan, cotan, device)
 
@@ -31,21 +31,21 @@ class Stiefel(Manifold):
         if gd is not None:
             self.fill_gd(gd, copy=False)
         else:
-            self.__gd = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
-                         torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
+            self.__gd = (torch.zeros(self.__point_shape, requires_grad=True, device=self.__device),
+                         torch.zeros(self.__mat_shape, requires_grad=True, device=self.__device))
 
         # TODO: tan is only rarely used. Maybe do something about this?
         if tan is not None:
             self.fill_tan(tan, copy=False)
         else:
-            self.__tan = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
-                          torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
+            self.__tan = (torch.zeros(self.__point_shape, requires_grad=True, device=self.__device),
+                          torch.zeros(self.__mat_shape, requires_grad=True, device=self.__device))
 
         if cotan is not None:
             self.fill_cotan(cotan, copy=False)
         else:
-            self.__cotan = (torch.zeros(self.__numel_gd_points, requires_grad=True, device=self.__device),
-                            torch.zeros(self.__numel_gd_mat, requires_grad=True, device=self.__device))
+            self.__cotan = (torch.zeros(self.__point_shape, requires_grad=True, device=self.__device),
+                            torch.zeros(self.__mat_shape, requires_grad=True, device=self.__device))
 
     def __find_device(self, gd, tan, cotan, device):
         if device is None:
@@ -98,6 +98,10 @@ class Stiefel(Manifold):
     @property
     def device(self):
         return self.__device
+
+    @property
+    def dtype(self):
+        return self.gd[0].dtype
 
     def copy(self, requires_grad=True):
         out = Stiefel(self.__dim, self.__nb_pts)
@@ -166,7 +170,7 @@ class Stiefel(Manifold):
         self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
     def fill_gd(self, gd, copy=False, requires_grad=True):
-        assert isinstance(gd, Iterable) and (len(gd) == 2) and (gd[0].numel() == self.__numel_gd_points) and (gd[1].numel() == self.__numel_gd_mat)
+        assert isinstance(gd, Iterable) and (len(gd) == 2) and (gd[0].shape == self.__point_shape) and (gd[1].shape == self.__mat_shape)
         if not copy:
             self.__gd = gd
         else:
@@ -174,7 +178,7 @@ class Stiefel(Manifold):
                          gd[1].detach().clone().requires_grad_(requires_grad))
 
     def fill_tan(self, tan, copy=False, requires_grad=True):
-        assert isinstance(tan, Iterable) and (len(tan) == 2) and (tan[0].numel() == self.__numel_gd_points) and (tan[1].numel() == self.__numel_gd_mat)
+        assert isinstance(tan, Iterable) and (len(tan) == 2) and (tan[0].shape == self.__point_shape) and (tan[1].shape == self.__mat_shape)
         if not copy:
             self.__tan = tan
         else:
@@ -182,7 +186,7 @@ class Stiefel(Manifold):
                           tan[1].detach().clone().requires_grad_(requires_grad))
 
     def fill_cotan(self, cotan, copy=False, requires_grad=True):
-        assert isinstance(cotan, Iterable) and (len(cotan) == 2) and (cotan[0].numel() == self.__numel_gd_points) and (cotan[1].numel() == self.__numel_gd_mat)
+        assert isinstance(cotan, Iterable) and (len(cotan) == 2) and (cotan[0].shape == self.__point_shape) and (cotan[1].shape == self.__mat_shape)
         if not copy:
             self.__cotan = cotan
         else:
@@ -212,10 +216,10 @@ class Stiefel(Manifold):
         self.__cotan = (-self.__cotan[0], -self.__cotan[1])
 
     def cot_to_vs(self, sigma, backend=None):
-        v0 = StructuredField_0(self.__gd[0].view(-1, self.__dim), self.__cotan[0].view(-1, self.__dim), sigma, backend=backend)
-        R = torch.einsum('nik, njk->nij', self.__cotan[1].view(-1, self.__dim, self.__dim), self.__gd[1].view(-1, self.__dim, self.__dim))
+        v0 = StructuredField_0(self.__gd[0], self.__cotan[0], sigma, backend=backend)
+        R = torch.einsum('nik, njk->nij', self.__cotan[1], self.__gd[1])
 
-        vm = StructuredField_m(self.__gd[0].view(-1, self.__dim), R, sigma, backend=backend)
+        vm = StructuredField_m(self.__gd[0], R, sigma, backend=backend)
 
         return CompoundStructuredField([v0, vm])
 
@@ -223,15 +227,15 @@ class Stiefel(Manifold):
         man = self.infinitesimal_action(field)
 
         return torch.dot(self.cotan[0].view(-1), man.tan[0].view(-1)) + \
-            torch.einsum('nij, nij->', self.cotan[1].view(-1, self.__dim, self.__dim), man.tan[1].view(-1, self.__dim, self.__dim))
+            torch.einsum('nij, nij->', self.cotan[1], man.tan[1])
 
     def infinitesimal_action(self, field):
         """Applies the vector field generated by the module on the landmark."""
-        vx = field(self.__gd[0].view(-1, self.__dim))
-        d_vx = field(self.__gd[0].view(-1, self.__dim), k=1)
+        vx = field(self.__gd[0])
+        d_vx = field(self.__gd[0], k=1)
 
         S = 0.5 * (d_vx - torch.transpose(d_vx, 1, 2))
-        vr = torch.bmm(S, self.__gd[1].view(-1, self.__dim, self.__dim))
+        vr = torch.bmm(S, self.__gd[1])
 
-        return Stiefel(self.__dim, self.__nb_pts, gd=self.__gd, tan=(vx.view(-1), vr.view(-1)))
+        return Stiefel(self.__dim, self.__nb_pts, gd=self.__gd, tan=(vx, vr))
 

@@ -31,8 +31,8 @@ class SilentLandmarks(DeformationModule):
         return self.__manifold.device
 
     @property
-    def dim_controls(self):
-        return 0
+    def dim(self):
+        return self.__manifold.dim
 
     @property
     def manifold(self):

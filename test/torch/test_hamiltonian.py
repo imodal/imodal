@@ -16,8 +16,8 @@ def make_test_hamiltonian(dim):
         def setUp(self):
             self.nb_pts = 10
             self.sigma = 0.5
-            self.gd = 100. * torch.rand(self.nb_pts, dim).view(-1)
-            self.mom = 100. * torch.rand_like(self.gd).view(-1)
+            self.gd = 100. * torch.rand(self.nb_pts, dim)
+            self.mom = 100. * torch.rand_like(self.gd)
             self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
             self.controls = 100.*torch.rand_like(self.gd)
 
@@ -107,10 +107,10 @@ def make_test_hamiltoniancompound(dim):
             self.nb_pts_silent = 15
             self.sigma = 0.5
 
-            self.gd_trans = 100. * torch.rand(self.nb_pts_trans, dim).view(-1)
-            self.mom_trans = 100. * torch.rand_like(self.gd_trans).view(-1)
-            self.gd_silent = 100. * torch.rand(self.nb_pts_silent, dim).view(-1)
-            self.mom_silent = 100. * torch.rand_like(self.gd_silent).view(-1)
+            self.gd_trans = 100. * torch.rand(self.nb_pts_trans, dim)
+            self.mom_trans = 100. * torch.rand_like(self.gd_trans)
+            self.gd_silent = 100. * torch.rand(self.nb_pts_silent, dim)
+            self.mom_silent = 100. * torch.rand_like(self.gd_silent)
             self.gd = [self.gd_trans, self.gd_silent]
             self.mom = [self.mom_trans, self.mom_silent]
 

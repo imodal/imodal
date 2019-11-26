@@ -18,9 +18,9 @@ def make_test_implicitmodule0(dim, backend):
             self.nu = 0.01
             self.nb_pts = 10
             self.sigma = side/math.sqrt(self.nb_pts)
-            self.gd = side*torch.rand(self.nb_pts, dim).view(-1)
-            self.mom = 0.05*torch.randn(self.nb_pts, dim).view(-1)
-            self.controls = 0.5*torch.randn(self.nb_pts, dim).view(-1)
+            self.gd = side*torch.rand(self.nb_pts, dim)
+            self.mom = 0.05*torch.randn(self.nb_pts, dim)
+            self.controls = 0.5*torch.randn(self.nb_pts, dim)
 
             self.implicit = im.DeformationModules.create_deformation_module('implicit_order_0', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, nu=self.nu, gd=self.gd, cotan=self.mom)
 
@@ -131,9 +131,9 @@ def make_test_implicitmodule1(dim, dim_controls, backend):
     class TestImplicitModule1(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 7
-            self.gd = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
-            self.tan = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
-            self.cotan = (torch.rand(self.nb_pts, dim).view(-1), torch.rand(self.nb_pts, dim, dim).view(-1))
+            self.gd = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
+            self.tan = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
+            self.cotan = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
             self.controls = torch.rand(dim_controls)
             self.C = torch.rand(self.nb_pts, dim, dim_controls)
             self.nu = 1e-3

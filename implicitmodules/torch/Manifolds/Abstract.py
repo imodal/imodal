@@ -6,10 +6,3 @@ class Manifold:
     def copy(self):
         raise NotImplementedError
 
-    @property
-    def numel_gd(self):
-        raise NotImplementedError
-
-    def infinitesimal_action(self, module):
-        raise NotImplementedError
-

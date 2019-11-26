@@ -17,12 +17,12 @@ class TestStiefel(unittest.TestCase):
     def setUp(self):
         self.nb_pts = 10
         self.dim = 2
-        self.gd_pts = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.gd_mat = torch.rand(self.nb_pts, self.dim, self.dim).view(-1)
-        self.tan_pts = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.tan_mat = torch.rand(self.nb_pts, self.dim, self.dim).view(-1)
-        self.cotan_pts = torch.rand(self.nb_pts, self.dim).view(-1)
-        self.cotan_mat = torch.rand(self.nb_pts, self.dim, self.dim).view(-1)
+        self.gd_pts = torch.rand(self.nb_pts, self.dim)
+        self.gd_mat = torch.rand(self.nb_pts, self.dim, self.dim)
+        self.tan_pts = torch.rand(self.nb_pts, self.dim)
+        self.tan_mat = torch.rand(self.nb_pts, self.dim, self.dim)
+        self.cotan_pts = torch.rand(self.nb_pts, self.dim)
+        self.cotan_mat = torch.rand(self.nb_pts, self.dim, self.dim)
 
         self.gd = (self.gd_pts, self.gd_mat)
         self.tan = (self.tan_pts, self.tan_mat)
@@ -102,12 +102,12 @@ class TestStiefel(unittest.TestCase):
         stiefel = im.Manifolds.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         scale = 1.5
-        d_gd = (torch.rand(self.nb_pts, self.dim).view(-1),
-                torch.rand(self.nb_pts, self.dim, self.dim).view(-1))
-        d_tan = (torch.rand(self.nb_pts, self.dim).view(-1),
-                 torch.rand(self.nb_pts, self.dim, self.dim).view(-1))
-        d_cotan = (torch.rand(self.nb_pts, self.dim).view(-1),
-                   torch.rand(self.nb_pts, self.dim, self.dim).view(-1))
+        d_gd = (torch.rand(self.nb_pts, self.dim),
+                torch.rand(self.nb_pts, self.dim, self.dim))
+        d_tan = (torch.rand(self.nb_pts, self.dim),
+                 torch.rand(self.nb_pts, self.dim, self.dim))
+        d_cotan = (torch.rand(self.nb_pts, self.dim),
+                   torch.rand(self.nb_pts, self.dim, self.dim))
 
         stiefel.muladd_gd(d_gd, scale)
         stiefel.muladd_tan(d_tan, scale)
@@ -124,7 +124,7 @@ class TestStiefel(unittest.TestCase):
         stiefel = im.Manifolds.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         nb_pts_mod = 15
-        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
+        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2))
         trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
@@ -136,7 +136,7 @@ class TestStiefel(unittest.TestCase):
         stiefel = im.Manifolds.Stiefel(self.dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
         nb_pts_mod = 15
-        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2).view(-1))
+        landmarks_mod = im.Manifolds.Landmarks(2, nb_pts_mod, gd=torch.rand(nb_pts_mod, 2))
         trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
         trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 

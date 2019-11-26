@@ -16,9 +16,9 @@ def make_test_landmarks(dim):
     class TestLandmarks(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
-            self.gd = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
-            self.tan = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
-            self.cotan = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
+            self.gd = torch.randn(self.nb_pts, dim, requires_grad=True)
+            self.tan = torch.randn(self.nb_pts, dim, requires_grad=True)
+            self.cotan = torch.randn(self.nb_pts, dim, requires_grad=True)
 
         def test_constructor(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
@@ -56,9 +56,9 @@ def make_test_landmarks(dim):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             scale = 1.5
-            d_gd = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
-            d_tan = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
-            d_cotan = torch.rand(self.nb_pts, dim, requires_grad=True).view(-1)
+            d_gd = torch.rand(self.nb_pts, dim, requires_grad=True)
+            d_tan = torch.rand(self.nb_pts, dim, requires_grad=True)
+            d_cotan = torch.rand(self.nb_pts, dim, requires_grad=True)
 
             landmarks.muladd_gd(d_gd, scale)
             landmarks.muladd_tan(d_tan, scale)
@@ -72,20 +72,20 @@ def make_test_landmarks(dim):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             nb_pts_mod = 15
-            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
+            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.randn(nb_pts_mod, dim))
             trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
             trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
             man = landmarks.infinitesimal_action(trans.field_generator())
 
             self.assertIsInstance(man, im.Manifolds.Landmarks)
-            self.assertEqual(man.gd.shape[0], dim*self.nb_pts)
+            self.assertEqual(man.gd.shape, torch.Size([self.nb_pts, dim]))
 
         def test_inner_prod_field(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             nb_pts_mod = 15
-            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
+            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.randn(nb_pts_mod, dim))
             trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
             trans.fill_controls(torch.rand_like(landmarks_mod.gd))
 
@@ -191,12 +191,12 @@ def make_test_compound(dim):
         def setUp(self):
             self.nb_pts0 = 10
             self.nb_pts1 = 15
-            self.gd0 = torch.rand(self.nb_pts0, dim, requires_grad=True).view(-1)
-            self.tan0 = torch.rand(self.nb_pts0, dim, requires_grad=True).view(-1)
-            self.cotan0 = torch.rand(self.nb_pts0, dim, requires_grad=True).view(-1)
-            self.gd1 = torch.rand(self.nb_pts1, dim, requires_grad=True).view(-1)
-            self.tan1 = torch.rand(self.nb_pts1, dim, requires_grad=True).view(-1)
-            self.cotan1 = torch.rand(self.nb_pts1, dim, requires_grad=True).view(-1)
+            self.gd0 = torch.rand(self.nb_pts0, dim, requires_grad=True)
+            self.tan0 = torch.rand(self.nb_pts0, dim, requires_grad=True)
+            self.cotan0 = torch.rand(self.nb_pts0, dim, requires_grad=True)
+            self.gd1 = torch.rand(self.nb_pts1, dim, requires_grad=True)
+            self.tan1 = torch.rand(self.nb_pts1, dim, requires_grad=True)
+            self.cotan1 = torch.rand(self.nb_pts1, dim, requires_grad=True)
             self.landmarks0 = im.Manifolds.Landmarks(dim, self.nb_pts0, gd=self.gd0, tan=self.tan0, cotan=self.cotan0)
             self.landmarks1 = im.Manifolds.Landmarks(dim, self.nb_pts1, gd=self.gd1, tan=self.tan1, cotan=self.cotan1)
             self.compound = im.Manifolds.CompoundManifold([self.landmarks0, self.landmarks1])
@@ -240,12 +240,12 @@ def make_test_compound(dim):
 
         def test_muladd(self):
             scale = 1.5
-            d_gd0 = torch.rand(self.nb_pts0, dim).view(-1)
-            d_tan0 = torch.rand(self.nb_pts0, dim).view(-1)
-            d_cotan0 = torch.rand(self.nb_pts0, dim).view(-1)
-            d_gd1 = torch.rand(self.nb_pts1, dim).view(-1)
-            d_tan1 = torch.rand(self.nb_pts1, dim).view(-1)
-            d_cotan1 = torch.rand(self.nb_pts1, dim).view(-1)
+            d_gd0 = torch.rand(self.nb_pts0, dim)
+            d_tan0 = torch.rand(self.nb_pts0, dim)
+            d_cotan0 = torch.rand(self.nb_pts0, dim)
+            d_gd1 = torch.rand(self.nb_pts1, dim)
+            d_tan1 = torch.rand(self.nb_pts1, dim)
+            d_cotan1 = torch.rand(self.nb_pts1, dim)
 
             self.compound.muladd_gd([d_gd0, d_gd1], scale)
             self.compound.muladd_tan([d_tan0, d_tan1], scale)
@@ -260,15 +260,15 @@ def make_test_compound(dim):
 
         def test_action(self):
             nb_pts_mod = 15
-            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.rand(nb_pts_mod, dim).view(-1))
+            landmarks_mod = im.Manifolds.Landmarks(dim, nb_pts_mod, gd=torch.randn(nb_pts_mod, dim))
             trans = im.DeformationModules.Translations_Torch(landmarks_mod, 1.5)
 
             man = self.compound.infinitesimal_action(trans.field_generator())
 
             self.assertIsInstance(man, im.Manifolds.CompoundManifold)
             self.assertTrue(man.nb_manifold, self.compound.nb_manifold)
-            self.assertEqual(man[0].gd.shape[0], dim*self.nb_pts0)
-            self.assertEqual(man[1].gd.shape[0], dim*self.nb_pts1)
+            self.assertEqual(man[0].gd.shape, torch.Size([self.nb_pts0, dim]))
+            self.assertEqual(man[1].gd.shape, torch.Size([self.nb_pts1, dim]))
 
         def test_gradcheck_fill(self):
             def fill_gd(*gd):
@@ -325,9 +325,9 @@ def make_test_compound(dim):
 
         def test_gradcheck_action(self):
             def action(gd0, gd1, controls0, controls1):
-                module0 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts0, 1., gd=gd0)
+                module0 = im.DeformationModules.Translations_Torch.build(dim, self.nb_pts0, 1., gd=gd0)
                 module0.fill_controls(controls0)
-                module1 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts1, 1., gd=gd1)
+                module1 = im.DeformationModules.Translations_Torch.build(dim, self.nb_pts1, 1., gd=gd1)
                 module1.fill_controls(controls1)
 
                 man = self.compound.infinitesimal_action(
@@ -346,9 +346,9 @@ def make_test_compound(dim):
             def inner_prod_field(*tensors):
                 gd = tensors[:2]
                 controls = tensors[2:]
-                module0 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts0, 1., gd=gd[0])
+                module0 = im.DeformationModules.Translations_Torch.build(dim, self.nb_pts0, 1., gd=gd[0])
                 module0.fill_controls(controls[0])
-                module1 = im.DeformationModules.Translations_Torch.build_from_points(dim, self.nb_pts1, 1., gd=gd[1])
+                module1 = im.DeformationModules.Translations_Torch.build(dim, self.nb_pts1, 1., gd=gd[1])
                 module1.fill_controls(controls[1])
 
                 return self.compound.inner_prod_field(
@@ -380,9 +380,9 @@ def make_test_compoundcompoundmanifold(dim):
 
         def test_compoundcompound(self):
             nb_pts = 5
-            landmarks0 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(dim*nb_pts))
-            landmarks1 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(dim*nb_pts))
-            landmarks2 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(dim*nb_pts))
+            landmarks0 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(nb_pts, dim))
+            landmarks1 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(nb_pts, dim))
+            landmarks2 = im.Manifolds.Landmarks(dim, nb_pts, gd=torch.rand(nb_pts, dim))
 
             compound0 = im.Manifolds.CompoundManifold([landmarks0, landmarks1])
             compound1 = im.Manifolds.CompoundManifold([compound0, landmarks2])

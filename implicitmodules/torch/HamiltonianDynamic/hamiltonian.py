@@ -20,6 +20,10 @@ class Hamiltonian:
     def module(self):
         return self.__module
 
+    @property
+    def dim(self):
+        return self.__module.dim
+
     def __call__(self):
         """Computes the hamiltonian."""
         return self.apply_mom() - self.__module.cost()
