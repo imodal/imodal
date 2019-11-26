@@ -84,7 +84,7 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
     def precompute(self):
         vertices_target, faces_target = self.target
         self.centers_target, normals_target, self.lengths_target = compute_centers_normals_lengths(vertices_target, faces_target)
-        self.normalized_target = normals_target / self.lengths_target
+        self.normalized_target = normals_target/self.lengths_target
 
         self.__target_precomputed = {}
 
@@ -95,7 +95,7 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
         vertices_source, faces_source = source
 
         centers_source, normals_source, lengths_source = compute_centers_normals_lengths(vertices_source, faces_source)
-        normalized_source = normals_source / lengths_source
+        normalized_source = normals_source/lengths_source
 
         return self.__target_precomputed[sigma]\
             + self.varifold_scalar_product(centers_source, centers_source, lengths_source, lengths_source, normalized_source, normalized_source, sigma)\
@@ -114,32 +114,35 @@ class VarifoldAttachment3D_Torch(VarifoldAttachment3D):
         return torch.mm(K * binet(torch.mm(x[1], y[1].T)), p)
 
     def varifold_scalar_product(self, x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
-        return torch.dot(lengths_x.view(-1), self.__convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
+        return  torch.dot(lengths_x.view(-1), self.__convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
 
 
-#'id': Kernel('gaussian(x,y) * linear(u,v)**2'),
 class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):
-    def __init__(self, sigmas, weight =1.):
+    def __init__(self, sigmas, weight=1.):
         super().__init__(sigmas, weight)
 
-        # Keops kernels are stored here
-        self.__K = {}
+        self.__K = None
+        self.__oos2 = {}
 
     def varifold_scalar_product(self, x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
-        if sigma not in self.__K:
-            def GaussLinKernel(sigma):
-                def K(x, y, u, v, b):
-                    params = {
-                        'id': Kernel('gaussian2(x,y) * linear(u,v)**2'),
-                        'gamma': (1 / (sigma * sigma), None),
-                        'backend': 'auto'
-                    }
-                    return kernel_product(params, (x, u), (y, v), b, dtype=str(x[0].dtype).split('.')[1])
-                return K
+        if self.__K is None:
+            formula = "Exp(-S*SqNorm2(x - y)/IntCst(2)) * Square((u|v))*p"
+            alias = ["x=Vi(3)",
+                     "y=Vj(3)",
+                     "u=Vi(3)",
+                     "v=Vj(3)",
+                     "p=Vj(1)",
+                     "S=Pm(1)"]
 
-            self.__K[sigma] = GaussLinKernel(torch.tensor([sigma], dtype=x[0].dtype, device=x[0].device))
+            self.__K = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(x.dtype).split('.')[1])
+            self.__keops_backend = 'CPU'
+            if str(x.device) != 'cpu':
+                self.__keops_backend = 'GPU'
 
-        return (lengths_x * self.__K[sigma](x, y, normalized_x, normalized_y, lengths_y)).sum()
+        if sigma not in self.__oos2:
+            self.__oos2[sigma] = torch.tensor([1./sigma/sigma], device=x.device, dtype=x.dtype)
+
+        return (lengths_x * self.__K(x, y, normalized_x, normalized_y, lengths_y, self.__oos2[sigma], backend=self.__keops_backend)).sum()
 
 
 def VarifoldAttachment(dim, sigmas, weight=1., backend=None):

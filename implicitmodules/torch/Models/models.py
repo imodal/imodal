@@ -22,7 +22,6 @@ class Model:
 
         if other_parameters is None:
             other_parameters = []
-
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
         # We copy each parameters
         self.__init_other_parameters = []
@@ -65,7 +64,11 @@ class Model:
     def lam(self):
         return self.__lam
 
-    def gradcheck(self):
+    @property
+    def attachments(self):
+        return self.__attachments
+
+    def gradcheck(self, target, l):
         def energy(*param):
             parameters = list(param)
             init_manifold = []
@@ -144,8 +147,9 @@ class ModelPointsRegistration(Model):
             if isinstance(source[i], tuple):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(source[i].shape[1], source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
-                self.__source_dim.append(source[i].shape[1])
+                modules.insert(i, SilentLandmarks(Landmarks(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                self.__source_dim.append(source[i][0].shape[1])
+
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
