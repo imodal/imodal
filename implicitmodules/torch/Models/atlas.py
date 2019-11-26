@@ -14,14 +14,14 @@ class Atlas:
             other_parameters = []
 
         if compute_mode != 'sequential' and compute_mode != 'parallel' and compute_mode != 'heterogeneous':
-            raise RuntimeError("Atlas.__init__(): compute_mode " + compute_mode + " not recognised!")
+            raise RuntimeError("Atlas.__init__(): compute_mode {compute_mode} not recognised!".format(compute_mode=compute_mode))
 
         if compute_mode == 'sequential':
             self.__compute_func = self.__compute_sequential
         elif compute_mode == 'parallel':
             self.__compute_func = self.__compute_parallel
         else:
-            raise RuntimeError("Atlas: heterogeneous computing not supported yet!")
+            raise RuntimeError("Atlas: {compute_mode} not recognised!".format(compute_mode=compute_mode))
 
         self.__compute_mode = compute_mode
 
@@ -106,10 +106,10 @@ class Atlas:
 
         return translations_ht.manifold.gd.detach().view(-1, 2)
 
-    def compute(self, target, it=10, method='euler'):
-        return self.__compute_func(target, it, method)
+    def compute(self, it=10, method='euler'):
+        return self.__compute_func(it, method)
         
-    def __compute_sequential(self, target, it, method):
+    def __compute_sequential(self, it, method):
         if self.__optimise_template:
             translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
@@ -125,7 +125,7 @@ class Atlas:
 
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
-            cost, deformation_cost, attach_cost = self.__models[i].compute([target[i]], it=it, method=method)
+            cost, deformation_cost, attach_cost = self.__models[i].compute(it=it, method=method)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
@@ -140,7 +140,7 @@ class Atlas:
 
         return cost, deformation_cost, attach_cost
 
-    def __compute_parallel(self, target, it, method):
+    def __compute_parallel(self, it, method):
         pass
 
 

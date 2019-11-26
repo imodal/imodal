@@ -40,7 +40,7 @@ class ModelFittingLBFGS(ModelFitting):
                 self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
             # Shooting + loss computation
-            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+            cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
 
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost.detach().cpu().item()
@@ -60,20 +60,13 @@ class ModelFittingLBFGS(ModelFitting):
         start = time.time()
         costs = [last_costs]
         for i in range(max_iter):
-            # Computing step
-            # step_options = {'closure': closure, 'current_loss': loss, 'ls_debug': False}
-            # step_options.update(options)
             self.__optim.step(closure)
-            print("prout")
 
             # Retrieving costs
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
 
             print("="*80)
             print("Iteration: %d \n Total energy = %f \n Attach cost = %f \n Deformation cost = %f \n Step length = %.12f" % (i + 1, last_costs['cost'], last_costs['attach_cost'], last_costs['deformation_cost'], self.__step_length))
-
-            # if fail or not desc_dir:
-            #     break
 
         print("="*80)
         print("End of the optimisation process.")

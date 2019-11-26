@@ -46,16 +46,16 @@ class ModelFittingScipy(ModelFitting):
             self.__pytorch_optim.zero_grad()
 
             # Shooting + loss computation
-            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+            cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
 
             dx_c = self.__model_to_numpy(self.model, grad=True)
 
             # Save for printing purpose
-            last_costs['deformation_cost'] = deformation_cost.item()
-            last_costs['attach_cost'] = attach_cost.item()
-            last_costs['cost'] = cost.item()
+            last_costs['deformation_cost'] = deformation_cost.detach().item()
+            last_costs['attach_cost'] = attach_cost.detach().item()
+            last_costs['cost'] = cost.detach().item()
 
-            return (cost.item(), dx_c)
+            return (cost.detach().item(), dx_c)
 
         self.__it = 1
 
@@ -78,7 +78,7 @@ class ModelFittingScipy(ModelFitting):
         step_options.update(options)
 
         x_0 = self.__model_to_numpy(self.model)
-        initial_cost = closure(x_0)
+        closure(x_0)
 
         if disp:
             print("Initial energy = %.3f" % last_costs['cost'])

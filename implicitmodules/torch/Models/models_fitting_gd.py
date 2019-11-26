@@ -40,7 +40,7 @@ class ModelFittingGradientDescent(ModelFitting):
                 self.model.precompute_callback(self.model.init_manifold, self.model.modules, self.model.parameters)
 
             # Shooting + loss computation
-            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+            cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
 
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost.detach().cpu().item()

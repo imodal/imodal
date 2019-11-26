@@ -65,7 +65,7 @@ class Model:
     def lam(self):
         return self.__lam
 
-    def gradcheck(self, target, l):
+    def gradcheck(self):
         def energy(*param):
             parameters = list(param)
             init_manifold = []
@@ -83,8 +83,8 @@ class Model:
             if self.__precompute_callback:
                 self.__precompute_callback(self.__modules, self.__parameters)
 
-            deformation_cost, attach_cost = self.compute(target)
-            cost = deformation_cost + l*attach_cost
+            deformation_cost, attach_cost = self.compute()
+            cost = deformation_cost + attach_cost
             return cost
 
         return torch.autograd.gradcheck(energy, self.__parameters, raise_exception=False)
@@ -131,8 +131,6 @@ class ModelPointsRegistration(Model):
     def __init__(self, source, modules, attachments, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
 
-        self.__dim = modules[0].manifold.dim
-
         if other_parameters is None:
             other_parameters = []
 
@@ -141,19 +139,22 @@ class ModelPointsRegistration(Model):
 
         # We now create the corresponding silent landmarks and save the alpha values
         self.weights = []
+        self.__source_dim = []
         for i in range(self.source_count):
             if isinstance(source[i], tuple):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(source[i].shape[1], source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                self.__source_dim.append(source[i].shape[1])
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(source[i].shape[1], source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
+                self.__source_dim.append(source[i].shape[1])
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
-    def compute(self, target, it=10, method="euler"):
+    def compute(self, it=10, method='euler'):
         """ Does shooting. Outputs compute deformation and attach cost. """
         # Call precompute callback if available
         # TODO: maybe do this in Model and not ModelPointsRegistration ?
@@ -173,79 +174,12 @@ class ModelPointsRegistration(Model):
         attach_costs = []
         for i in range(self.source_count):
             if self.weights[i] is not None:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i])))
+                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__source_dim[i]), self.weights[i])))
             else:
-                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__dim)))
+                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__source_dim[i])))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost
-        if pc_cost is not None:
-            c = c + pc_cost
-
-        cost = c.detach()
-        c.backward()
-        del c
-
-        return cost, deformation_cost.detach(), attach_cost.detach()
-
-
-class ModelPointsRegistrationOnlyAttachment(Model):
-    """
-    TODO: add documentation
-    """
-    def __init__(self, source, modules, attachments, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
-        assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
-
-        self.__dim = modules[0].manifold.dim
-
-        if other_parameters is None:
-            other_parameters = []
-
-        # We first determinate the number of sources
-        self.source_count = len(source)
-
-        # We now create the corresponding silent landmarks and save the alpha values
-        self.weights = []
-        for i in range(self.source_count):
-            if isinstance(source[i], tuple):
-                # Weights are provided
-                self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
-            elif isinstance(source[i], torch.Tensor):
-                # No weights provided
-                self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
-
-        super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
-
-    def compute(self, target, it=10, method="euler"):
-        """ Does shooting. Outputs compute deformation and attach cost. """
-        # Call precompute callback if available
-        # TODO: maybe do this in Model and not ModelPointsRegistration ?
-        pc_cost = None
-        if self.precompute_callback is not None:
-            pc_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
-
-        # We first create and fill the compound module we will shoot
-        compound = CompoundModule(self.modules)
-        compound.manifold.fill(self.init_manifold)
-
-        # Shooting
-        shoot(Hamiltonian(compound), it, method)
-        deformation_cost = compound.cost()
-
-        # We compute the attach cost for each source/target couple
-        attach_costs = []
-        for i in range(self.source_count):
-            if self.weights[i] is not None:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i])))
-            else:
-                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__dim)))
-
-        attach_cost = self.lam*sum(attach_costs)
-        #c = deformation_cost + attach_cost
-        print('only attachment')
-        c = attach_cost
         if pc_cost is not None:
             c = c + pc_cost
 
