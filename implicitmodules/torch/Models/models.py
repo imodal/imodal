@@ -22,7 +22,6 @@ class Model:
 
         if other_parameters is None:
             other_parameters = []
-
         self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
         # We copy each parameters
         self.__init_other_parameters = []
@@ -149,11 +148,11 @@ class ModelPointsRegistration(Model):
             if isinstance(source[i], tuple):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(Landmarks(self.__dim, source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks(Landmarks(source[i].shape[1], source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
@@ -177,9 +176,9 @@ class ModelPointsRegistration(Model):
         attach_costs = []
         for i in range(self.source_count):
             if self.weights[i] is not None:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__dim), self.weights[i])))
+                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, compound[i].manifold.dim), self.weights[i])))
             else:
-                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__dim)))
+                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, compound[i].manifold.dim)))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost

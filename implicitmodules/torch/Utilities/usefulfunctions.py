@@ -2,6 +2,7 @@ import math
 
 import torch
 from torchviz import make_dot
+from .meshutils import close_shape, point_side
 
 def grid2vec(*argv):
     """Convert a grid of points (such as given by torch.meshgrid) to a tensor of vectors."""

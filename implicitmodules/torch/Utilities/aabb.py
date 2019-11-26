@@ -1,5 +1,6 @@
 import math
 import copy
+from collections import Iterable
 
 import torch
 
@@ -115,22 +116,36 @@ class AABB:
         """
         TODO: Add documentation.
         """
+        factors = []
+        if isinstance(factor, Iterable):
+            factors = factor
+        else:
+            factors.append(factor)
+            factors.append(factor)
+
         center = self.center
-        self.__xmin = factor*(self.__xmin - center[0]) + center[0]
-        self.__xmax = factor*(self.__xmax - center[0]) + center[0]
-        self.__ymin = factor*(self.__ymin - center[1]) + center[1]
-        self.__ymax = factor*(self.__ymax - center[1]) + center[1]
+        self.__xmin = factors[0]*(self.__xmin - center[0]) + center[0]
+        self.__xmax = factors[0]*(self.__xmax - center[0]) + center[0]
+        self.__ymin = factors[1]*(self.__ymin - center[1]) + center[1]
+        self.__ymax = factors[1]*(self.__ymax - center[1]) + center[1]
 
     def scale(self, factor):
         """
         TODO: Add documentation.
         """
+        factors = []
+        if isinstance(factor, Iterable):
+            factors = factor
+        else:
+            factors.append(factor)
+            factors.append(factor)
+
         out = copy.copy(self)
         center = self.center
-        out.__xmin = factor*(self.__xmin - center[0]) + center[0]
-        out.__xmax = factor*(self.__xmax - center[0]) + center[0]
-        out.__ymin = factor*(self.__ymin - center[1]) + center[1]
-        out.__ymax = factor*(self.__ymax - center[1]) + center[1]
+        out.__xmin = factors[0]*(self.__xmin - center[0]) + center[0]
+        out.__xmax = factors[0]*(self.__xmax - center[0]) + center[0]
+        out.__ymin = factors[1]*(self.__ymin - center[1]) + center[1]
+        out.__ymax = factors[1]*(self.__ymax - center[1]) + center[1]
 
         return out
 
