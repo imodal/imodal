@@ -64,7 +64,6 @@ class ModelFittingGradientDescent(ModelFitting):
             # step_options = {'closure': closure, 'current_loss': loss, 'ls_debug': False}
             # step_options.update(options)
             self.__optim.step(closure)
-            print("prout")
 
             # Retrieving costs
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
