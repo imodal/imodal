@@ -66,15 +66,18 @@ class DeformationModuleBuilder():
             return deformation_module_builder(**kwargs)
 
 
-__deformation_module_builder = DeformationModuleBuilder()
+def create_deformation_module_with_backends(build_torch, build_keops):
+    def create_deformation_module(*args, backend=None, **kwargs):
+        if backend is None:
+            backend = get_compute_backend()
 
+        if backend == 'torch':
+            return build_torch(*args, **kwargs)
+        elif backend == 'keops':
+            return build_keops(*args, **kwargs)
+        else:
+            raise NotImplementedError("Error while creating module! {backend} backend not recognised!".format(backend=backend))
 
-def register_deformation_module_builder(module_name, deformation_module_builder):
-    global __deformation_module_builder
-    __deformation_module_builder.register_deformation_module_builder(module_name, deformation_module_builder)
+    return create_deformation_module
 
-
-def create_deformation_module(module_name, backend=None, **kwargs):
-    global __deformation_module_builder
-    return __deformation_module_builder.spawn(module_name, backend, **kwargs)
 

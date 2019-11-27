@@ -24,7 +24,11 @@ class EmptyManifold(Manifold):
 
     @property
     def numel_gd(self):
-        return 0
+        return (0,)
+
+    @property
+    def shape_gd(self):
+        return(torch.Size([]),)
 
     @property
     def len_gd(self):

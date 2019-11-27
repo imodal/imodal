@@ -2,7 +2,7 @@ import torch
 
 from pykeops.torch import Genred, KernelSolve
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
+from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
 from implicitmodules.torch.Kernels.kernels import K_xx
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_0
@@ -146,5 +146,5 @@ class ImplicitModule0_KeOps(ImplicitModule0):
         self.fill_controls(self.solve_cgc(self.manifold.gd, self.manifold.gd, vs, self.__keops_invsigmasq, backend=self.__keops_backend, alpha=self.nu).reshape(self.manifold.nb_pts, self.dim)/self.coeff)
 
 
-register_deformation_module_builder('implicit_order_0', {'torch': ImplicitModule0_Torch.build, 'keops': ImplicitModule0_KeOps.build})
+ImplicitModule0 = create_deformation_module_with_backends(ImplicitModule0_Torch.build, ImplicitModule0_KeOps.build)
 

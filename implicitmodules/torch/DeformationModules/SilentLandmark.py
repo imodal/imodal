@@ -1,6 +1,6 @@
 import torch
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
+from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_Null
 
@@ -12,12 +12,6 @@ class SilentLandmarks(DeformationModule):
         assert isinstance(manifold, Landmarks)
         super().__init__()
         self.__manifold = manifold
-
-    # TODO: remove deprecated method name
-    @classmethod
-    def build_from_points(cls, pts):
-        """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(pts.shape[1], pts.shape[0], gd=pts.view(-1)))
 
     @classmethod
     def build(cls, dim, nb_pts, gd=None, tan=None, cotan=None):
@@ -70,7 +64,4 @@ class SilentLandmarks(DeformationModule):
 
     def adjoint(self, manifold):
         return StructuredField_Null(device=self.device)
-
-
-register_deformation_module_builder('silent_points', SilentLandmarks.build)
 

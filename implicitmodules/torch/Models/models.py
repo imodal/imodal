@@ -147,13 +147,13 @@ class ModelPointsRegistration(Model):
             if isinstance(source[i], tuple):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
-                modules.insert(i, SilentLandmarks(Landmarks(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].view(-1).requires_grad_())))
                 self.__source_dim.append(source[i][0].shape[1])
+                modules.insert(i, SilentLandmarks.build(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].clone().requires_grad_()))
 
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(Landmarks(source[i].shape[1], source[i].shape[0], gd=source[i].view(-1).requires_grad_())))
+                modules.insert(i, SilentLandmarks.build(source[i].shape[1], source[i].shape[0], gd=source[i].clone().requires_grad_()))
                 self.__source_dim.append(source[i].shape[1])
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)

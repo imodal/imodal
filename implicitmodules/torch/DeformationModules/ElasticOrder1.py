@@ -3,7 +3,7 @@ import math
 
 from pykeops.torch import Genred, KernelSolve
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, register_deformation_module_builder
+from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
 from implicitmodules.torch.Kernels.SKS import eta, compute_sks, A
 from implicitmodules.torch.Manifolds import Stiefel
 from implicitmodules.torch.StructuredFields import StructuredField_p
@@ -12,7 +12,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_p
 class ImplicitModule1(DeformationModule):
     """Module generating sum of translations."""
     
-    def __init__(self, manifold, C, sigma, nu, coeff=1.):
+    def __init__(self, manifold, sigma, C, nu, coeff):
         assert isinstance(manifold, Stiefel)
         super().__init__()
         self.__manifold = manifold
@@ -25,9 +25,9 @@ class ImplicitModule1(DeformationModule):
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
     @classmethod
-    def build(cls, dim, nb_pts, C, sigma, nu=0., gd=None, tan=None, cotan=None, coeff=1.):
+    def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), C, sigma, nu, coeff)
+        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff)
 
     @property
     def dim(self):
@@ -107,8 +107,8 @@ class ImplicitModule1(DeformationModule):
 
 
 class ImplicitModule1_Torch(ImplicitModule1):
-    def __init__(self, manifold, C, sigma, nu, coeff=1.):
-        super().__init__(manifold, C, sigma, nu, coeff=1.)
+    def __init__(self, manifold, sigma, C, nu, coeff=1.):
+        super().__init__(manifold, sigma, C, nu, coeff=1.)
 
     @property
     def backend(self):
@@ -116,7 +116,6 @@ class ImplicitModule1_Torch(ImplicitModule1):
 
     def cost(self):
         return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
-
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
@@ -167,8 +166,8 @@ class ImplicitModule1_Torch(ImplicitModule1):
 
 
 class ImplicitModule1_KeOps(ImplicitModule1):
-    def __init__(self, manifold, C, sigma, nu, coeff=1.):
-        super().__init__(manifold, C, sigma, nu, coeff=1.)
+    def __init__(self, manifold, sigma, C, nu, coeff=1.):
+        super().__init__(manifold, sigma, C, nu, coeff=1.)
 
         self.__keops_dtype = str(manifold.gd[0].dtype).split(".")[1]
         self.__keops_backend = 'CPU'
@@ -241,5 +240,5 @@ class ImplicitModule1_KeOps(ImplicitModule1):
         return (aq, torch.mm(lambdas, aq))
 
 
-register_deformation_module_builder('implicit_order_1', {'torch': ImplicitModule1_Torch.build, 'keops': ImplicitModule1_KeOps.build})
+ImplicitModule1 = create_deformation_module_with_backends(ImplicitModule1_Torch.build, ImplicitModule1_KeOps.build)
 

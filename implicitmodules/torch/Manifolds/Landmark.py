@@ -92,15 +92,15 @@ class Landmarks(Manifold):
 
     @property
     def numel_gd(self):
-        return self.__numel_gd
+        return (self.__numel_gd,)
+
+    @property
+    def shape_gd(self):
+        return (self.__gd.shape,)
 
     @property
     def len_gd(self):
         return 1
-
-    @property
-    def dim_gd(self):
-        return (self.__numel_gd,)
 
     def unroll_gd(self):
         return [self.__gd]

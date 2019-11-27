@@ -117,24 +117,16 @@ class Stiefel(Manifold):
         return self.__dim
 
     @property
-    def numel_gd(self):
-        return self.__numel_gd
-
-    @property
-    def numel_gd_points(self):
-        return self.__numel_gd_points
-
-    @property
-    def numel_gd_mat(self):
-        return self.__numel_gd_mat
-
-    @property
     def len_gd(self):
         return 2
 
     @property
-    def dim_gd(self):
+    def numel_gd(self):
         return (self.__numel_gd_points, self.__numel_gd_mat)
+
+    @property
+    def shape_gd(self):
+        return (self.__gd[0].shape, self.__gd[1].shape)
 
     def unroll_gd(self):
         return [self.__gd[0], self.__gd[1]]

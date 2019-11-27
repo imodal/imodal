@@ -87,3 +87,4 @@ class CompoundModule(DeformationModule, Iterable):
     
     def field_generator(self):
         return CompoundStructuredField([m.field_generator() for m in self.__modules])
+

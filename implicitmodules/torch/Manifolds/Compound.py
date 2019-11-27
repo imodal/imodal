@@ -38,16 +38,12 @@ class CompoundManifold(Manifold):
         return sum([m.nb_pts for m in self.__manifolds])
 
     @property
-    def numel_gd(self):
-        return sum([m.numel_gd for m in self.__manifolds])
-
-    @property
     def len_gd(self):
         return sum([m.len_gd for m in self.__manifolds])
 
     @property
-    def dim_gd(self):
-        return tuple(sum((m.dim_gd for m in self.__manifolds), ()))
+    def numel_gd(self):
+        return tuple(sum((m.numel_gd for m in self.__manifolds), ()))
 
     def unroll_gd(self):
         """Returns a flattened list of all gd tensors."""
