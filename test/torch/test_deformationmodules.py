@@ -19,7 +19,7 @@ def make_test_translations(dim, backend):
             self.gd = torch.randn(self.nb_pts, dim, requires_grad=True)
             self.mom = torch.randn(self.nb_pts, dim, requires_grad=True)
             self.controls = torch.rand(self.nb_pts, dim, requires_grad=True)
-            self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts, sigma=self.sigma, gd=self.gd, cotan=self.mom)
+            self.trans = im.DeformationModules.Translations(dim, self.nb_pts, self.sigma, gd=self.gd, cotan=self.mom, backend=backend)
 
         def test_call(self):
             points = torch.rand(100, dim)
@@ -129,7 +129,7 @@ def make_test_silentpoints(dim):
             self.nb_pts = 10
             self.gd = torch.rand(self.nb_pts, dim, requires_grad=True)
             self.mom = torch.rand(self.nb_pts, dim, requires_grad=True)
-            self.silent_points = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts, gd=self.gd)
+            self.silent_points = im.DeformationModules.SilentLandmarks(dim, self.nb_pts, gd=self.gd)
 
         def test_call(self):
             points = torch.rand(100, dim)
@@ -213,8 +213,8 @@ def make_test_compound(dim, backend):
             self.mom_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
             self.gd_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
             self.mom_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
-            self.trans = im.DeformationModules.create_deformation_module('translations', backend=backend, dim=dim, nb_pts=self.nb_pts_trans, sigma=self.sigma, gd=self.gd_trans, cotan=self.mom_trans)
-            self.silent = im.DeformationModules.create_deformation_module('silent_points', dim=dim, nb_pts=self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
+            self.trans = im.DeformationModules.Translations(dim, self.nb_pts_trans, self.sigma, gd=self.gd_trans, cotan=self.mom_trans, backend=backend)
+            self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
             self.compound = im.DeformationModules.CompoundModule([self.silent, self.trans])
             self.controls_trans = torch.rand_like(self.gd_trans)
             self.controls = [None, self.controls_trans]

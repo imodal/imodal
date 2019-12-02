@@ -30,11 +30,11 @@ def make_test_shooting(dim, backend):
             self.cotan_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
 
         def _build_h(self, fill_cotan=True):
-            self.silent = im.DeformationModules.create_deformation_module('silent_points', backend=backend, dim=dim, nb_pts=self.nb_pts_silent, gd=self.gd_silent)
+            self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent)
             if fill_cotan:
                 self.silent.manifold.fill_cotan(self.cotan_silent)
 
-            self.trans = im.DeformationModules.create_deformation_module('implicit_order_0', backend=backend, dim=dim, nb_pts=self.nb_pts_trans, sigma=self.sigma, nu=self.nu, gd=self.gd_trans)
+            self.trans = im.DeformationModules.ImplicitModule0(dim, self.nb_pts_trans, self.sigma, nu=self.nu, gd=self.gd_trans, backend=backend)
             if fill_cotan:
                 self.trans.manifold.fill_cotan(self.cotan_trans)
 

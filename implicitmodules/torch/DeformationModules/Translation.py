@@ -8,7 +8,7 @@ from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_0
 
 
-class Translations(DeformationModule):
+class TranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
     def __init__(self, manifold, sigma):
@@ -72,7 +72,7 @@ class Translations(DeformationModule):
         return manifold.cot_to_vs(self.__sigma, backend=self.backend)
 
 
-class Translations_Torch(Translations):
+class Translations_Torch(TranslationsBase):
     def __init__(self, manifold, sigma):
         super().__init__(manifold, sigma)
 
@@ -95,7 +95,7 @@ class Translations_Torch(Translations):
         self.controls = controls.contiguous()
 
 
-class Translations_KeOps(Translations):
+class Translations_KeOps(TranslationsBase):
     def __init__(self, manifold, sigma):
         super().__init__(manifold, sigma)
 

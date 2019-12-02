@@ -5,7 +5,7 @@ from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_Null
 
 
-class SilentLandmarks(DeformationModule):
+class SilentLandmarksBase(DeformationModule):
     """Module handling silent points."""
 
     def __init__(self, manifold):
@@ -64,4 +64,8 @@ class SilentLandmarks(DeformationModule):
 
     def adjoint(self, manifold):
         return StructuredField_Null(device=self.device)
+
+
+# Give SilentLandmarks the same interface than other deformations modules
+SilentLandmarks = SilentLandmarksBase.build
 

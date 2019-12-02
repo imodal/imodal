@@ -40,32 +40,6 @@ class DeformationModule:
         raise NotImplementedError
 
 
-class DeformationModuleBuilder():
-    def __init__(self):
-        self.__builders = {}
-
-    def __call__(self, module_name, backend, **kwargs):
-        return spawn(module_name, backend, kwargs)
-
-    def register_deformation_module_builder(self, module_name, deformation_module_builder):
-        if isinstance(deformation_module_builder, dict):
-            self.__builders[module_name] = ObjectFactory(deformation_module_builder)
-        else:
-            self.__builders[module_name] = deformation_module_builder
-
-    def spawn(self, module_name, backend=None, **kwargs):
-        deformation_module_builder = self.__builders.get(module_name)
-        if not deformation_module_builder:
-            raise KeyError(module_name)
-
-        if isinstance(deformation_module_builder, ObjectFactory):
-            if backend is None:
-                backend = get_compute_backend()
-            return deformation_module_builder.spawn(backend, **kwargs)
-        else:
-            return deformation_module_builder(**kwargs)
-
-
 def create_deformation_module_with_backends(build_torch, build_keops):
     def create_deformation_module(*args, backend=None, **kwargs):
         if backend is None:

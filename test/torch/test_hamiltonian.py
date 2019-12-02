@@ -21,7 +21,7 @@ def make_test_hamiltonian(dim):
             self.landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.mom)
             self.controls = 100.*torch.rand_like(self.gd)
 
-            self.trans = im.DeformationModules.Translations_Torch(self.landmarks, self.sigma)
+            self.trans = im.DeformationModules.Translations(dim, self.nb_pts, self.sigma, gd=self.gd, cotan=self.mom)
             self.trans.fill_controls(self.controls)
 
             self.h = im.HamiltonianDynamic.Hamiltonian([self.trans])
@@ -100,7 +100,7 @@ class TestHamiltonian3D(make_test_hamiltonian(3)):
 # This constitutes more as an integration test than an unit test, but using Hamiltonian with
 # compound modules needs some attention
 
-def make_test_hamiltoniancompound(dim):
+def make_test_hamiltoniancompound(dim, backend):
     class TestHamiltonianCompound(unittest.TestCase):
         def setUp(self):
             self.nb_pts_trans = 10
@@ -114,15 +114,13 @@ def make_test_hamiltoniancompound(dim):
             self.gd = [self.gd_trans, self.gd_silent]
             self.mom = [self.mom_trans, self.mom_silent]
 
-            self.landmarks_trans = im.Manifolds.Landmarks(dim, self.nb_pts_trans, gd=self.gd_trans, cotan=self.mom_trans)
-            self.landmarks_silent = im.Manifolds.Landmarks(dim, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
             self.controls_trans = 100. * torch.rand_like(self.gd_trans)
             self.controls_silent = torch.tensor([])
             self.controls = [self.controls_trans, self.controls_silent]
 
-            self.trans = im.DeformationModules.Translations_Torch(self.landmarks_trans, self.sigma)
+            self.trans = im.DeformationModules.Translations(dim, self.nb_pts_trans, self.sigma, gd=self.gd_trans, cotan=self.mom_trans, backend=backend)
             self.trans.fill_controls(self.controls[0])
-            self.silent = im.DeformationModules.SilentLandmarks(self.landmarks_silent)
+            self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
 
             self.h = im.HamiltonianDynamic.Hamiltonian([self.trans, self.silent])
 
@@ -200,11 +198,19 @@ def make_test_hamiltoniancompound(dim):
     return TestHamiltonianCompound
 
 
-class TestHamiltonianCompound2D(make_test_hamiltoniancompound(2)):
+class TestHamiltonianCompound2D_Torch(make_test_hamiltoniancompound(2, 'torch')):
     pass
 
 
-class TestHamiltonianCompound3D(make_test_hamiltoniancompound(3)):
+class TestHamiltonianCompound2D_KeOps(make_test_hamiltoniancompound(2, 'keops')):
+    pass
+
+
+class TestHamiltonianCompound2D_KeOps(make_test_hamiltoniancompound(3, 'torch')):
+    pass
+
+
+class TestHamiltonianCompound2D_KeOps(make_test_hamiltoniancompound(3, 'keops')):
     pass
 
 

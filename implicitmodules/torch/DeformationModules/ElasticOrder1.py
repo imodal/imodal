@@ -9,7 +9,7 @@ from implicitmodules.torch.Manifolds import Stiefel
 from implicitmodules.torch.StructuredFields import StructuredField_p
 
 
-class ImplicitModule1(DeformationModule):
+class ImplicitModule1Base(DeformationModule):
     """Module generating sum of translations."""
     
     def __init__(self, manifold, sigma, C, nu, coeff):
@@ -106,7 +106,7 @@ class ImplicitModule1(DeformationModule):
         return manifold.cot_to_vs(self.__sigma, backend=self.backend)
 
 
-class ImplicitModule1_Torch(ImplicitModule1):
+class ImplicitModule1_Torch(ImplicitModule1Base):
     def __init__(self, manifold, sigma, C, nu, coeff=1.):
         super().__init__(manifold, sigma, C, nu, coeff=1.)
 
@@ -165,7 +165,7 @@ class ImplicitModule1_Torch(ImplicitModule1):
         return (aq, torch.mm(lambdas, aq))
 
 
-class ImplicitModule1_KeOps(ImplicitModule1):
+class ImplicitModule1_KeOps(ImplicitModule1Base):
     def __init__(self, manifold, sigma, C, nu, coeff=1.):
         super().__init__(manifold, sigma, C, nu, coeff=1.)
 

@@ -134,9 +134,9 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
             index = 0
             for m in h.module:
                 for j in range(m.manifold.len_gd):
-                    gd.append(x_1[i, 0, index:index+m.manifold.dim_gd[j]].detach().view(-1, m.dim))
-                    mom.append(x_1[i, 1, index:index+m.manifold.dim_gd[j]].detach().view(-1, m.dim))
-                    index = index + m.manifold.dim_gd[j]
+                    gd.append(x_1[i, 0, index:index+m.manifold.numel_gd[j]].detach().view(-1, m.dim))
+                    mom.append(x_1[i, 1, index:index+m.manifold.numel_gd[j]].detach().view(-1, m.dim))
+                    index = index + m.manifold.numel_gd[j]
 
             intermediate_states.append(init_manifold.copy())
 

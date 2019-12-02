@@ -9,7 +9,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 from implicitmodules.torch.Utilities import get_compute_backend
 
 
-class ImplicitModule0(DeformationModule):
+class ImplicitModule0Base(DeformationModule):
     """Module generating sum of translations."""
 
     def __init__(self, manifold, sigma, nu, coeff=1.):
@@ -87,7 +87,7 @@ class ImplicitModule0(DeformationModule):
         return manifold.cot_to_vs(self.__sigma, backend=self.backend)
 
 
-class ImplicitModule0_Torch(ImplicitModule0):
+class ImplicitModule0_Torch(ImplicitModule0Base):
     def __init__(self, manifold, sigma, nu, coeff=1.):
         super().__init__(manifold, sigma, nu, coeff=coeff)
 
@@ -108,7 +108,8 @@ class ImplicitModule0_Torch(ImplicitModule0):
         controls, _ = torch.solve(vs(self.manifold.gd), K_q)
         self.controls = controls.reshape(self.manifold.nb_pts, self.dim)/self.coeff
 
-class ImplicitModule0_KeOps(ImplicitModule0):
+
+class ImplicitModule0_KeOps(ImplicitModule0Base):
     def __init__(self, manifold, sigma, nu, coeff=1.):
         super().__init__(manifold, sigma, nu, coeff=coeff)
 
