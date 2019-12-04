@@ -9,10 +9,8 @@ import math
 def plot_tensor_scatter(x, alpha=1., scale=64.):
     """Scatter plot points in the format: ([x, y], scale) or ([x, y]) (in that case you can specify scale)"""
     if (isinstance(x, tuple) or isinstance(x, list)):
-        plt.scatter(x[0].detach().numpy()[:, 1], x[0].detach().numpy()[:, 0],
-                    s=50. * x[1].shape[0] * x[1].detach().numpy(), marker='o', alpha=alpha)
-        plt.scatter(x[0].detach().numpy()[:, 1], x[0].detach().numpy()[:, 0], s=64. * x[1].shape[0] * x[1], marker='o',
-                    alpha=alpha)
+        plt.scatter(x[0].detach().numpy()[:, 1], x[0].detach().numpy()[:, 0], s=50. * x[1].shape[0] * x[1].detach().numpy(), marker='o', alpha=alpha)
+        plt.scatter(x[0].detach().numpy()[:, 1], x[0].detach().numpy()[:, 0], s=64. * x[1].shape[0] * x[1], marker='o', alpha=alpha)
     else:
         plt.scatter(x.detach().numpy()[:, 1], x.detach().numpy()[:, 0], s=scale, marker='o', alpha=alpha)
 

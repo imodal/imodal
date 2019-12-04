@@ -26,6 +26,7 @@ def make_test_landmarks(dim):
             self.assertEqual(landmarks.nb_pts, self.nb_pts)
             self.assertEqual(landmarks.dim, dim)
             self.assertEqual(sum(landmarks.numel_gd), dim*self.nb_pts)
+
             self.assertTrue(torch.allclose(landmarks.gd, self.gd))
             self.assertTrue(torch.allclose(landmarks.tan, self.tan))
             self.assertTrue(torch.allclose(landmarks.cotan, self.cotan))
@@ -55,18 +56,17 @@ def make_test_landmarks(dim):
         def test_muladd(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
-            scale = 1.5
             d_gd = torch.rand(self.nb_pts, dim, requires_grad=True)
             d_tan = torch.rand(self.nb_pts, dim, requires_grad=True)
             d_cotan = torch.rand(self.nb_pts, dim, requires_grad=True)
 
-            landmarks.muladd_gd(d_gd, scale)
-            landmarks.muladd_tan(d_tan, scale)
-            landmarks.muladd_cotan(d_cotan, scale)
+            landmarks.add_gd(d_gd)
+            landmarks.add_tan(d_tan)
+            landmarks.add_cotan(d_cotan)
 
-            self.assertTrue(torch.allclose(landmarks.gd, self.gd+scale*d_gd))
-            self.assertTrue(torch.allclose(landmarks.tan, self.tan+scale*d_tan))
-            self.assertTrue(torch.allclose(landmarks.cotan, self.cotan+scale*d_cotan))
+            self.assertTrue(torch.allclose(landmarks.gd, self.gd+d_gd))
+            self.assertTrue(torch.allclose(landmarks.tan, self.tan+d_tan))
+            self.assertTrue(torch.allclose(landmarks.cotan, self.cotan+d_cotan))
 
         def test_action(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
@@ -115,20 +115,20 @@ def make_test_landmarks(dim):
             self.assertTrue(gradcheck(fill_tan, (self.tan), raise_exception=False))
             self.assertTrue(gradcheck(fill_cotan, (self.cotan), raise_exception=False))
 
-        def test_gradcheck_muladd(self):
-            def muladd_gd(gd):
+        def test_gradcheck_add(self):
+            def add_gd(gd):
                 landmarks.fill_gd(self.gd)
-                landmarks.muladd_gd(gd, scale)
+                landmarks.add_gd(gd)
                 return landmarks.gd
 
-            def muladd_tan(tan):
+            def add_tan(tan):
                 landmarks.fill_tan(self.tan)
-                landmarks.muladd_tan(tan, scale)
+                landmarks.add_tan(tan)
                 return landmarks.tan
 
-            def muladd_cotan(cotan):
+            def add_cotan(cotan):
                 landmarks.fill_cotan(self.cotan)
-                landmarks.muladd_cotan(cotan, scale)
+                landmarks.add_cotan(cotan)
                 return landmarks.cotan
 
             self.gd.requires_grad_()
@@ -136,15 +136,14 @@ def make_test_landmarks(dim):
             self.cotan.requires_grad_()
 
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
-            scale = 2.
 
-            gd_mul = torch.rand_like(self.gd, requires_grad=True)
-            tan_mul = torch.rand_like(self.tan, requires_grad=True)
-            cotan_mul = torch.rand_like(self.cotan, requires_grad=True)
+            gd_add = torch.rand_like(self.gd, requires_grad=True)
+            tan_add = torch.rand_like(self.tan, requires_grad=True)
+            cotan_add = torch.rand_like(self.cotan, requires_grad=True)
 
-            self.assertTrue(gradcheck(muladd_gd, (gd_mul), raise_exception=False))
-            self.assertTrue(gradcheck(muladd_tan, (tan_mul), raise_exception=False))
-            self.assertTrue(gradcheck(muladd_cotan, (cotan_mul), raise_exception=False))
+            self.assertTrue(gradcheck(add_gd, (gd_add), raise_exception=False))
+            self.assertTrue(gradcheck(add_tan, (tan_add), raise_exception=False))
+            self.assertTrue(gradcheck(add_cotan, (cotan_add), raise_exception=False))
 
         def test_gradcheck_action(self):
             def action(gd, controls):

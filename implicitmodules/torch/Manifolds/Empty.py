@@ -1,10 +1,10 @@
 import torch
 
-from implicitmodules.torch.Manifolds.Abstract import Manifold
+from implicitmodules.torch.Manifolds.Abstract import BaseManifold
 from implicitmodules.torch.StructuredFields import StructuredField_Null
 
 
-class EmptyManifold(Manifold):
+class EmptyManifold(BaseManifold):
     def __init__(self):
         super().__init__()
 

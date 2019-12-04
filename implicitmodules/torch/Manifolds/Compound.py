@@ -1,14 +1,13 @@
-from implicitmodules.torch.Manifolds.Abstract import Manifold
 from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
 
 
-class CompoundManifold(Manifold):
+class CompoundManifold():
     def __init__(self, manifolds):
         super().__init__()
         self.__manifolds = manifolds
 
-    def to(self, device):
-        [man.to(device) for man in self.__manifolds]
+    def to_(self, device):
+        [man.to_(device) for man in self.__manifolds]
 
     @property
     def device(self):

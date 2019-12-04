@@ -1,4 +1,5 @@
 import math
+from collections import Iterable
 
 import torch
 from torchviz import make_dot
@@ -38,4 +39,30 @@ def is_inside_shape(shape, points):
 
 def make_grad_graph(tensor, filename):
     make_dot(tensor).render(filename)
+
+
+def are_tensors_properties_equal(tensors, prop):
+    """ Check if all tensors share the same property given by prop(tensor). """
+    assert isinstance(tensors, Iterable)
+
+    # If tensors is not a collection but a tensor, returns its property.
+    if isinstance(tensors, torch.Tensor):
+        return prop(tensors)
+
+    all_same = (list(prop(tensor) for tensor in tensors if prop(tensor) is not None).count(prop(tensors[0])) == len(tensors))
+
+    if all_same:
+        return list(prop(tensor) for tensor in tensors if prop(tensor) is not None)[0]
+    else:
+        return None
+
+
+def tensors_device(tensors, filter_none=False):
+    """ Returns the common device on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are on different devices."""
+    return are_tensors_properties_equal(tensors, lambda tensor: tensor.device, filter_none)
+
+
+def tensors_dtype(tensors, filter_none=False):
+    """ Returns the common dtypes on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are of different dtypes."""
+    return are_tensors_properties_equal(tensors, lambda tensor: tensor.dtype, filter_none)
 
