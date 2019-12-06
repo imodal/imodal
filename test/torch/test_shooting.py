@@ -33,10 +33,14 @@ def make_test_shooting(dim, backend):
             self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent)
             if fill_cotan:
                 self.silent.manifold.fill_cotan(self.cotan_silent)
+            else:
+                self.silent.manifold.fill_cotan(torch.zeros_like(self.cotan_silent, requires_grad=True))
 
             self.trans = im.DeformationModules.ImplicitModule0(dim, self.nb_pts_trans, self.sigma, nu=self.nu, gd=self.gd_trans, backend=backend)
             if fill_cotan:
                 self.trans.manifold.fill_cotan(self.cotan_trans)
+            else:
+                self.trans.manifold.fill_cotan(torch.zeros_like(self.cotan_trans, requires_grad=True))
 
             return im.HamiltonianDynamic.Hamiltonian([self.silent, self.trans])        
 

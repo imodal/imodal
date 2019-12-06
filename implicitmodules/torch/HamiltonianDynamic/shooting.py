@@ -25,7 +25,7 @@ def shoot_euler(h, it, controls=None, intermediates=False):
     step = 1. / it
 
     if intermediates:
-        intermediate_states = [h.module.manifold.copy(requires_grad=False)]
+        intermediate_states = [h.module.manifold.clone(requires_grad=False)]
         intermediate_controls = []
 
     for i in range(it):
@@ -45,11 +45,12 @@ def shoot_euler(h, it, controls=None, intermediates=False):
 
         d_gd = h.module.manifold.roll_gd(delta[:int(len(delta)/2)])
         d_mom = h.module.manifold.roll_cotan(delta[int(len(delta)/2):])
-        h.module.manifold.muladd_gd(d_mom, step)
-        h.module.manifold.muladd_cotan(d_gd, -step)
+
+        h.module.manifold.add_gd(list(map(lambda x: step*x, d_mom)))
+        h.module.manifold.add_cotan(list(map(lambda x: -step*x, d_gd)))
 
         if intermediates:
-            intermediate_states.append(h.module.manifold.copy(requires_grad=False))
+            intermediate_states.append(h.module.manifold.clone(requires_grad=False))
             intermediate_controls.append(list(map(lambda x: x.detach().clone(), h.module.controls)))
 
     if intermediates:
@@ -102,12 +103,12 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
 
                 self.it = self.it + 1
 
-                return torch.cat(list(map(lambda x: x.view(-1), [*mom_out, *list(map(lambda x: -x, gd_out))])), dim=0).view(2, -1)
+                return torch.cat(list(map(lambda x: x.flatten(), [*mom_out, *list(map(lambda x: -x, gd_out))])), dim=0).view(2, -1)
     steps = it + 1
     if intermediates:
         intermediate_controls = []
 
-    init_manifold = h.module.manifold.copy()
+    init_manifold = h.module.manifold.clone()
     H = TorchDiffEqHamiltonianGrad.from_hamiltonian(h)
     H.intermediates = intermediates
     H.in_controls = controls
@@ -138,7 +139,7 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
                     mom.append(x_1[i, 1, index:index+m.manifold.numel_gd[j]].detach().view(-1, m.dim))
                     index = index + m.manifold.numel_gd[j]
 
-            intermediate_states.append(init_manifold.copy())
+            intermediate_states.append(init_manifold.clone())
 
             intermediate_states[-1].fill_gd(intermediate_states[-1].roll_gd(gd))
             intermediate_states[-1].fill_cotan(intermediate_states[-1].roll_cotan(mom))

@@ -15,7 +15,7 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 def make_test_landmarks(dim):
     class TestLandmarks(unittest.TestCase):
         def setUp(self):
-            self.nb_pts = 10
+            self.nb_pts = 3
             self.gd = torch.randn(self.nb_pts, dim, requires_grad=True)
             self.tan = torch.randn(self.nb_pts, dim, requires_grad=True)
             self.cotan = torch.randn(self.nb_pts, dim, requires_grad=True)
@@ -42,6 +42,15 @@ def make_test_landmarks(dim):
             self.assertTrue(torch.all(torch.eq(landmarks.tan, self.tan)))
             self.assertTrue(torch.all(torch.eq(landmarks.cotan, self.cotan)))
 
+        def test_clone(self):
+            landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            landmarks2 = landmarks.clone()
+
+            self.assertNotEqual(id(landmarks), id(landmarks2))
+            self.assertNotEqual(id(landmarks.gd), id(landmarks2.gd))
+            self.assertNotEqual(id(landmarks.tan), id(landmarks2.tan))
+            self.assertNotEqual(id(landmarks.cotan), id(landmarks2.cotan))
+
         def test_assign(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts)
 
@@ -53,12 +62,12 @@ def make_test_landmarks(dim):
             self.assertTrue(torch.allclose(landmarks.tan, self.tan))
             self.assertTrue(torch.allclose(landmarks.cotan, self.cotan))
 
-        def test_muladd(self):
+        def test_add(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
-            d_gd = torch.rand(self.nb_pts, dim, requires_grad=True)
-            d_tan = torch.rand(self.nb_pts, dim, requires_grad=True)
-            d_cotan = torch.rand(self.nb_pts, dim, requires_grad=True)
+            d_gd = torch.randn(self.nb_pts, dim, requires_grad=True)
+            d_tan = torch.randn(self.nb_pts, dim, requires_grad=True)
+            d_cotan = torch.randn(self.nb_pts, dim, requires_grad=True)
 
             landmarks.add_gd(d_gd)
             landmarks.add_tan(d_tan)
@@ -81,10 +90,10 @@ def make_test_landmarks(dim):
             self.assertEqual(man.gd.shape, torch.Size([self.nb_pts, dim]))
 
         def test_inner_prod_field(self):
-            landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            landmarks = im.Manifolds.Landmarks(dim, self.nb_pts, gd=self.gd, cotan=self.cotan)
 
-            nb_pts_mod = 15
-            trans = im.DeformationModules.Translations(dim, nb_pts_mod, 0.2, gd=torch.randn(nb_pts_mod, dim))
+            nb_pts_mod = 5
+            trans = im.DeformationModules.Translations(dim, nb_pts_mod, 0.1, gd=torch.randn(nb_pts_mod, dim))
             trans.fill_controls(torch.rand_like(trans.manifold.gd))
 
             inner_prod = landmarks.inner_prod_field(trans.field_generator())
@@ -159,15 +168,19 @@ def make_test_landmarks(dim):
             self.assertTrue(gradcheck(action, (self.gd, controls), raise_exception=False))
 
         def test_gradcheck_inner_prod_field(self):
-            def inner_prod_field(gd, controls):
-                module = im.DeformationModules.Translations(dim, self.nb_pts, 0.2, gd=gd)
+            def inner_prod_field(gd, cotan, controls):
+                module = im.DeformationModules.Translations(dim, self.nb_pts, 0.2, gd=gd, cotan=cotan)
                 module.fill_controls(controls)
+                # print(module.manifold.gd)
+                # print(module.manifold.tan)
+                # print(module.manifold.cotan)
                 return module.manifold.inner_prod_field(module.field_generator())
 
             self.gd.requires_grad_()
-            controls = torch.rand_like(self.gd, requires_grad=True)
+            self.cotan.requires_grad_()
+            controls = torch.randn_like(self.gd, requires_grad=True)
 
-            self.assertTrue(gradcheck(inner_prod_field, (self.gd, controls), raise_exception=False))
+            self.assertTrue(gradcheck(inner_prod_field, (self.gd, self.cotan, controls), raise_exception=True))
 
     return TestLandmarks
 
@@ -199,7 +212,7 @@ def make_test_compound(dim):
             self.assertEqual(self.compound.nb_pts, self.nb_pts0+self.nb_pts1)
             self.assertEqual(self.compound.dim, dim)
             self.assertEqual(sum(self.compound.numel_gd), dim*self.nb_pts0+dim*self.nb_pts1)
-            self.assertEqual(self.compound.nb_manifold, 2)
+            self.assertEqual(len(self.compound.manifolds), 2)
             self.assertEqual(len(self.compound.gd), 2)
             self.assertTrue(torch.all(torch.eq(self.compound.gd[0], self.gd0)))
             self.assertTrue(torch.all(torch.eq(self.compound.gd[1], self.gd1)))
@@ -232,8 +245,7 @@ def make_test_compound(dim):
             self.assertTrue(torch.all(torch.eq(self.compound[1].tan, self.tan1)))
             self.assertTrue(torch.all(torch.eq(self.compound[1].cotan, self.cotan1)))
 
-        def test_muladd(self):
-            scale = 1.5
+        def test_add(self):
             d_gd0 = torch.rand(self.nb_pts0, dim)
             d_tan0 = torch.rand(self.nb_pts0, dim)
             d_cotan0 = torch.rand(self.nb_pts0, dim)
@@ -241,25 +253,25 @@ def make_test_compound(dim):
             d_tan1 = torch.rand(self.nb_pts1, dim)
             d_cotan1 = torch.rand(self.nb_pts1, dim)
 
-            self.compound.muladd_gd([d_gd0, d_gd1], scale)
-            self.compound.muladd_tan([d_tan0, d_tan1], scale)
-            self.compound.muladd_cotan([d_cotan0, d_cotan1], scale)
+            self.compound.add_gd([d_gd0, d_gd1])
+            self.compound.add_tan([d_tan0, d_tan1])
+            self.compound.add_cotan([d_cotan0, d_cotan1])
 
-            self.assertTrue(torch.allclose(self.compound[0].gd, self.gd0+scale*d_gd0))
-            self.assertTrue(torch.allclose(self.compound[0].tan, self.tan0+scale*d_tan0))
-            self.assertTrue(torch.allclose(self.compound[0].cotan, self.cotan0+scale*d_cotan0))
-            self.assertTrue(torch.allclose(self.compound[1].gd, self.gd1+scale*d_gd1))
-            self.assertTrue(torch.allclose(self.compound[1].tan, self.tan1+scale*d_tan1))
-            self.assertTrue(torch.allclose(self.compound[1].cotan, self.cotan1+scale*d_cotan1))
+            self.assertTrue(torch.allclose(self.compound[0].gd, self.gd0+d_gd0))
+            self.assertTrue(torch.allclose(self.compound[0].tan, self.tan0+d_tan0))
+            self.assertTrue(torch.allclose(self.compound[0].cotan, self.cotan0+d_cotan0))
+            self.assertTrue(torch.allclose(self.compound[1].gd, self.gd1+d_gd1))
+            self.assertTrue(torch.allclose(self.compound[1].tan, self.tan1+d_tan1))
+            self.assertTrue(torch.allclose(self.compound[1].cotan, self.cotan1+d_cotan1))
 
         def test_action(self):
-            nb_pts_mod = 15
+            nb_pts_mod = 5
             trans = im.DeformationModules.Translations(dim, nb_pts_mod, 0.2, gd=torch.randn(nb_pts_mod, dim))
 
             man = self.compound.infinitesimal_action(trans.field_generator())
 
             self.assertIsInstance(man, im.Manifolds.CompoundManifold)
-            self.assertTrue(man.nb_manifold, self.compound.nb_manifold)
+            self.assertTrue(len(man.manifolds), len(self.compound.manifolds))
             self.assertEqual(man[0].gd.shape, torch.Size([self.nb_pts0, dim]))
             self.assertEqual(man[1].gd.shape, torch.Size([self.nb_pts1, dim]))
 
@@ -285,22 +297,21 @@ def make_test_compound(dim):
             self.assertTrue(gradcheck(fill_cotan, cotan, raise_exception=False))
 
         def test_gradcheck_muladd(self):
-            def muladd_gd(*gd_mul):
+            def add_gd(*gd_mul):
                 self.compound.fill_gd(gd)
-                self.compound.muladd_gd([*gd_mul], scale)
+                self.compound.add_gd([*gd_mul])
                 return self.compound.gd
 
-            def muladd_tan(*tan_mul):
+            def add_tan(*tan_mul):
                 self.compound.fill_tan(tan)
-                self.compound.muladd_tan([*tan_mul], scale)
+                self.compound.add_tan([*tan_mul])
                 return self.compound.tan
 
-            def muladd_cotan(*cotan_mul):
+            def add_cotan(*cotan_mul):
                 self.compound.fill_cotan(cotan)
-                self.compound.muladd_cotan([*cotan_mul], scale)
+                self.compound.add_cotan([*cotan_mul])
                 return self.compound.cotan
 
-            scale = 2.
             gd = [self.gd0.requires_grad_(), self.gd1.requires_grad_()]
             tan = [self.tan0.requires_grad_(), self.tan1.requires_grad_()]
             cotan = [self.cotan0.requires_grad_(), self.cotan1.requires_grad_()]
@@ -312,9 +323,9 @@ def make_test_compound(dim):
             cotan_mul0 = torch.rand_like(self.cotan0 , requires_grad=True)
             cotan_mul1 = torch.rand_like(self.cotan1, requires_grad=True)
 
-            self.assertTrue(gradcheck(muladd_gd, [gd_mul0, gd_mul1], raise_exception=False))
-            self.assertTrue(gradcheck(muladd_tan, [tan_mul0, tan_mul1], raise_exception=False))
-            self.assertTrue(gradcheck(muladd_cotan, [cotan_mul0, cotan_mul1], raise_exception=False))
+            self.assertTrue(gradcheck(add_gd, [gd_mul0, gd_mul1], raise_exception=False))
+            self.assertTrue(gradcheck(add_tan, [tan_mul0, tan_mul1], raise_exception=False))
+            self.assertTrue(gradcheck(add_cotan, [cotan_mul0, cotan_mul1], raise_exception=False))
 
         def test_gradcheck_action(self):
             def action(gd0, gd1, controls0, controls1):

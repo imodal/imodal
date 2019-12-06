@@ -26,9 +26,9 @@ class ImplicitModule0Base(DeformationModule):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff)
 
-    def to(self, device):
-        self.__manifold.to(device)
-        self.__controls.to(device)
+    def to_(self, device):
+        self.__manifold.to_(device)
+        self.__controls = self.__controls.to(device)
 
     @property
     def device(self):

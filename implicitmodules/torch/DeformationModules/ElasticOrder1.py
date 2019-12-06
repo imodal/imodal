@@ -34,8 +34,8 @@ class ImplicitModule1Base(DeformationModule):
         return self.__manifold.dim
 
     def to(self, device):
-        self.__manifold.to(device)
-        self.__controls.to(device)
+        self.__manifold = self.__manifold.to(device)
+        self.__controls = self.__controls.to(device)
 
     @property
     def device(self):
@@ -210,7 +210,7 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
 
         c, _ = torch.solve(torch.mm(aq.t(), tlambdas.view(-1, 1)), aqkiaq)
 
-        self.controls = c.reshape(-1)
+        self.controls = c.flatten()
         self.__compute_moments()
 
     def compute_moments(self):

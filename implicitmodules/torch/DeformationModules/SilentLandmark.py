@@ -17,8 +17,8 @@ class SilentLandmarksBase(DeformationModule):
     def build(cls, dim, nb_pts, gd=None, tan=None, cotan=None):
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan))
 
-    def to(self, device):
-        self.__manifold.to(device)
+    def to_(self, device):
+        self.__manifold.to_(device)
 
     @property
     def device(self):

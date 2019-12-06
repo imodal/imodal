@@ -97,10 +97,9 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(torch.all(torch.eq(stiefel.cotan[0], self.cotan[0])))
             self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1])))
 
-        def test_muladd(self):
+        def test_add(self):
             stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
-            scale = 1.5
             d_gd = (torch.rand(self.nb_pts, dim),
                     torch.rand(self.nb_pts, dim, dim))
             d_tan = (torch.rand(self.nb_pts, dim),
@@ -108,16 +107,16 @@ def make_test_stiefel(dim, backend):
             d_cotan = (torch.rand(self.nb_pts, dim),
                        torch.rand(self.nb_pts, dim, dim))
 
-            stiefel.muladd_gd(d_gd, scale)
-            stiefel.muladd_tan(d_tan, scale)
-            stiefel.muladd_cotan(d_cotan, scale)
+            stiefel.add_gd(d_gd)
+            stiefel.add_tan(d_tan)
+            stiefel.add_cotan(d_cotan)
 
-            self.assertTrue(torch.all(torch.eq(stiefel.gd[0], self.gd[0] + scale * d_gd[0])))
-            self.assertTrue(torch.all(torch.eq(stiefel.gd[1], self.gd[1] + scale * d_gd[1])))
-            self.assertTrue(torch.all(torch.eq(stiefel.tan[0], self.tan[0] + scale * d_tan[0])))
-            self.assertTrue(torch.all(torch.eq(stiefel.tan[1], self.tan[1] + scale * d_tan[1])))
-            self.assertTrue(torch.all(torch.eq(stiefel.cotan[0], self.cotan[0] + scale * d_cotan[0])))
-            self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1] + scale * d_cotan[1])))
+            self.assertTrue(torch.all(torch.eq(stiefel.gd[0], self.gd[0] + d_gd[0])))
+            self.assertTrue(torch.all(torch.eq(stiefel.gd[1], self.gd[1] + d_gd[1])))
+            self.assertTrue(torch.all(torch.eq(stiefel.tan[0], self.tan[0] + d_tan[0])))
+            self.assertTrue(torch.all(torch.eq(stiefel.tan[1], self.tan[1] + d_tan[1])))
+            self.assertTrue(torch.all(torch.eq(stiefel.cotan[0], self.cotan[0] + d_cotan[0])))
+            self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1] + d_cotan[1])))
 
         def test_action(self):
             stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
@@ -168,20 +167,20 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(gradcheck(fill_tan, (self.tan_pts, self.tan_mat), raise_exception=False))
             self.assertTrue(gradcheck(fill_cotan, (self.cotan_pts, self.cotan_mat), raise_exception=False))
 
-        def test_gradcheck_muladd(self):
-            def muladd_gd(gd_pts, gd_mat):
+        def test_gradcheck_add(self):
+            def add_gd(gd_pts, gd_mat):
                 stiefel.fill_gd(self.gd)
-                stiefel.muladd_gd((gd_pts, gd_mat), scale)
+                stiefel.add_gd((gd_pts, gd_mat))
                 return stiefel.gd[0], stiefel.gd[1]
 
-            def muladd_tan(tan_pts, tan_mat):
+            def add_tan(tan_pts, tan_mat):
                 stiefel.fill_tan(self.tan)
-                stiefel.muladd_tan((tan_pts, tan_mat), scale)
+                stiefel.add_tan((tan_pts, tan_mat))
                 return stiefel.tan[0], stiefel.cotan[1]
 
-            def muladd_cotan(cotan_pts, cotan_mat):
+            def add_cotan(cotan_pts, cotan_mat):
                 stiefel.fill_cotan(self.cotan)
-                stiefel.muladd_cotan((cotan_pts, cotan_mat), scale)
+                stiefel.add_cotan((cotan_pts, cotan_mat))
                 return stiefel.cotan[0], stiefel.cotan[1]
 
             stiefel = im.Manifolds.Stiefel(dim, self.nb_pts)
@@ -193,8 +192,6 @@ def make_test_stiefel(dim, backend):
             self.cotan[0].requires_grad_()
             self.cotan[1].requires_grad_()
 
-            scale = 2.
-
             gd_mul = (torch.rand_like(self.gd[0], requires_grad=True),
                       torch.rand_like(self.gd[1], requires_grad=True))
             tan_mul = (torch.rand_like(self.tan[0], requires_grad=True),
@@ -202,13 +199,13 @@ def make_test_stiefel(dim, backend):
             cotan_mul = (torch.rand_like(self.cotan[0], requires_grad=True),
                          torch.rand_like(self.cotan[1], requires_grad=True))
 
-            self.assertTrue(gradcheck(muladd_gd, gd_mul, raise_exception=False))
-            self.assertTrue(gradcheck(muladd_tan, tan_mul, raise_exception=False))
-            self.assertTrue(gradcheck(muladd_cotan, cotan_mul, raise_exception=False))
+            self.assertTrue(gradcheck(add_gd, gd_mul, raise_exception=False))
+            self.assertTrue(gradcheck(add_tan, tan_mul, raise_exception=False))
+            self.assertTrue(gradcheck(add_cotan, cotan_mul, raise_exception=False))
 
         def test_gradcheck_action(self):
             def action(gd_pts, gd_mat, controls):
-                module = im.DeformationModules.ImplicitModule1(dim, self.nb_pts, 0.01, C, nu=0.01, gd=(gd_pts, gd_mat), backend=backend)
+                module = im.DeformationModules.ImplicitModule1(dim, self.nb_pts, 0.001, C, nu=0.01, gd=(gd_pts, gd_mat), backend=backend)
                 module.fill_controls(controls)
                 stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=(gd_pts, gd_mat))
                 man = stiefel.infinitesimal_action(module.field_generator())

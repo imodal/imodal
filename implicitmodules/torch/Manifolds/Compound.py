@@ -1,29 +1,25 @@
 from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
+from implicitmodules.torch.Manifolds.Abstract import BaseManifold
 
 
-class CompoundManifold():
+class CompoundManifold(BaseManifold):
     def __init__(self, manifolds):
         super().__init__()
         self.__manifolds = manifolds
 
-    def to_(self, device):
-        [man.to_(device) for man in self.__manifolds]
+    def to_device(self, device):
+        [man.to_device(device) for man in self.__manifolds]
 
     @property
     def device(self):
         return self.__manifolds[0].device
 
-    def copy(self, requires_grad=True):
-        manifolds = [m.copy(requires_grad=requires_grad) for m in self.__manifolds]
-        return CompoundManifold(manifolds)
+    def clone(self, requires_grad=True):
+        return CompoundManifold([m.clone(requires_grad=requires_grad) for m in self.__manifolds])
 
     @property
     def manifolds(self):
         return self.__manifolds
-
-    @property
-    def nb_manifold(self):
-        return len(self.__manifolds)
 
     def __getitem__(self, index):
         return self.__manifolds[index]
@@ -100,17 +96,17 @@ class CompoundManifold():
     tan = property(__get_tan, fill_tan)
     cotan = property(__get_cotan, fill_cotan)
 
-    def muladd_gd(self, gd, scale):
+    def add_gd(self, gd):
         for i in range(len(self.__manifolds)):
-            self.__manifolds[i].muladd_gd(gd[i], scale)
+            self.__manifolds[i].add_gd(gd[i])
 
-    def muladd_tan(self, tan, scale):
+    def add_tan(self, tan):
         for i in range(len(self.__manifolds)):
-            self.__manifolds[i].muladd_tan(tan[i], scale)
+            self.__manifolds[i].add_tan(tan[i])
 
-    def muladd_cotan(self, cotan, scale):
+    def add_cotan(self, cotan):
         for i in range(len(self.__manifolds)):
-            self.__manifolds[i].muladd_cotan(cotan[i], scale)
+            self.__manifolds[i].add_cotan(cotan[i])
 
     def negate_gd(self):
         for m in self.__manifolds:
