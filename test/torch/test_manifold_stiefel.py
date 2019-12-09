@@ -209,7 +209,7 @@ def make_test_stiefel(dim, backend):
                 module.fill_controls(controls)
                 stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=(gd_pts, gd_mat))
                 man = stiefel.infinitesimal_action(module.field_generator())
-                return man.gd[0], man.gd[1], man.tan[0], man.tan[1], man.cotan[0], man.cotan[1]
+                return man.gd[0], man.gd[1], man.tan[0], man.tan[1]
 
             self.gd_pts.requires_grad_()
             self.gd_mat.requires_grad_()

@@ -105,10 +105,14 @@ class ModelFittingScipy(ModelFitting):
         if not all(param.is_contiguous() for param in self.model.parameters):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
+        # print("====")
+        # print([param.grad for param in model.parameters])
+        # print([param.requires_grad for param in model.parameters])
+        # print("****")
         if grad:
-            tensors = [param.grad.data.view(-1).cpu().numpy() for param in self.model.parameters]
+            tensors = [param.grad.data.view(-1).cpu().numpy() for param in model.parameters]
         else:
-            tensors = [param.data.view(-1).cpu().numpy() for param in self.model.parameters]
+            tensors = [param.data.view(-1).cpu().numpy() for param in model.parameters]
 
         return np.ascontiguousarray(np.hstack(tensors), dtype='float64')
 

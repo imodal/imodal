@@ -11,7 +11,7 @@ class EmptyManifold(BaseManifold):
     def to(self, device):
         pass
 
-    def copy(self, requires_grad=True):
+    def clone(self, requires_grad=True):
         return EmptyManifold()
 
     @property
@@ -57,13 +57,13 @@ class EmptyManifold(BaseManifold):
         pass
 
     def __get_gd(self):
-        return torch.tensor([])
+        return torch.tensor([], requires_grad=True)
 
     def __get_tan(self):
-        return torch.tensor([])
+        return torch.tensor([], requires_grad=True)
  
     def __get_cotan(self):
-        return torch.tensor([])
+        return torch.tensor([], requires_grad=True)
 
     def fill(self, manifold, copy=False, requires_grad=True):
         pass
@@ -75,6 +75,15 @@ class EmptyManifold(BaseManifold):
         pass
 
     def fill_cotan(self, cotan, copy=False, requires_grad=True):
+        pass
+
+    def fill_gd_zeros(self, requires_grad=True):
+        pass
+
+    def fill_tan_zeros(self, requires_grad=True):
+        pass
+
+    def fill_cotan_zeros(self, requires_grad=True):
         pass
 
     gd = property(__get_gd, fill_gd)

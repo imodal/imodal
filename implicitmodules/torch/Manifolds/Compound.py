@@ -7,14 +7,14 @@ class CompoundManifold(BaseManifold):
         super().__init__()
         self.__manifolds = manifolds
 
-    def to_device(self, device):
-        [man.to_device(device) for man in self.__manifolds]
+    def to_(self, *argv, **kwargs):
+        [man.to_(*argv, **kwargs) for man in self.__manifolds]
 
     @property
     def device(self):
         return self.__manifolds[0].device
 
-    def clone(self, requires_grad=True):
+    def clone(self, requires_grad=False):
         return CompoundManifold([m.clone(requires_grad=requires_grad) for m in self.__manifolds])
 
     @property

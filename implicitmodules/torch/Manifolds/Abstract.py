@@ -24,7 +24,7 @@ class BaseManifold:
 class ManifoldTensor:
     def __init__(self, shapes):
         # TODO: have a lazy initialisation approach
-        self.__tensors = list(torch.empty(shape) for shape in shapes)
+        self.__tensors = list(torch.empty(shape, requires_grad=True) for shape in shapes)
 
         self.__shapes = shapes
 
@@ -66,7 +66,8 @@ class ManifoldTensor:
     def __get(self):
         return self.__tensors
 
-    def fill(self, tensors, clone, requires_grad):
+    def fill(self, tensors, clone=False, requires_grad=None):
+        # if clone=False and requires_grad=None, should just assign tensor without changing requires_grad flag
         # assert (len(self.__shapes) == 1) or (isinstance(tensors, Iterable) and (len(self.__shapes)) == len(tensors))
         # assert (len(self.__shapes) > 1) or isinstance(tensors, torch.Tensor) and (len(self.__shapes) == 1)
 
@@ -77,20 +78,27 @@ class ManifoldTensor:
         self.__device = device
 
         if len(self.__shapes) == 1 and isinstance(tensors, torch.Tensor):
-            if clone:
-                self.__tensors = (tensors.detach().clone().requires_grad_(requires_grad),)
-            else:
-                self.__tensors = (tensors,)
+            tensors = (tensors,)
+
+        if clone and requires_grad is not None:
+            self.__tensors = tuple(tensor.detach().clone().requires_grad_(requires_grad) for tensor in tensors)
+        elif clone and requires_grad is None:
+            self.__tensors = tuple(tensor.detach().clone().requires_grad_(tensor.requires_grad) for tensor in tensors)
         else:
-            if clone:
-                self.__tensors = tuple(tensor.detach().clone().requires_grad_(requires_grad) for tensor in tensors)
-            else:
-                self.__tensors = tuple(tensor for tensor in tensors)
+            self.__tensors = tuple(tensor for tensor in tensors)
+        # not clone and requires_grad is not None:
+            #self.__tensors = tuple(tensor.requires_grad_(requires_grad) for tensor in tensors)
+        # else:
+        #     print("hey")
+        #     self.__tensors = tuple(tensor for tensor in tensors)
 
     tensors = property(__get, fill)
 
-    def requires_grad(self, requires_grad):
-        (tensor.requires_grad_(requires_grad) for tensor in self.__tensors)
+    def fill_zeros(self, requires_grad=False):
+        self.fill(tuple(torch.zeros(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+
+    def requires_grad_(self, requires_grad):
+        [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
 
     def add(self, tensors):
         if len(self.__shapes) == 1:
@@ -138,9 +146,9 @@ class Manifold(BaseManifold):
 
     def clone(self, requires_grad=False):
         out = copy.deepcopy(self)
-        out.__gd.requires_grad(requires_grad)
-        out.__tan.requires_grad(requires_grad)
-        out.__cotan.requires_grad(requires_grad)
+        out.__gd.requires_grad_(requires_grad)
+        out.__tan.requires_grad_(requires_grad)
+        out.__cotan.requires_grad_(requires_grad)
 
         return out
 
@@ -249,6 +257,15 @@ class Manifold(BaseManifold):
     def fill_cotan(self, cotan, copy=False, requires_grad=True):
         self.__cotan.fill(cotan, copy, requires_grad)
         self.__device = self.__cotan.device
+
+    def fill_gd_zeros(self, requires_grad=True):
+        self.__gd.fill_zeros(requires_grad=requires_grad)
+
+    def fill_tan_zeros(self, requires_grad=True):
+        self.__tan.fill_zeros(requires_grad=requires_grad)
+
+    def fill_cotan_zeros(self, requires_grad=True):
+        self.__cotan.fill_zeros(requires_grad=requires_grad)
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)

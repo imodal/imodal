@@ -22,7 +22,10 @@ class Model:
 
         if other_parameters is None:
             other_parameters = []
-        self.__init_manifold = CompoundModule(self.__modules).manifold.copy()
+
+        [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
+        self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
+
         # We copy each parameters
         self.__init_other_parameters = []
         for p in other_parameters:
@@ -100,8 +103,9 @@ class Model:
         self.__parameters = []
 
         if self.__fit_moments:
-            for i in range(len(self.__modules)):
-                self.__parameters.extend(self.__init_manifold[i].unroll_cotan())
+            self.__parameters.extend(self.__init_manifold.unroll_cotan())
+            # for i in range(len(self.__modules)):
+            #     self.__parameters.extend(self.__init_manifold[i].unroll_cotan())
 
         if self.__fit_gd is not None:
             for i in range(len(self.__modules)):
@@ -148,12 +152,12 @@ class ModelPointsRegistration(Model):
                 # Weights are provided
                 self.weights.insert(i, source[i][1])
                 self.__source_dim.append(source[i][0].shape[1])
-                modules.insert(i, SilentLandmarks.build(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].clone().requires_grad_()))
+                modules.insert(i, SilentLandmarks(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].clone().requires_grad_(), cotan=torch.zeros_like(source[i][0], requires_grad=True)))
 
             elif isinstance(source[i], torch.Tensor):
                 # No weights provided
                 self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks.build(source[i].shape[1], source[i].shape[0], gd=source[i].clone().requires_grad_()))
+                modules.insert(i, SilentLandmarks(source[i].shape[1], source[i].shape[0], gd=source[i].clone().requires_grad_(), cotan=torch.zeros_like(source[i], requires_grad=True)))
                 self.__source_dim.append(source[i].shape[1])
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)

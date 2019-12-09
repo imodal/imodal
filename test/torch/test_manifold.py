@@ -159,7 +159,7 @@ def make_test_landmarks(dim):
                 module = im.DeformationModules.Translations(dim, self.nb_pts, 0.1, gd=gd)
                 module.fill_controls(controls)
                 man = module.manifold.infinitesimal_action(module.field_generator())
-                return man.gd, man.tan, man.cotan
+                return man.gd, man.tan
 
             self.gd.requires_grad_()
             controls = torch.rand_like(self.gd, requires_grad=True)
@@ -336,13 +336,13 @@ def make_test_compound(dim):
 
                 man = self.compound.infinitesimal_action(
                     im.DeformationModules.CompoundModule([module0, module1]))
-                return man.gd[0], man.gd[1], man.tan[0], man.tan[1], man.cotan[0], man.cotan[1]
+                return man.gd[0], man.gd[1], man.tan[0], man.tan[1]
 
             self.gd0.requires_grad_()
             self.gd1.requires_grad_()
 
-            controls0 = torch.rand_like(self.gd0, requires_grad=True)
-            controls1 = torch.rand_like(self.gd1, requires_grad=True)
+            controls0 = torch.randn_like(self.gd0, requires_grad=True)
+            controls1 = torch.randn_like(self.gd1, requires_grad=True)
 
             self.assertTrue(gradcheck(action, [self.gd0, self.gd1, controls0, controls1], raise_exception=True))
 
