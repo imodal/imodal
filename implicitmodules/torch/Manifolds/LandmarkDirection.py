@@ -43,9 +43,9 @@ class LandmarksDirection(Manifold):
         v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, device=self.device, backend=backend)
 
         if self.__transport == 'vector':
-            vu = StructuredField_0_u(self.gd[0], self.cotan[1], self.__directions, self.sigma)
+            vu = StructuredField_0_u(self.gd[0], self.cotan[1], self.gd[1], sigma)
         else:
-            vu = StructuredField_0_u(self.gd[0], -self.__directions, self.cotan[1], self.sigma)
+            vu = StructuredField_0_u(self.gd[0], -self.gd[1], self.cotan[1], sigma)
 
         return CompoundStructuredField([v0, vu])
 

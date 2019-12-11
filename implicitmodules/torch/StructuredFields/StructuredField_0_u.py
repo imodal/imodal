@@ -8,7 +8,7 @@ from implicitmodules.torch.Kernels import K_xy
 from pykeops.torch import Genred
 
 
-class StructuredField_0(SupportStructuredField):
+class StructuredField_0_u(SupportStructuredField):
     def __init__(self, support, moments, directions, sigma, device=None, backend=None):
         super().__init__(support, moments)
         self.__sigma = sigma
@@ -57,13 +57,11 @@ class StructuredField_0(SupportStructuredField):
         dim = points.shape[1]
 
         if k == 0:
-            ker_vec = gauss_kernel(rel_differences(points, self.support), k, self.__sigma)
+            ker_vec = gauss_kernel(rel_differences(points, self.support), 1, self.__sigma)
             ker_vec = ker_vec.reshape((points.shape[0], self.support.shape[0]) + tuple(ker_vec.shape[1:]))
             D = torch.tensordot(torch.transpose(torch.tensordot(torch.eye(dim, device=self.device), ker_vec, dims=0), 0, 2), self.moments, dims=([2, 3], [1, 0]))
-            return torch.einsum('nik, nk->ni', D, self.__directions)
 
-            K_q = K_xy(points, self.support, self.__sigma)
-            return torch.mm(K_q, self.moments)
+            return torch.einsum('nik, nk->ni', D, self.__directions)
         else:
             raise NotImplementedError()
 

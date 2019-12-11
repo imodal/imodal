@@ -19,9 +19,9 @@ class OrientedTranslationsBase(DeformationModule):
         self.__controls = torch.zeros(self.__manifold.nb_pts, requires_grad=True)
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None):
+    def build(cls, dim, nb_pts, sigma, transport='vector', gd=None, tan=None, cotan=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(LandmarksDirection(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma)
+        return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma)
 
     def to_(self, device):
         self.__manifold.to_(device)
@@ -65,7 +65,7 @@ class OrientedTranslationsBase(DeformationModule):
         raise NotImplementedError
 
     def field_generator(self):
-        return StructuredField_0(self.__manifold.gd, self.__controls, self.__sigma, device=self.device, backend=self.backend)
+        return StructuredField_0(self.__manifold.gd[0], self.__controls.unsqueeze(1).repeat(1, self.dim)*self.__manifold.gd[1], self.__sigma, device=self.device, backend=self.backend)
 
     def adjoint(self, manifold):
         return manifold.cot_to_vs(self.__sigma, backend=self.backend)
@@ -80,18 +80,19 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
         return 'torch'
 
     def cost(self):
-        K_q = K_xx(self.manifold.gd, self.sigma)
+        K_q = K_xx(self.manifold.gd[0], self.sigma)
 
-        m = torch.mm(K_q, self.controls)
-        return 0.5 * torch.dot(m.flatten(), self.controls.flatten())
+        m = torch.mm(K_q, self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1])
+        return 0.5 * torch.dot(m.flatten(), (self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1]).flatten())
 
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
-        K_q = K_xx(self.manifold.gd, self.sigma)
+        Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
 
-        controls, _ = torch.solve(vs(self.manifold.gd), K_q)
-        self.controls = controls.contiguous()
+        controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
+
+        self.controls = controls.flatten().contiguous()
 
 
 class OrientedTranslations_KeOps(OrientedTranslationsBase):
