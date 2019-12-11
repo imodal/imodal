@@ -176,7 +176,7 @@ def make_test_stiefel(dim, backend):
             def add_tan(tan_pts, tan_mat):
                 stiefel.fill_tan(self.tan)
                 stiefel.add_tan((tan_pts, tan_mat))
-                return stiefel.tan[0], stiefel.cotan[1]
+                return stiefel.tan[0], stiefel.tan[1]
 
             def add_cotan(cotan_pts, cotan_mat):
                 stiefel.fill_cotan(self.cotan)

@@ -18,14 +18,6 @@ class Stiefel(Manifold):
     def dim(self):
         return self.__dim
 
-    def cot_to_vs(self, sigma, backend=None):
-        v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, backend=backend)
-        R = torch.einsum('nik, njk->nij', self.cotan[1], self.gd[1])
-
-        vm = StructuredField_m(self.gd[0], R, sigma, backend=backend)
-
-        return CompoundStructuredField([v0, vm])
-
     def inner_prod_field(self, field):
         man = self.infinitesimal_action(field)
 
@@ -41,4 +33,12 @@ class Stiefel(Manifold):
         vr = torch.bmm(S, self.gd[1])
 
         return Stiefel(self.__dim, self.nb_pts, gd=self.gd, tan=(vx, vr))
+
+    def cot_to_vs(self, sigma, backend=None):
+        v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, backend=backend)
+        R = torch.einsum('nik, njk->nij', self.cotan[1], self.gd[1])
+
+        vm = StructuredField_m(self.gd[0], R, sigma, backend=backend)
+
+        return CompoundStructuredField([v0, vm])
 

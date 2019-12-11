@@ -171,9 +171,6 @@ def make_test_landmarks(dim):
             def inner_prod_field(gd, cotan, controls):
                 module = im.DeformationModules.Translations(dim, self.nb_pts, 0.2, gd=gd, cotan=cotan)
                 module.fill_controls(controls)
-                # print(module.manifold.gd)
-                # print(module.manifold.tan)
-                # print(module.manifold.cotan)
                 return module.manifold.inner_prod_field(module.field_generator())
 
             self.gd.requires_grad_()
