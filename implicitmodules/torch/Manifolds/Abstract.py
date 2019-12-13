@@ -41,9 +41,11 @@ class ManifoldTensor:
 
     def __deepcopy__(self, memo):
         return self.clone()
+        # out = self.clone()
+        # memo[id(out)] = out
+        # return out
 
     def clone(self):
-        #tensors = list(tensor.detach().requires_grad_(requires_grad) for tensor in self.__tensors)
         out = ManifoldTensor(self.__shapes)
         out.fill(self.__tensors, True, False)
         return out
@@ -58,7 +60,9 @@ class ManifoldTensor:
         return [*self.__tensors]
 
     def roll(self, l):
-        if len(self.__shapes) == 1:
+        if len(self.__shapes) == 0:
+            return
+        elif len(self.__shapes) == 1:
             return l.pop(0)
         else:
             return [l.pop(0) for shape in self.__shapes]
@@ -151,6 +155,11 @@ class Manifold(BaseManifold):
         out.__cotan.requires_grad_(requires_grad)
 
         return out
+
+    # def __deepcopy__(self, memo):
+    #     out = self.clone()
+    #     memo[id(out)] = out
+    #     return out
 
     @property
     def nb_pts(self):

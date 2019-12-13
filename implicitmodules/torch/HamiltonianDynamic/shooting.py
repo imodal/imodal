@@ -43,11 +43,19 @@ def shoot_euler(h, it, controls=None, intermediates=False):
             if delta[i] is None:
                 delta[i] = torch.zeros_like(l[i])
 
-        d_gd = h.module.manifold.roll_gd(delta[:int(len(delta)/2)])
-        d_mom = h.module.manifold.roll_cotan(delta[int(len(delta)/2):])
-
-        h.module.manifold.add_gd(list(map(lambda x: step*x, d_mom)))
-        h.module.manifold.add_cotan(list(map(lambda x: -step*x, d_gd)))
+        print(len(delta))
+        # First extract gradients and multiply them by the step
+        d_gd = list(map(lambda x: step*x, delta[:int(len(delta)/2)]))
+        d_mom = list(map(lambda x: step*x, delta[int(len(delta)/2):]))
+        # print(len(d_gd))
+        # print(d_gd)
+        # Roll them back
+        rolled_d_gd = h.module.manifold.roll_gd(d_gd)
+        rolled_d_mom = h.module.manifold.roll_cotan(d_gd)
+        print(len(rolled_d_gd))
+        # Add them
+        h.module.manifold.add_gd(rolled_d_gd)
+        h.module.manifold.add_cotan(rolled_d_mom)
 
         if intermediates:
             intermediate_states.append(h.module.manifold.clone(requires_grad=False))

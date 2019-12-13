@@ -30,14 +30,6 @@ class StructuredField_0(SupportStructuredField):
             self.__keops_sigma = torch.tensor([1./self.__sigma/self.__sigma], dtype=support.dtype, device=self.__device)
             self.__keops_dtype = str(support.dtype).split(".")[1]
 
-        # print("==========")
-        # print(self.support.shape)
-        # print(self.moments.shape)
-        # print("==========")
-
-        if self.support.shape[0] == 24:
-            raise RuntimeError()
-
     @property
     def device(self):
         return self.__device
@@ -64,10 +56,6 @@ class StructuredField_0(SupportStructuredField):
         dim = points.shape[1]
 
         if k == 0:
-            # print(points.shape)
-            # print(self.support.shape)
-            # print(self.moments.shape)
-            # print("====")
             K_q = K_xy(points, self.support, self.__sigma)
             return torch.mm(K_q, self.moments)
         else:

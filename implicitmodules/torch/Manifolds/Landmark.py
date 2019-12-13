@@ -6,6 +6,9 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 
 class Landmarks(Manifold):
     def __init__(self, dim, nb_pts, gd=None, tan=None, cotan=None, device=None):
+        assert (gd is None) or ((gd.shape[0] == nb_pts) and (gd.shape[1] == dim))
+        assert (tan is None) or ((tan.shape[0] == nb_pts) and (tan.shape[1] == dim))
+        assert (cotan is None) or ((cotan.shape[0] == nb_pts) and (cotan.shape[1] == dim))
         super().__init__(((dim,),), nb_pts, gd, tan, cotan)
 
         self.to_(device=device)

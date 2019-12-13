@@ -9,6 +9,15 @@ from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredFi
 
 class Stiefel(Manifold):
     def __init__(self, dim, nb_pts, gd=None, tan=None, cotan=None, device=None):
+        assert (gd is None) or ((gd[0].shape[0] == nb_pts) and (gd[0].shape[1] == dim) and\
+                                (gd[1].shape[0] == nb_pts) and (gd[1].shape[1] == dim) and\
+                                (gd[1].shape[2] == dim))
+        assert (tan is None) or ((tan[0].shape[0] == nb_pts) and (tan[0].shape[1] == dim) and\
+                                 (tan[1].shape[0] == nb_pts) and (tan[1].shape[1] == dim) and\
+                                 (tan[1].shape[2] == dim))
+        assert (cotan is None) or ((cotan[0].shape[0] == nb_pts) and (cotan[0].shape[1] == dim) and\
+                                   (cotan[1].shape[0] == nb_pts) and (cotan[1].shape[1] == dim) and\
+                                   (cotan[1].shape[2] == dim))
         super().__init__(((dim,), (dim, dim)), nb_pts, gd, tan, cotan)
 
         self.to_(device=device)

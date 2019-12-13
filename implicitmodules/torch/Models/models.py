@@ -104,9 +104,8 @@ class Model:
 
         if self.__fit_moments:
             self.__parameters.extend(self.__init_manifold.unroll_cotan())
-            # for i in range(len(self.__modules)):
-            #     self.__parameters.extend(self.__init_manifold[i].unroll_cotan())
 
+        # Pythonise this
         if self.__fit_gd is not None:
             for i in range(len(self.__modules)):
                 if self.__fit_gd[i]:
@@ -114,21 +113,25 @@ class Model:
 
         self.__parameters.extend(self.__init_other_parameters)
 
-    def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=10, method="euler", intermediate=False):
+    def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=10, method="euler", intermediates=False):
         x, y = torch.meshgrid([
             torch.linspace(grid_origin[0], grid_origin[0]+grid_size[0], grid_resolution[0]),
             torch.linspace(grid_origin[1], grid_origin[1]+grid_size[1], grid_resolution[1])])
 
         gridpos = grid2vec(x, y)
 
-        grid_landmarks = Landmarks(2, gridpos.shape[0], gd=gridpos.view(-1))
-        grid_silent = SilentLandmarks(grid_landmarks)
-        compound = CompoundModule(self.modules)
-        compound.manifold.fill(self.init_manifold)
+        grid_silent = SilentLandmarks(2, gridpos.shape[0], gd=gridpos.requires_grad_())
+        compound = CompoundModule(copy.copy(self.modules))
+        compound.manifold.fill(self.init_manifold.clone())
 
-        intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=True)
+        if intermediates:
+            intermediate_states, _ = shoot(Hamiltonian([grid_silent, *compound]), it, method, intermediates=intermediates)
 
-        return [vec2grid(inter[0].gd.detach().view(-1, 2), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
+            return [vec2grid(inter[0].gd.detach(), grid_resolution[0], grid_resolution[1]) for inter in intermediate_states]
+        else:
+            shoot(Hamiltonian([grid_silent, *compound]), it, method)
+
+            return vec2grid(grid_silent.manifold.gd.detach(), grid_resolution[0], grid_resolution[1])
 
 
 class ModelPointsRegistration(Model):
