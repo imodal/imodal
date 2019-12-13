@@ -11,10 +11,10 @@ from implicitmodules.torch.StructuredFields import StructuredField_p
 
 class ImplicitModule1Base(DeformationModule):
     """Module generating sum of translations."""
-    
-    def __init__(self, manifold, sigma, C, nu, coeff):
+
+    def __init__(self, manifold, sigma, C, nu, coeff, label):
         assert isinstance(manifold, Stiefel)
-        super().__init__()
+        super().__init__(label)
         self.__manifold = manifold
         self.__C = C
         self.__sigma = sigma
@@ -25,9 +25,9 @@ class ImplicitModule1Base(DeformationModule):
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None):
+    def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff)
+        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff, label)
 
     @property
     def dim(self):
@@ -107,8 +107,8 @@ class ImplicitModule1Base(DeformationModule):
 
 
 class ImplicitModule1_Torch(ImplicitModule1Base):
-    def __init__(self, manifold, sigma, C, nu, coeff=1.):
-        super().__init__(manifold, sigma, C, nu, coeff=1.)
+    def __init__(self, manifold, sigma, C, nu, coeff, label):
+        super().__init__(manifold, sigma, C, nu, coeff, label)
 
     @property
     def backend(self):
@@ -166,8 +166,8 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
 
 
 class ImplicitModule1_KeOps(ImplicitModule1Base):
-    def __init__(self, manifold, sigma, C, nu, coeff=1.):
-        super().__init__(manifold, sigma, C, nu, coeff=1.)
+    def __init__(self, manifold, sigma, C, nu, coeff, label):
+        super().__init__(manifold, sigma, C, nu, coeff, label)
 
         self.__keops_dtype = str(manifold.gd[0].dtype).split(".")[1]
         self.__keops_backend = 'CPU'

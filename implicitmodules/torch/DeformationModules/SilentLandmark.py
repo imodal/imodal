@@ -8,14 +8,14 @@ from implicitmodules.torch.StructuredFields import StructuredField_Null
 class SilentLandmarksBase(DeformationModule):
     """Module handling silent points."""
 
-    def __init__(self, manifold):
+    def __init__(self, manifold, label):
         assert isinstance(manifold, Landmarks)
-        super().__init__()
+        super().__init__(label)
         self.__manifold = manifold
 
     @classmethod
-    def build(cls, dim, nb_pts, gd=None, tan=None, cotan=None):
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan))
+    def build(cls, dim, nb_pts, gd=None, tan=None, cotan=None, label=None):
+        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), label)
 
     def to_(self, device):
         self.__manifold.to_(device)

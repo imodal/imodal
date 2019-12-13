@@ -5,22 +5,25 @@ from implicitmodules.torch.Utilities.compute_backend import get_compute_backend
 
 class DeformationModule:
     """Base deformation module."""
-    
-    def __init__(self):
-        super().__init__()
-    
+    def __init__(self, label):
+        self.__label = label
+
+    @property
+    def label(self):
+        return self.__label
+
     def copy(self):
         """
         Returns a copy of the deformation module.
         """
         return copy.copy(self)
-    
+
     def __call__(self, points, k=0):
         """
         TODO: Add documentation
         """
         raise NotImplementedError
-    
+
     def cost(self):
         """
         TODO: Add documentation.

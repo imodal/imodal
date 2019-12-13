@@ -40,6 +40,10 @@ class LandmarksDirection(Manifold):
         return LandmarksDirection(self.__dim, self.nb_pts, transport=self.__transport, gd=self.gd, tan=(tan_landmarks, tan_directions), device=self.device)
 
     def cot_to_vs(self, sigma, backend=None):
+        # print("***")
+        # print(self.gd[0].shape)
+        # print(self.cotan[0].shape)
+        # print("****")
         v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, device=self.device, backend=backend)
 
         if self.__transport == 'vector':

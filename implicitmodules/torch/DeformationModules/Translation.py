@@ -11,17 +11,17 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 class TranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
-    def __init__(self, manifold, sigma):
+    def __init__(self, manifold, sigma, label):
         assert isinstance(manifold, Landmarks)
-        super().__init__()
+        super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
         self.__controls = torch.zeros_like(self.__manifold.gd, requires_grad=True)
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None):
+    def build(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma)
+        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, label)
 
     def to_(self, device):
         self.__manifold.to_(device)
@@ -72,8 +72,8 @@ class TranslationsBase(DeformationModule):
 
 
 class Translations_Torch(TranslationsBase):
-    def __init__(self, manifold, sigma):
-        super().__init__(manifold, sigma)
+    def __init__(self, manifold, sigma, label):
+        super().__init__(manifold, sigma, label)
 
     @property
     def backend(self):
@@ -95,8 +95,8 @@ class Translations_Torch(TranslationsBase):
 
 
 class Translations_KeOps(TranslationsBase):
-    def __init__(self, manifold, sigma):
-        super().__init__(manifold, sigma)
+    def __init__(self, manifold, sigma, label):
+        super().__init__(manifold, sigma, label)
 
         self.__keops_dtype = str(manifold.gd.dtype).split(".")[1]
         self.__keops_backend = 'CPU'

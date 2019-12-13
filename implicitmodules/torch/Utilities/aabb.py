@@ -77,6 +77,13 @@ class AABB:
     def fill_uniform_density(self, density, dtype=None, device=None):
         return self.fill_uniform(1./math.sqrt(density), dtype=dtype, device=device)
 
+    def fill(self, count, dtype=None, device=None):
+        assert len(count) == 2
+        x, y = torch.meshgrid([torch.arange(self.xmin, self.xmax, step=self.width/count[0], dtype=dtype),
+                               torch.arange(self.ymin, self.ymax, step=self.height/count[1], dtype=dtype)])
+
+        return grid2vec(x, y).to(device=device)
+
     def is_inside(self, points):
         return torch.where((points[:, 0] >= self.__xmin) &
                            (points[:, 0] <= self.xmax) &

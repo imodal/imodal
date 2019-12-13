@@ -7,10 +7,10 @@ from implicitmodules.torch.StructuredFields import CompoundStructuredField
 
 class CompoundModule(DeformationModule, Iterable):
     """Combination of modules."""
-    
-    def __init__(self, modules):
+
+    def __init__(self, modules, label=None):
         assert isinstance(modules, Iterable)
-        super().__init__()
+        super().__init__(label)
         self.__modules = [*modules]
 
     def to(self, device):
@@ -19,72 +19,68 @@ class CompoundModule(DeformationModule, Iterable):
     @property
     def device(self):
         return self.__modules[0].device
-    
+
     @property
     def modules(self):
         return self.__modules
-    
-    def __getitem__(self, index):
-        return self.__modules[index]
-    
+
+    @property
+    def todict(self):
+        return dict(zip(self.label, self.__modules))
+
+    def __getitem__(self, itemid):
+        if isinstance(itemid, int):
+            return self.__modules[itemid]
+        else:
+            return self.todict()[itemid]
+
     def __iter__(self):
         self.current = 0
         return self
-    
+
     def __next__(self):
         if self.current >= len(self.__modules):
             raise StopIteration
         else:
             self.current = self.current + 1
             return self.__modules[self.current - 1]
-    
-    @property
-    def nb_module(self):
-        return len(self.__modules)
 
     @property
     def dim(self):
         return self.__modules[0].dim # Dirty
-    
+
+    @property
+    def label(self):
+        return [module.label for module in self.__modules]
+
     def __get_controls(self):
         return [m.controls for m in self.__modules]
-    
+
     def fill_controls(self, controls):
-        assert len(controls) == self.nb_module
-        for i in range(self.nb_module):
-            self.__modules[i].fill_controls(controls[i])
-    
+        assert len(controls) == len(self.__modules)
+        [module.fill_controls(control) for module, control in zip(self.__modules, controls)]
+
     controls = property(__get_controls, fill_controls)
-    
+
     def fill_controls_zero(self):
-        for m in self.__modules:
-            m.fill_controls_zero()
-    
+        [module.fill_controls_zero() for module in self.__modules]
+
     @property
     def manifold(self):
         return CompoundManifold([m.manifold for m in self.__modules])
-    
+
     def __call__(self, points):
         """Applies the generated vector field on given points."""
-        app_list = []
-        for m in self.__modules:
-            app_list.append(m(points))
-        
-        return sum(app_list).view(-1, self.manifold.dim)
-    
+        return sum([module(points) for module in self.__modules])
+
     def cost(self):
         """Returns the cost."""
-        cost_list = []
-        for m in self.__modules:
-            cost_list.append(m.cost())
-        
-        return sum(cost_list)
-    
+        return sum([module.cost() for module in self.__modules])
+
     def compute_geodesic_control(self, man):
         """Computes geodesic control from \delta \in H^\ast."""
-        for i in range(self.nb_module):
-            self.__modules[i].compute_geodesic_control(man)
-    
+        [module.compute_geodesic_control(man) for module in self.__modules]
+
     def field_generator(self):
         return CompoundStructuredField([m.field_generator() for m in self.__modules])
 

@@ -7,13 +7,14 @@ from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 
 class GlobalTranslation(DeformationModule):
     """Global translation module."""
-    def __init__(self, dim, coeff=1.):
+    def __init__(self, dim, coeff=1., label=None):
+        super().__init__(label)
         self.__controls = torch.zeros(dim)
         self.__coeff = coeff
 
     @classmethod
-    def build(cls, dim, coeff=1.):
-        return cls(dim, coeff=coeff)
+    def build(cls, dim, coeff=1., label=None):
+        return cls(dim, coeff, label)
 
     @property
     def dim_controls(self):

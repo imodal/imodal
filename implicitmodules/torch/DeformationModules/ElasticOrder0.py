@@ -12,9 +12,9 @@ from implicitmodules.torch.Utilities import get_compute_backend
 class ImplicitModule0Base(DeformationModule):
     """Module generating sum of translations."""
 
-    def __init__(self, manifold, sigma, nu, coeff=1.):
+    def __init__(self, manifold, sigma, nu, coeff, label):
         assert isinstance(manifold, Landmarks)
-        super().__init__()
+        super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
         self.__nu = nu
@@ -22,9 +22,9 @@ class ImplicitModule0Base(DeformationModule):
         self.__controls = torch.zeros_like(self.__manifold.gd, device=manifold.device)
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, nu=0., coeff=1., gd=None, tan=None, cotan=None):
+    def build(cls, dim, nb_pts, sigma, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff)
+        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff, label)
 
     def to_(self, device):
         self.__manifold.to_(device)
@@ -88,8 +88,8 @@ class ImplicitModule0Base(DeformationModule):
 
 
 class ImplicitModule0_Torch(ImplicitModule0Base):
-    def __init__(self, manifold, sigma, nu, coeff=1.):
-        super().__init__(manifold, sigma, nu, coeff=coeff)
+    def __init__(self, manifold, sigma, nu, coeff, label):
+        super().__init__(manifold, sigma, nu, coeff, label)
 
     @property
     def backend(self):
@@ -110,8 +110,8 @@ class ImplicitModule0_Torch(ImplicitModule0Base):
 
 
 class ImplicitModule0_KeOps(ImplicitModule0Base):
-    def __init__(self, manifold, sigma, nu, coeff=1.):
-        super().__init__(manifold, sigma, nu, coeff=coeff)
+    def __init__(self, manifold, sigma, nu, coeff, label):
+        super().__init__(manifold, sigma, nu, coeff, label)
 
         self.__keops_dtype = str(manifold.gd.dtype).split(".")[1]
         self.__keops_backend = 'CPU'
