@@ -24,7 +24,6 @@ class CompoundModule(DeformationModule, Iterable):
     def modules(self):
         return self.__modules
 
-    @property
     def todict(self):
         return dict(zip(self.label, self.__modules))
 

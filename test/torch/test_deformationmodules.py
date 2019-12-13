@@ -213,8 +213,8 @@ def make_test_compound(dim, backend):
             self.mom_trans = torch.randn(self.nb_pts_trans, dim, requires_grad=True)
             self.gd_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
             self.mom_silent = torch.randn(self.nb_pts_silent, dim, requires_grad=True)
-            self.trans = im.DeformationModules.Translations(dim, self.nb_pts_trans, self.sigma, gd=self.gd_trans, cotan=self.mom_trans, backend=backend)
-            self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent)
+            self.trans = im.DeformationModules.Translations(dim, self.nb_pts_trans, self.sigma, gd=self.gd_trans, cotan=self.mom_trans, backend=backend, label="translation")
+            self.silent = im.DeformationModules.SilentLandmarks(dim, self.nb_pts_silent, gd=self.gd_silent, cotan=self.mom_silent, label="silent")
             self.compound = im.DeformationModules.CompoundModule([self.silent, self.trans])
             self.controls_trans = torch.rand_like(self.gd_trans)
             self.controls = [None, self.controls_trans]
@@ -224,6 +224,9 @@ def make_test_compound(dim, backend):
             self.assertEqual(self.compound.modules, [self.silent, self.trans])
 
             self.assertEqual(self.compound.manifold.nb_pts, self.nb_pts)
+
+            self.assertEqual(id(self.compound["silent"]), id(self.silent))
+            self.assertEqual(id(self.compound["translation"]), id(self.trans))
 
         def test_call(self):
             points = torch.rand(100, dim)
