@@ -119,7 +119,7 @@ class TestOrientedTranslations2D_Vector_Torch(make_test_orientedtranslations(2, 
     pass
 
 
-class TestOrientedTranslations2D_Surface_Torch(make_test_orientedtranslations(2, 'surface', 'torch')):
+class TestOrientedTranslations2D_Surface_Torch(make_test_orientedtranslations(2, 'orthogonal', 'torch')):
     pass
 
 
@@ -127,7 +127,7 @@ class TestOrientedTranslations3D_Vector_Torch(make_test_orientedtranslations(3, 
     pass
 
 
-class TestOrientedTranslations3D_Surface_Torch(make_test_orientedtranslations(3, 'surface', 'torch')):
+class TestOrientedTranslations3D_Surface_Torch(make_test_orientedtranslations(3, 'orthogonal', 'torch')):
     pass
 
 

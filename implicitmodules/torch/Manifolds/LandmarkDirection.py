@@ -17,7 +17,7 @@ class LandmarksDirection(Manifold):
         self.to_(device=device)
         self.__dim = dim
 
-        if transport != 'vector' and transport != 'surface':
+        if transport != 'vector' and transport != 'orthogonal':
             raise RuntimeError("LandmarksDirection.__init__(): transport mode {transport} not recognised!".format(transport=transport))
 
         self.__transport = transport
@@ -46,10 +46,6 @@ class LandmarksDirection(Manifold):
         return LandmarksDirection(self.__dim, self.nb_pts, transport=self.__transport, gd=self.gd, tan=(tan_landmarks, tan_directions), device=self.device)
 
     def cot_to_vs(self, sigma, backend=None):
-        # print("***")
-        # print(self.gd[0].shape)
-        # print(self.cotan[0].shape)
-        # print("****")
         v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, device=self.device, backend=backend)
 
         if self.__transport == 'vector':
