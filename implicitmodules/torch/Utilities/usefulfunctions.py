@@ -41,8 +41,9 @@ def make_grad_graph(tensor, filename):
     make_dot(tensor).render(filename)
 
 
-def are_tensors_properties_equal(tensors, prop):
-    """ Check if all tensors share the same property given by prop(tensor). Ignores None tensors and None property values. """
+# TODO: Maybe generalise this to more than torch.Tensor? (duck typing)
+def shared_tensors_property(tensors, prop):
+    """ Check if all tensors share the same property given by prop(tensor). Ignores None tensors and None property values. Returns the shared property or None if the property is not shared. """
     assert isinstance(tensors, Iterable)
 
     # If tensors is not a collection but a tensor, returns its property.
@@ -66,10 +67,10 @@ def are_tensors_properties_equal(tensors, prop):
 
 def tensors_device(tensors):
     """ Returns the common device on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are on different devices."""
-    return are_tensors_properties_equal(tensors, lambda tensor: tensor.device)
+    return shared_tensors_property(tensors, lambda tensor: tensor.device)
 
 
 def tensors_dtype(tensors):
     """ Returns the common dtypes on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are of different dtypes."""
-    return are_tensors_properties_equal(tensors, lambda tensor: tensor.dtype)
+    return shared_tensors_property(tensors, lambda tensor: tensor.dtype)
 

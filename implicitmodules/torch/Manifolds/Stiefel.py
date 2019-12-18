@@ -4,7 +4,7 @@ import torch
 
 from implicitmodules.torch.Manifolds.Abstract import Manifold
 from implicitmodules.torch.StructuredFields import StructuredField_m, StructuredField_0
-from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
+from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
 
 
 class Stiefel(Manifold):
@@ -49,5 +49,5 @@ class Stiefel(Manifold):
 
         vm = StructuredField_m(self.gd[0], R, sigma, backend=backend)
 
-        return CompoundStructuredField([v0, vm])
+        return SumStructuredField([v0, vm])
 

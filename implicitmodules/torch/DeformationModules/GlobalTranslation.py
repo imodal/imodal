@@ -11,6 +11,7 @@ class GlobalTranslation(DeformationModule):
         super().__init__(label)
         self.__controls = torch.zeros(dim)
         self.__coeff = coeff
+        self.__manifold = EmptyManifold(dim)
 
     @classmethod
     def build(cls, dim, coeff=1., label=None):
@@ -26,7 +27,7 @@ class GlobalTranslation(DeformationModule):
 
     @property
     def manifold(self):
-        return EmptyManifold()
+        return self.__manifold
 
     def __get_controls(self):
         return self.__controls

@@ -1,5 +1,6 @@
 import os.path
 import sys
+import copy
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
@@ -50,6 +51,12 @@ def make_test_landmarks(dim):
             self.assertNotEqual(id(landmarks.gd), id(landmarks2.gd))
             self.assertNotEqual(id(landmarks.tan), id(landmarks2.tan))
             self.assertNotEqual(id(landmarks.cotan), id(landmarks2.cotan))
+
+            landmarks3 = copy.deepcopy(landmarks)
+            self.assertNotEqual(id(landmarks), id(landmarks3))
+            self.assertNotEqual(id(landmarks.gd), id(landmarks3.gd))
+            self.assertNotEqual(id(landmarks.tan), id(landmarks3.tan))
+            self.assertNotEqual(id(landmarks.cotan), id(landmarks3.cotan))
 
         def test_assign(self):
             landmarks = im.Manifolds.Landmarks(dim, self.nb_pts)

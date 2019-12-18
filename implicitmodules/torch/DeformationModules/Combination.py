@@ -2,7 +2,7 @@ from typing import Iterable
 
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 from implicitmodules.torch.Manifolds import CompoundManifold
-from implicitmodules.torch.StructuredFields import CompoundStructuredField
+from implicitmodules.torch.StructuredFields import SumStructuredField
 
 
 class CompoundModule(DeformationModule, Iterable):
@@ -81,5 +81,5 @@ class CompoundModule(DeformationModule, Iterable):
         [module.compute_geodesic_control(man) for module in self.__modules]
 
     def field_generator(self):
-        return CompoundStructuredField([m.field_generator() for m in self.__modules])
+        return SumStructuredField([m.field_generator() for m in self.__modules])
 

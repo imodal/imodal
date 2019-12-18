@@ -39,11 +39,11 @@ class ManifoldTensor:
     def dtype(self):
         return self.__dtype
 
-    def __deepcopy__(self, memo):
-        return self.clone()
-        # out = self.clone()
-        # memo[id(out)] = out
-        # return out
+    def __deepcopy__(self, memodict):
+        #return self.clone()
+        out = self.clone()
+        memodict[id(out)] = out
+        return out
 
     def clone(self):
         out = ManifoldTensor(self.__shapes)
@@ -90,11 +90,6 @@ class ManifoldTensor:
             self.__tensors = tuple(tensor.detach().clone().requires_grad_(tensor.requires_grad) for tensor in tensors)
         else:
             self.__tensors = tuple(tensor for tensor in tensors)
-        # not clone and requires_grad is not None:
-            #self.__tensors = tuple(tensor.requires_grad_(requires_grad) for tensor in tensors)
-        # else:
-        #     print("hey")
-        #     self.__tensors = tuple(tensor for tensor in tensors)
 
     tensors = property(__get, fill)
 
@@ -156,9 +151,9 @@ class Manifold(BaseManifold):
 
         return out
 
-    # def __deepcopy__(self, memo):
+    # def __deepcopy__(self, memodict):
     #     out = self.clone()
-    #     memo[id(out)] = out
+    #     memodict[id(out)] = out
     #     return out
 
     @property
@@ -176,8 +171,6 @@ class Manifold(BaseManifold):
     @property
     def numel_gd(self):
         return tuple(prod(shape) for shape in self.shape_gd)
-
-        return self.__device
 
     @property
     def device(self):

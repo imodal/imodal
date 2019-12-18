@@ -1,4 +1,4 @@
-from implicitmodules.torch.StructuredFields.Abstract import CompoundStructuredField
+from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
 from implicitmodules.torch.Manifolds.Abstract import BaseManifold
 
 
@@ -121,7 +121,7 @@ class CompoundManifold(BaseManifold):
             m.negate_cotan()
 
     def cot_to_vs(self, sigma, backend=None):
-        return CompoundStructuredField([m.cot_to_vs(sigma, backend=backend) for m in self.__manifolds])
+        return SumStructuredField([m.cot_to_vs(sigma, backend=backend) for m in self.__manifolds])
 
     def inner_prod_field(self, field):
         return sum([m.inner_prod_field(field) for m in self.__manifolds])

@@ -11,21 +11,26 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 class OrientedTranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
-    def __init__(self, manifold, sigma, label):
+    def __init__(self, manifold, sigma, nu, label):
         assert isinstance(manifold, LandmarksDirection)
         super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
         self.__controls = torch.zeros(self.__manifold.nb_pts, requires_grad=True)
+        self.__nu = nu
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, transport='vector', gd=None, tan=None, cotan=None, label=None):
+    def build(cls, dim, nb_pts, sigma, transport='vector', nu=0., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, label)
+        return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, nu, label)
 
     def to_(self, device):
         self.__manifold.to_(device)
         self.__controls = self.__controls.to(device)
+
+    @property
+    def nu(self):
+        return self.__nu
 
     @property
     def device(self):
@@ -72,8 +77,8 @@ class OrientedTranslationsBase(DeformationModule):
 
 
 class OrientedTranslations_Torch(OrientedTranslationsBase):
-    def __init__(self, manifold, sigma, label):
-        super().__init__(manifold, sigma, label)
+    def __init__(self, manifold, sigma, nu, label):
+        super().__init__(manifold, sigma, nu, label)
 
     @property
     def backend(self):
@@ -88,7 +93,7 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
-        Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
+        Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
 
         controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
 
@@ -96,8 +101,8 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
 
 
 class OrientedTranslations_KeOps(OrientedTranslationsBase):
-    def __init__(self, manifold, sigma):
-        super().__init__(manifold, sigma)
+    def __init__(self, manifold, nu, sigma):
+        super().__init__(manifold, nu, sigma)
 
         self.__keops_dtype = str(manifold.gd.dtype).split(".")[1]
         self.__keops_backend = 'CPU'

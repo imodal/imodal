@@ -60,10 +60,10 @@ class SilentLandmarksBase(DeformationModule):
         pass
 
     def field_generator(self):
-        return StructuredField_Null(device=self.device)
+        return StructuredField_Null(self.__manifold.dim, device=self.device)
 
     def adjoint(self, manifold):
-        return StructuredField_Null(device=self.device)
+        return StructuredField_Null(self.__manifold.dim, device=self.device)
 
 
 # Give SilentLandmarks the same interface than other deformations modules
