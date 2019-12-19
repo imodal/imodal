@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 from pykeops.torch import Genred, KernelSolve
 
@@ -93,8 +94,8 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
-        Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
-
+        Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
+        print(np.log(np.linalg.cond(Z.detach().numpy())))
         controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
 
         self.controls = controls.flatten().contiguous()
