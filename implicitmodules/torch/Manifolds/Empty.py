@@ -9,7 +9,7 @@ class EmptyManifold(BaseManifold):
         super().__init__()
         self.__dim = dim
 
-    def to(self, device):
+    def to(self, *argv, **kwargs):
         pass
 
     def clone(self, requires_grad=True):

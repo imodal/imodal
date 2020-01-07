@@ -8,8 +8,12 @@ from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
 
 
 class BaseManifold:
+    """Base manifold class."""
     def __init__(self):
         pass
+
+    def clone(self):
+        raise NotImplementedError()
 
     def inner_prod_field(self, field):
         raise NotImplementedError()
@@ -20,11 +24,50 @@ class BaseManifold:
     def cot_to_vs(self, sigma, backend=None):
         raise NotImplementedError()
 
+    def fill_gd(self, gd, copy=False, requires_grad=True):
+        raise NotImplementedError()
+
+    def fill_tan(self, tan, copy=False, requires_grad=True):
+        raise NotImplementedError()
+
+    def fill_cotan(self, cotan, copy=False, requires_grad=True):
+        raise NotImplementedError()
+
+    def fill_gd_zeros(self, requires_grad=True):
+        raise NotImplementedError()
+
+    def fill_tan_zeros(self, requires_grad=True):
+        raise NotImplementedError()
+
+    def fill_cotan_zeros(self, requires_grad=True):
+        raise NotImplementedError()
+
+    def add_gd(self, gd):
+        raise NotImplementedError()
+
+    def add_tan(self, tan):
+        raise NotImplementedError()
+
+    def add_cotan(self, cotan):
+        raise NotImplementedError()
+    
+    def negate_gd(self):
+        raise NotImplementedError()
+
+    def negate_tan(self):
+        raise NotImplementedError()
+
+    def negate_cotan(self):
+        raise NotImplementedError()
+
 
 class ManifoldTensor:
+    """Container class for manifold tensors.
+    Internal class used to facilitate management of manifold tensors.
+    Manifold tensors are stored as a tuple of torch.Tensor."""
     def __init__(self, shapes):
         # TODO: have a lazy initialisation approach
-        self.__tensors = list(torch.empty(shape, requires_grad=True) for shape in shapes)
+        self.__tensors = tuple(torch.empty(shape, requires_grad=True) for shape in shapes)
 
         self.__shapes = shapes
 
@@ -40,26 +83,42 @@ class ManifoldTensor:
         return self.__dtype
 
     def __deepcopy__(self, memodict):
-        #return self.clone()
         out = self.clone()
         memodict[id(out)] = out
         return out
 
     def clone(self):
+        """Returns a copy of the current manifold tensor.
+        In this implementation, the computation graph of each tensor gets detached.
+        **requires_grad** is then set to the same value as the current manifold tensor.
+        Returns
+        -------
+        ManifoldTensor
+            The cloned manifold tensor.
+        """
         out = ManifoldTensor(self.__shapes)
-        out.fill(self.__tensors, True, False)
+        out.fill(self.__tensors, True)
         return out
 
     def to_device(self, device):
+        """Moves each tensors onto the device **device**."""
         [tensor.to(device=device) for tensor in self.__tensors]
 
     def to_dtype(self, dtype):
+        """Convert each tensors into dtype **dtype**."""
         [tensor.to(dtype=dtype) for tensor in self.__tensors]
 
     def unroll(self):
+        """Unroll the tensor manifold tensor tuple into a flattened list.
+        Returns
+        -------
+            A flattened list of the manifold tensors.
+        """
         return [*self.__tensors]
 
     def roll(self, l):
+        """Roll a flattened list into (i.e. inverse operation of unroll())
+        """
         if len(self.__shapes) == 0:
             return
         elif len(self.__shapes) == 1:
@@ -71,6 +130,16 @@ class ManifoldTensor:
         return self.__tensors
 
     def fill(self, tensors, clone=False, requires_grad=None):
+        """Fill the manifold tensors with **tensors**.
+        Parameters
+        ----------
+        tensors : Iterable
+            Iterable of torch.Tensor for multidimensional manifold tensor or torch.Tensor for simple manifold tensor we want to fill with.
+        clone : bool, default=False
+            Set to true to clone the tensors. This will detach the computation graph. If false, tensors will be passed as references.
+        requires_grad : bool, default=None
+            Set to true to record further operations on the tensors. Only relevant when cloning the tensors.
+        """
         # if clone=False and requires_grad=None, should just assign tensor without changing requires_grad flag
         # assert (len(self.__shapes) == 1) or (isinstance(tensors, Iterable) and (len(self.__shapes)) == len(tensors))
         # assert (len(self.__shapes) > 1) or isinstance(tensors, torch.Tensor) and (len(self.__shapes) == 1)
@@ -94,21 +163,36 @@ class ManifoldTensor:
     tensors = property(__get, fill)
 
     def fill_zeros(self, requires_grad=False):
+        """Fill each tensors of the manifold tensor with zeros.
+        Parameters
+        ----------
+        requires_grad : bool, default=False
+            Set to true to record futher operations on the tensors.
+        """
         self.fill(tuple(torch.zeros(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
 
     def requires_grad_(self, requires_grad):
+        """Set operation recording flag.
+        Parameters
+        ----------
+        requires_grad : bool, default=False
+            Set to true to record futher operations on the tensors.
+        """
         [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
 
     def add(self, tensors):
+        """Addition."""
         if len(self.__shapes) == 1:
             tensors = (tensors,)
         self.__tensors = tuple(t0 + t for t0, t in zip(self.__tensors, tensors))
 
     def negate(self):
+        """Negate each manifold tensors."""
         self.__tensors = tuple(-t0 for t0 in self.__tensors)
 
 
 class Manifold(BaseManifold):
+    """Manifold class built using ManifoldTensor as manifold tensors storage. Base class for most manifold class."""
     def __init__(self, shapes, nb_pts, gd, tan, cotan):
         super().__init__()
 
@@ -144,6 +228,12 @@ class Manifold(BaseManifold):
                 raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors are of different dtype!")
 
     def clone(self, requires_grad=False):
+        """Returns a copy of the manifold. Detaches the computation graph.
+        Parameters
+        ----------
+        requires_grad : bool, default=False
+            Set to true to record futher operations on the manifold tensors.
+        """
         out = copy.deepcopy(self)
         out.__gd.requires_grad_(requires_grad)
         out.__tan.requires_grad_(requires_grad)
@@ -151,25 +241,24 @@ class Manifold(BaseManifold):
 
         return out
 
-    # def __deepcopy__(self, memodict):
-    #     out = self.clone()
-    #     memodict[id(out)] = out
-    #     return out
-
     @property
     def nb_pts(self):
+        """Returns the number of points of the manifold."""
         return self.__nb_pts
 
     @property
     def shape_gd(self):
+        """Returns the shape of each tensors for a manifold tensor of the manifold."""
         return tuple((self.__nb_pts, *shape) for shape in self.__shapes)
 
     @property
     def len_gd(self):
+        """Returns the dimensions of each tensors for a manifold tensor of the manifold."""
         return len(self.__shapes)
 
     @property
     def numel_gd(self):
+        """Returns the total number of elements for a manifold tensor of the manifold."""
         return tuple(prod(shape) for shape in self.shape_gd)
 
     @property
@@ -193,6 +282,7 @@ class Manifold(BaseManifold):
         self.__cotan.to_dtype(dtype)
 
     def to_(self, *argv, **kwargs):
+        """Performs manifold dtype or/and device conversion. A torch.dtype and torch.device are inferred from the arguments of self.to(*argv, **kwargs)."""
         for arg in argv:
             if isinstance(arg, str):
                 self.__to_device(torch.device(arg))
