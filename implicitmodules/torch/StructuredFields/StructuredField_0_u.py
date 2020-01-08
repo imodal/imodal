@@ -24,9 +24,7 @@ class StructuredField_0_u(KernelSupportStructuredField):
         if k == 0:
             ker_vec = gauss_kernel(rel_differences(points, self.support), 1, self.sigma)
             ker_vec = ker_vec.reshape((points.shape[0], self.support.shape[0]) + tuple(ker_vec.shape[1:]))
-            D = torch.tensordot(torch.transpose(torch.tensordot(torch.eye(self.dim, device=self.device), ker_vec, dims=0), 0, 2), self.moments, dims=([2, 3], [1, 0]))
-
-            return torch.einsum('nik, nk->ni', D, self.__directions)
+            return torch.mm(torch.einsum('ijk, jk->ij', -ker_vec, self.directions), self.moments)
         else:
             raise NotImplementedError()
 

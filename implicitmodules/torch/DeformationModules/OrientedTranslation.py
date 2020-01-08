@@ -95,7 +95,6 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
         """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
         Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
-        print(np.log(np.linalg.cond(Z.detach().numpy())))
         controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
 
         self.controls = controls.flatten().contiguous()

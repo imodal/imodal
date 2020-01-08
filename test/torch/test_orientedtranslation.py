@@ -112,6 +112,24 @@ def make_test_orientedtranslations(dim, transport, backend):
 
             self.assertTrue(torch.allclose(d_controls, torch.zeros_like(d_controls)))
 
+        def test_gradcheck_hamiltonian(self):
+
+            def ham(gd_pos, gd_dir, mom_pos, mom_dir):
+                self.oriented.manifold.gd = (gd_pos, gd_dir)
+                self.oriented.manifold.cotan = (mom_pos, mom_dir)
+                self.oriented.compute_geodesic_control(self.oriented.manifold)
+                h = im.HamiltonianDynamic.Hamiltonian([self.oriented])
+
+                return h()
+
+            self.gd_pos.requires_grad_()
+            self.gd_dir.requires_grad_()
+            self.mom_pos.requires_grad_()
+            self.mom_dir.requires_grad_()
+
+            self.assertTrue(torch.autograd.gradcheck(ham, (self.gd_pos, self.gd_dir, self.mom_pos, self.mom_dir)))
+
+
     return TestOrientedTranslations
 
 
