@@ -6,4 +6,5 @@ from implicitmodules.torch.DeformationModules.SilentLandmark import SilentLandma
 from implicitmodules.torch.DeformationModules.Translation import Translations
 from implicitmodules.torch.DeformationModules.GlobalTranslation import GlobalTranslation
 from implicitmodules.torch.DeformationModules.OrientedTranslation import OrientedTranslations
+from implicitmodules.torch.DeformationModules.Linear import LinearDeformation
 

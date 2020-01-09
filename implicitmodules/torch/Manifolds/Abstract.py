@@ -221,12 +221,12 @@ class ManifoldTensorContainer:
         """
         self.fill(tuple(torch.zeros(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
 
-    def requires_grad_(self, requires_grad):
+    def requires_grad_(self, requires_grad=True):
         """Set operation recording flag.
 
         Parameters
         ----------
-        requires_grad : bool, default=False
+        requires_grad : bool, default=True
             Set to true to record futher operations on the tensors.
         """
         [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]

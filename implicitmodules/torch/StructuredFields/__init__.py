@@ -4,4 +4,5 @@ from implicitmodules.torch.StructuredFields.StructuredField_Null import Structur
 from implicitmodules.torch.StructuredFields.StructuredField_pm import StructuredField_m, StructuredField_p
 from implicitmodules.torch.StructuredFields.ConstantField import ConstantField
 from implicitmodules.torch.StructuredFields.StructuredField_0_u import StructuredField_0_u
+from implicitmodules.torch.StructuredFields.StructuredField_Affine import StructuredField_Affine
 
