@@ -27,10 +27,6 @@ class StructuredField_Affine(BaseStructuredField):
         return self.__u
 
     def __call__(self, points, k=0):
-        print(self.__A)
-        print(self.__x0)
-        print(self.__u)
-        print(points)
         if k == 0:
             return torch.bmm((points - self.__x0.repeat(points.shape[0], 1)).unsqueeze(1), self.__A.repeat(points.shape[0], 1, 1)).view(-1, points.shape[1]) + self.__u.repeat(points.shape[0], 1)
         elif k == 1:
