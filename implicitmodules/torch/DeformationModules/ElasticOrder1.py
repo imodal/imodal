@@ -119,7 +119,7 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
-        d_vx = vs(self.manifold.gd[0].view(-1, self.manifold.dim), k=1)
+        d_vx = vs(self.manifold.gd[0], k=1)
 
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)

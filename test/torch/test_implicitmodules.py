@@ -15,7 +15,7 @@ def make_test_implicitmodule0(dim, backend):
     class TestImplicitModule0(unittest.TestCase):
         def setUp(self):
             side = 5.
-            self.nu = 0.01
+            self.nu = 0.
             self.nb_pts = 10
             self.sigma = side/math.sqrt(self.nb_pts)
             self.gd = side*torch.rand(self.nb_pts, dim)
@@ -108,6 +108,23 @@ def make_test_implicitmodule0(dim, backend):
 
         #     self.assertTrue(torch.allclose(d_controls, torch.zeros_like(d_controls)))
 
+        def test_hamiltonian_speed(self):
+            self.gd.requires_grad_()
+            self.mom.requires_grad_()
+
+            self.implicit.manifold.fill_gd(self.gd)
+            self.implicit.manifold.fill_cotan(self.mom)
+            self.implicit.compute_geodesic_control(self.implicit.manifold)
+
+            h = im.HamiltonianDynamic.Hamiltonian([self.implicit])
+
+            speed_h = torch.autograd.grad(h(), (self.mom,))[0]
+
+            speed_field = self.implicit(self.gd.detach())
+
+            self.assertTrue(torch.allclose(speed_h, speed_field))
+
+
     return TestImplicitModule0
 
 
@@ -131,12 +148,12 @@ def make_test_implicitmodule1(dim, dim_controls, backend):
     class TestImplicitModule1(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 7
-            self.gd = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
-            self.tan = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
-            self.cotan = (torch.rand(self.nb_pts, dim), torch.rand(self.nb_pts, dim, dim))
-            self.controls = torch.rand(dim_controls)
-            self.C = torch.rand(self.nb_pts, dim, dim_controls)
-            self.nu = 1e-3
+            self.gd = (torch.randn(self.nb_pts, dim), torch.randn(self.nb_pts, dim, dim))
+            self.tan = (torch.randn(self.nb_pts, dim), torch.randn(self.nb_pts, dim, dim))
+            self.cotan = (torch.randn(self.nb_pts, dim), torch.randn(self.nb_pts, dim, dim))
+            self.controls = torch.randn(dim_controls)
+            self.C = 10.*torch.rand(self.nb_pts, dim, dim_controls)
+            self.nu = 0.
             self.sigma = 0.001
 
             self.implicit = im.DeformationModules.ImplicitModule1(dim, self.nb_pts, self.sigma, self.C, nu=self.nu, gd=self.gd, tan=self.tan, cotan=self.cotan, backend=backend)
@@ -219,6 +236,22 @@ def make_test_implicitmodule1(dim, dim_controls, backend):
             self.cotan[1].requires_grad_()
 
             self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (self.gd[0], self.gd[1], self.cotan[0], self.cotan[1]), raise_exception=True))
+
+        def test_hamiltonian_speed(self):
+            self.gd = (self.gd[0].requires_grad_(), self.gd[1].requires_grad_())
+            self.cotan = (self.cotan[0].requires_grad_(), self.cotan[1].requires_grad_())
+
+            self.implicit.manifold.fill_gd(self.gd)
+            self.implicit.manifold.fill_cotan(self.cotan)
+
+            h = im.HamiltonianDynamic.Hamiltonian([self.implicit])
+
+            speed_h = torch.autograd.grad(h(), (self.cotan[0],))[0]
+
+            speed_field = self.implicit(self.gd[0].detach())
+
+            self.assertTrue(torch.allclose(speed_h, speed_field))
+
 
     return TestImplicitModule1
 

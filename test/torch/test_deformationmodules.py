@@ -103,6 +103,22 @@ def make_test_translations(dim, backend):
 
             self.assertTrue(torch.allclose(d_controls, torch.zeros_like(d_controls)))
 
+        def test_hamiltonian_speed(self):
+            self.gd.requires_grad_()
+            self.mom.requires_grad_()
+
+            self.trans.manifold.fill_gd(self.gd)
+            self.trans.manifold.fill_cotan(self.mom)
+            self.trans.compute_geodesic_control(self.trans.manifold)
+
+            h = im.HamiltonianDynamic.Hamiltonian([self.trans])
+
+            speed_h = torch.autograd.grad(h(), (self.mom,))[0]
+
+            speed_field = self.trans(self.gd.detach())
+
+            self.assertTrue(torch.allclose(speed_h, speed_field))
+
     return TestTranslations
 
 
@@ -190,6 +206,23 @@ def make_test_silentpoints(dim):
             self.mom.requires_grad_()
 
             self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (self.gd, self.mom), raise_exception=True))
+
+        def test_hamiltonian_speed(self):
+            self.gd.requires_grad_()
+            self.mom.requires_grad_()
+
+            self.silent_points.manifold.fill_gd(self.gd)
+            self.silent_points.manifold.fill_cotan(self.mom)
+            self.silent_points.compute_geodesic_control(self.silent_points.manifold)
+
+            h = im.HamiltonianDynamic.Hamiltonian([self.silent_points])
+
+            speed_h = torch.autograd.grad(h(), (self.mom,))[0]
+
+            speed_field = self.silent_points(self.gd.detach())
+
+            self.assertTrue(torch.allclose(speed_h, speed_field))
+
 
     return TestSilentPoints
 
@@ -309,6 +342,28 @@ def make_test_compound(dim, backend):
             [d_controls_silent, d_controls_trans] = torch.autograd.grad(h(), self.compound.controls, allow_unused=True)
 
             self.assertTrue(torch.allclose(d_controls_trans, torch.zeros_like(d_controls_trans)))
+
+        def test_hamiltonian_speed(self):
+            self.gd_trans.requires_grad_()
+            self.mom_trans.requires_grad_()
+            self.gd_silent.requires_grad_()
+            self.mom_silent.requires_grad_()
+
+            self.compound.manifold.fill_gd((self.gd_silent, self.gd_trans))
+            self.compound.manifold.fill_cotan((self.mom_silent, self.mom_trans))
+            self.compound.compute_geodesic_control(self.compound.manifold)
+
+            h = im.HamiltonianDynamic.Hamiltonian([self.compound])
+
+            speed_h = torch.autograd.grad(h(), (self.mom_silent, self.mom_trans))
+
+            speed_field_silent = self.compound[0](self.gd_silent.detach())
+            speed_field_trans = self.compound[1](self.gd_trans.detach())
+
+            self.assertTrue(torch.allclose(speed_h[0], speed_field_silent))
+            self.assertTrue(torch.allclose(speed_h[1], speed_field_trans))
+
+
 
     return TestCompound
 
