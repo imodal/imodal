@@ -45,8 +45,9 @@ class ModelFittingScipy(ModelFitting):
             self.__numpy_to_model(self.model, x.astype('float64'))
             self.__pytorch_optim.zero_grad()
 
-            # Shooting + loss computation
-            cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
+            with torch.autograd.detect_anomaly():
+                # Shooting + loss computation
+                cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
 
             dx_c = self.__model_to_numpy(self.model, grad=True)
 
@@ -107,7 +108,6 @@ class ModelFittingScipy(ModelFitting):
 
         # print("====")
         # print([param.grad for param in model.parameters])
-        # print([param.requires_grad for param in model.parameters])
         # print("****")
         if grad:
             tensors = [param.grad.data.view(-1).cpu().numpy() for param in model.parameters]

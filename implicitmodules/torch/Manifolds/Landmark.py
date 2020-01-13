@@ -20,6 +20,8 @@ class Landmarks(Manifold):
 
     def inner_prod_field(self, field):
         man = self.infinitesimal_action(field)
+        # print(man.tan)
+        # print("===")
         return torch.dot(self.cotan.flatten(), man.tan.flatten())
 
     def infinitesimal_action(self, field):

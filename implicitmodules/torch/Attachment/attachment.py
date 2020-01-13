@@ -60,11 +60,15 @@ class EnergyAttachment(Attachment):
         super().__init__(weight)
 
     def loss(self, source):
-        x_i, a_i = source
-        y_j, b_j = self.target
-        if a_i is None:
-            a_i = torch.ones(x_i.shape[0])
-            b_j = torch.ones(y_j.shape[0])
+        if isinstance(source, torch.Tensor):
+            x_i = source
+            a_i = torch.ones(source.shape[0])
+            y_j = self.target
+            b_j = torch.ones(self.target.shape[0])
+        else:
+            x_i, a_i = source
+            y_j, b_j = self.target
+
         K_xx = -distances(x_i, x_i)
         K_xy = -distances(x_i, y_j)
         K_yy = -distances(y_j, y_j)

@@ -15,6 +15,10 @@ class LinearDeformation(DeformationModule):
 
         self.__A = A
 
+    @property
+    def A(self):
+        return self.__A
+
     @classmethod
     def build(cls, A, coeff=1., gd=None, tan=None, cotan=None, label=None):
         return cls(Landmarks(A.shape[0], 1, gd=gd, tan=tan, cotan=cotan), A, coeff, label)
@@ -37,7 +41,7 @@ class LinearDeformation(DeformationModule):
     def fill_controls(self, controls):
         assert controls.shape == torch.Size([])
 
-        self.__controls = controls.clone()
+        self.__controls = controls
     
     def __get_coeff(self):
         return self.__coeff
