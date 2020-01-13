@@ -5,4 +5,6 @@ from implicitmodules.torch.DeformationModules.ElasticOrder1 import ImplicitModul
 from implicitmodules.torch.DeformationModules.SilentLandmark import SilentLandmarks
 from implicitmodules.torch.DeformationModules.Translation import Translations
 from implicitmodules.torch.DeformationModules.GlobalTranslation import GlobalTranslation
+from implicitmodules.torch.DeformationModules.LocalConstrainedTranslations import LocalScaling
+from implicitmodules.torch.DeformationModules.LocalConstrainedTranslations import LocalRotation
 
