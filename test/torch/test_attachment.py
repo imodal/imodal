@@ -23,32 +23,25 @@ def make_test_attachment(dim):
 
         def test_energy_attachment(self):
             energy = im.Attachment.EnergyAttachment()
-            energy.target = (self.source, self.source_weights)
-            self.assertTrue(torch.allclose(energy((self.source, self.source_weights)), torch.tensor([0.])))
-            energy.target = (self.target, self.target_weights)
-            self.assertFalse(torch.allclose(energy((self.source, self.source_weights)), torch.tensor([0.])))
+            self.assertTrue(torch.allclose(energy((self.source, self.source_weights), (self.source, self.source_weights)), torch.tensor([0.])))
+            self.assertFalse(torch.allclose(energy((self.source, self.source_weights), (self.target, self.target_weights)), torch.tensor([0.])))
 
         def test_energy_attachment_gradcheck(self):
-            def my_energy(source):
+            def my_energy(source, target):
                 energy = im.Attachment.EnergyAttachment()
-                energy.target = (self.target, self.target_weights)
-                return energy((source, self.source_weights))
+                return energy((source, self.source_weights), (target, self.target_weights))
 
-            self.assertTrue(torch.autograd.gradcheck(my_energy, self.source.requires_grad_()))
+            self.assertTrue(torch.autograd.gradcheck(my_energy, (self.source.requires_grad_(), self.target.requires_grad_())))
 
         def test_l2_norm_attachment(self):
             l2_norm = im.Attachment.L2NormAttachment()
-            l2_norm.target = self.source
-            self.assertTrue(torch.allclose(l2_norm(self.source), torch.tensor([0.])))
-
-            l2_norm.target = self.target
-            self.assertFalse(torch.allclose(l2_norm(self.source), torch.tensor([0.])))
+            self.assertTrue(torch.allclose(l2_norm(self.source, self.source), torch.tensor([0.])))
+            self.assertFalse(torch.allclose(l2_norm(self.source, self.target), torch.tensor([0.])))
 
         def test_l2_norm_attachment_gradcheck(self):
             def my_l2_norm(source, target):
                 l2_norm = im.Attachment.L2NormAttachment()
-                l2_norm.target = target
-                return l2_norm(source)
+                return l2_norm(source, target)
 
             self.assertTrue(torch.autograd.gradcheck(my_l2_norm, (self.source.requires_grad_(), self.target.requires_grad_())))
 
@@ -57,17 +50,13 @@ def make_test_attachment(dim):
 
         def test_euclidean_attachment(self):
             euclidean = im.Attachment.EuclideanPointwiseDistanceAttachment()
-            euclidean.target = self.source
-            self.assertTrue(torch.allclose(euclidean(self.source), torch.tensor([0.])))
-
-            euclidean.target = self.target
-            self.assertFalse(torch.allclose(euclidean(self.source), torch.tensor([0.])))
+            self.assertTrue(torch.allclose(euclidean(self.source, self.source), torch.tensor([0.])))
+            self.assertFalse(torch.allclose(euclidean(self.source, self.target), torch.tensor([0.])))
 
         def test_euclidean_attachment_gradcheck(self):
             def my_euclidean(source, target):
                 euclidean = im.Attachment.EuclideanPointwiseDistanceAttachment()
-                euclidean.target = target
-                return euclidean(source)
+                return euclidean(source, target)
 
             self.assertTrue(torch.autograd.gradcheck(my_euclidean, (self.source.requires_grad_(), self.target.requires_grad_())))
 
@@ -89,17 +78,13 @@ class TestAttachmentVarifold2D(unittest.TestCase):
         target = torch.randn(N, 2)
 
         varifold = im.Attachment.VarifoldAttachment(2, [1.5])
-        varifold.target = source
-        self.assertTrue(torch.allclose(varifold(source), torch.tensor([0.])))
-
-        varifold.target = target
-        self.assertFalse(torch.allclose(varifold(source), torch.tensor([0.])))
+        self.assertTrue(torch.allclose(varifold(source, source), torch.tensor([0.])))
+        self.assertFalse(torch.allclose(varifold(source, target), torch.tensor([0.])))
 
     def test_attachment_gradcheck(self):
         def my_varifold(source, target):
             varifold = im.Attachment.VarifoldAttachment(2, [1.5])
-            varifold.target = target
-            return varifold(source)
+            return varifold(source, target)
 
         source = torch.rand(5, 2)
         target = torch.rand(3, 2)
@@ -117,17 +102,13 @@ def make_test_attachment_varifold_3d(backend):
 
         def test_attachment(self):
             varifold = im.Attachment.VarifoldAttachment(3, [1.5], backend=backend)
-            varifold.target = (self.source_vertices, self.source_faces)
-            self.assertTrue(torch.allclose(varifold((self.source_vertices, self.source_faces)), torch.tensor([0.])))
-
-            varifold.target = (self.target_vertices, self.target_faces)
-            self.assertFalse(torch.allclose(varifold((self.source_vertices, self.source_faces)), torch.tensor([0.])))
+            self.assertTrue(torch.allclose(varifold((self.source_vertices, self.source_faces), (self.source_vertices, self.source_faces)), torch.tensor([0.])))
+            self.assertFalse(torch.allclose(varifold((self.source_vertices, self.source_faces), (self.target_vertices, self.target_faces)), torch.tensor([0.])))
 
         def test_attachment_gradcheck(self):
             def my_varifold(source_vertices, target_vertices):
                 varifold = im.Attachment.VarifoldAttachment(3, [1.5], backend=backend)
-                varifold.target = (target_vertices, self.target_faces)
-                return varifold((source_vertices, self.source_faces))
+                return varifold((source_vertices, self.source_faces), (target_vertices, self.target_faces))
 
             self.assertTrue(torch.autograd.gradcheck(my_varifold, (self.source_vertices.requires_grad_(), self.target_vertices.requires_grad_())))
 

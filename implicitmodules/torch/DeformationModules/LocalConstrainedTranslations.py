@@ -8,21 +8,22 @@ from implicitmodules.torch.Kernels.kernels import K_xy, K_xx
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_0
 
-class ConstrainedTranslationsBase(DeformationModule):
+class LocalConstrainedTranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
     def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
         assert isinstance(manifold, Landmarks)
-        super().__init__()
+        super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
-        self.__f_support = f_support
-        self.__f_vectors = f_vectors
-        self.__controls = torch.zeros(1, requires_grad=True)
+        self.__controls = torch.zeros(1, requires_grad=True).view([])
         self.__coeff = coeff
 
+        self._f_support = f_support
+        self._f_vectors = f_vectors
+
     @classmethod
-    def build(cls, dim, nb_pts, sigma, coeff, gd=None, tan=None, cotan=None, label=None):
+    def build(cls, dim, nb_pts, sigma, f_support, f_vectors, coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, f_support, f_vectors, coeff, label)
 
@@ -66,41 +67,22 @@ class ConstrainedTranslationsBase(DeformationModule):
         return self.field_generator()(points, k)
 
     def cost(self):
-        support = self.__f_support(self.__manifold.gd)
-        vectors = self.__f_vectors(self.__manifold.gd)
-        
-        K_q = K_xx(support, self.sigma)
-
-        m = torch.mm(K_q, vectors)
-        return 0.5 * self.coeff * torch.dot(m.flatten(), vectors.flatten()) * self.controls * self.controls
+        raise NotImplementedError()
 
     def compute_geodesic_control(self, man):
-        support = self.__f_support(self.__manifold.gd)
-        vectors = self.__f_vectors(self.__manifold.gd)
-        # vector field for control = 1
-        v = StructuredField_0(support, vectors, self.__sigma, device=self.device, backend='torch')
-        
-                
-        K_q = K_xx(support, self.sigma)
-        m = torch.mm(K_q, vectors)
-        co = self.coeff * torch.dot(m.flatten(), vectors.flatten())
-        
-        self.controls = man.inner_prod_field(v)/co
-
+        raise NotImplementedError()
 
     def field_generator(self):
-        
-        support = self.__f_support(self.__manifold.gd)
-        vectors = self.__f_vectors(self.__manifold.gd)
+        support = self._f_support(self.__manifold.gd)
+        vectors = self._f_vectors(self.__manifold.gd)
         
         return StructuredField_0(support, self.__controls*vectors, self.__sigma, device=self.device, backend=self.backend)
 
     def adjoint(self, manifold):
         return manifold.cot_to_vs(self.__sigma, backend=self.backend)
 
-    
-    
-class ConstrainedTranslations_Torch(ConstrainedTranslationsBase):
+
+class LocalConstrainedTranslations_Torch(LocalConstrainedTranslationsBase):
     def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
         super().__init__(manifold, sigma, f_support, f_vectors, coeff, label)
 
@@ -109,76 +91,62 @@ class ConstrainedTranslations_Torch(ConstrainedTranslationsBase):
         return 'torch'
 
     def cost(self):
-        
-        support = self.__f_support(self.__manifold.gd)
-        vectors = self.__f_vectors(self.__manifold.gd)
-        
-        K_q = K_xx(support, self.sigma)
+        support = self._f_support(self.manifold.gd)
+        vectors = self._f_vectors(self.manifold.gd)
 
+        K_q = K_xx(support, self.sigma)
         m = torch.mm(K_q, vectors)
-        return 0.5 * self.coeff * torch.dot(m.flatten(), vectors.flatten()) * self.controls * self.controls
+
+        return 0.5 * self.coeff * torch.dot(m.flatten(), vectors.flatten()).view([]) * self.controls * self.controls
 
     def compute_geodesic_control(self, man):
-        support = self.f_support(self.__manifold.gd)
-        vectors = self.f_vectors(self.__manifold.gd)
+        support = self._f_support(self.manifold.gd)
+        vectors = self._f_vectors(self.manifold.gd)
+
         # vector field for control = 1
-        v = StructuredField_0(support, vectors, self.__sigma, device=self.device, backend='torch')
-        
-                
+        v = StructuredField_0(support, vectors, self.sigma, device=self.device, backend='torch')
+
         K_q = K_xx(support, self.sigma)
         m = torch.mm(K_q, vectors)
         co = self.coeff * torch.dot(m.flatten(), vectors.flatten())
-        
+
         self.controls = man.inner_prod_field(v)/co
 
-   
-    
 
-#ConstrainedTranslations = create_deformation_module_with_backends(ConstrainedTranslations_Torch.build)
-
-    
-class LocalScaling(ConstrainedTranslationsBase):
-    def __init__(self, manifold, sigma, coeff, label=None):
-        
-        def f_vectors(gd):
-            pi = math.pi
-            return torch.tensor([[math.cos(2*pi/3*x), math.sin(2*pi/3*x)] for x in range(3)])
-        def f_support(gd):
-            return gd.repeat(3, 1) + sigma/3 * f_vectors(gd)
-        
+class LocalConstrainedTranslations_KeOps(LocalConstrainedTranslationsBase):
+    def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
         super().__init__(manifold, sigma, f_support, f_vectors, coeff, label)
-   
-    @classmethod
-    def build(cls, dim, nb_pts, sigma, coeff, gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, coeff, label)
-         
-    
+
     @property
     def backend(self):
-        return 'torch'
-    
-    
-    
-    
-class LocalRotation(ConstrainedTranslationsBase):
-    def __init__(self, manifold, sigma, coeff, label=None):
-        
-        def f_vectors(gd):
-            pi = math.pi
-            return torch.tensor([[-math.sin(2*pi/3*(x)), math.cos(2*pi/3*(x))] for x in range(3)])
-        def f_support(gd):
-            pi = math.pi
-            return gd.repeat(3, 1) + sigma/3 * torch.tensor([[math.cos(2*pi/3*x), math.sin(2*pi/3*x)] for x in range(3)])
-        
-        super().__init__(manifold, sigma, f_support, f_vectors, coeff, label)
-   
-    @classmethod
-    def build(cls, dim, nb_pts, sigma, coeff, gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, coeff, label)
-         
-    
-    @property
-    def backend(self):
-        return 'torch'
+        return 'keops'
+
+    def cost(self):
+        raise NotImplementedError()
+
+    def compute_geodesic_control(self, man):
+        raise NotImplementedError()
+
+
+LocalConstrainedTranslations = create_deformation_module_with_backends(LocalConstrainedTranslations_Torch.build, LocalConstrainedTranslations_KeOps.build)
+
+
+def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
+    def f_vectors(gd):
+        return torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)])
+
+    def f_support(gd):
+        return gd.repeat(3, 1) + sigma/3. * f_vectors(gd)
+
+    return LocalConstrainedTranslations(dim, 1, sigma, f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
+
+
+def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
+    def f_vectors(gd):
+        return torch.tensor([[-math.sin(2.*math.pi/3.*i), math.cos(2.*math.pi/3.*i)] for i in range(3)])
+
+    def f_support(gd):
+        return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)])
+
+    return LocalConstrainedTranslations(dim, 1, sigma, f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
+

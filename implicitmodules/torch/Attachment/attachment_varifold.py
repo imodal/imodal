@@ -81,16 +81,16 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
     def dim(self):
         return 3
 
-    def cost_varifold(self, source, sigma):
+    def cost_varifold(self, source, target, sigma):
         vertices_source, faces_source = source
+        vertices_target, faces_target = target
 
         centers_source, normals_source, lengths_source = compute_centers_normals_lengths(vertices_source, faces_source)
         centers_target, normals_target, lengths_target = compute_centers_normals_lengths(vertices_target, faces_target)
         normalized_source = normals_source/lengths_source
         normalized_target = normals_target/lengths_target
 
-
-        return self.__target_precomputed[sigma]\
+        return self.varifold_scalar_product(centers_target, centers_target, lengths_target, lengths_target, normalized_target, normalized_target, sigma)\
             + self.varifold_scalar_product(centers_source, centers_source, lengths_source, lengths_source, normalized_source, normalized_source, sigma)\
             - 2. * self.varifold_scalar_product(centers_source, centers_target, lengths_source, lengths_target, normalized_source, normalized_target, sigma)
 
