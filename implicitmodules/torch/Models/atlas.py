@@ -36,10 +36,10 @@ class Atlas:
 
         self.__models = []
         for i in range(self.__population_count):
-            manifolds = [module.manifold.copy() for module in modules]
+            manifolds = [module.manifold.clone() for module in modules]
             cur_modules = copy.copy(modules)
-            for module, man in zip(cur_modules, manifolds):
-                module.manifold.fill(man, copy=True)
+            # for module, man in zip(cur_modules, manifolds):
+            #     module.manifold.fill(man, copy=True)
             self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
             if fit_gd is not None and i != 0:
                 for j in range(self.__n_modules):
@@ -51,6 +51,10 @@ class Atlas:
             self.__cotan_ht = torch.zeros_like(template).view(-1).requires_grad_()
 
         self.compute_parameters()
+
+    @property
+    def attachments(self):
+        return list(list(zip(*[model.attachments for model in self.__models]))[0])
 
     @property
     def compute_mode(self):
@@ -105,10 +109,10 @@ class Atlas:
 
         return translations_ht.manifold.gd.detach().view(-1, 2)
 
-    def compute(self, it=10, method='euler'):
-        return self.__compute_func(it, method)
+    def compute(self, targets, it=10, method='euler'):
+        return self.__compute_func(targets, it, method)
         
-    def __compute_sequential(self, it, method):
+    def __compute_sequential(self, targets, it, method):
         if self.__optimise_template:
             translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
 
@@ -124,7 +128,7 @@ class Atlas:
 
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
-            cost, deformation_cost, attach_cost = self.__models[i].compute(it=it, method=method)
+            cost, deformation_cost, attach_cost = self.__models[i].compute([targets[i]], it=it, method=method)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
@@ -139,7 +143,7 @@ class Atlas:
 
         return cost, deformation_cost, attach_cost
 
-    def __compute_parallel(self, it, method):
+    def __compute_parallel(self, atlas, it, method):
         pass
 
 

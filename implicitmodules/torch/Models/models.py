@@ -165,7 +165,7 @@ class ModelPointsRegistration(Model):
 
         super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
 
-    def compute(self, it=10, method='euler'):
+    def compute(self, target, it=10, method='euler'):
         """ Does shooting. Outputs compute deformation and attach cost. """
         # Call precompute callback if available
         # TODO: maybe do this in Model and not ModelPointsRegistration ?
@@ -185,9 +185,9 @@ class ModelPointsRegistration(Model):
         attach_costs = []
         for i in range(self.source_count):
             if self.weights[i] is not None:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__source_dim[i]), self.weights[i])))
+                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__source_dim[i]), self.weights[i]), target[i]))
             else:
-                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__source_dim[i])))
+                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__source_dim[i]), target[i]))
 
         attach_cost = self.lam*sum(attach_costs)
         c = deformation_cost + attach_cost

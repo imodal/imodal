@@ -14,23 +14,10 @@ class Attachment:
     def weight(self):
         return self.__weight
 
-    def __call__(self, source):
-        return self.__weight*self.loss(source)
+    def __call__(self, source, target):
+        return self.__weight*self.loss(source, target)
 
-    def __set_target(self, target):
-        self.__target = target
-
-        self.precompute()
-
-    def __get_target(self):
-        return self.__target
-
-    target = property(__get_target, __set_target)
-
-    def precompute(self):
-        pass
-
-    def loss(self, source):
+    def loss(self, source, target):
         raise NotImplementedError
 
 
@@ -41,17 +28,8 @@ class CompoundAttachment(Attachment):
         self.__attachments = attachments
         super().__init__(weight)
 
-    def __set_target(self, targets):
-        for attachment, target in zip(self.__attachments, targets):
-            attachment.target = target
-
-    def __get_target(self):
-        return self.__attachments[0]
-
-    target = property(__get_target, __set_target)
-
-    def loss(self, source):
-        return sum([attachment.loss(source) for attachment in self.__attachments])
+    def loss(self, source, target):
+        return sum([attachment.loss(source, target) for attachment in self.__attachments])
 
 
 class EnergyAttachment(Attachment):
@@ -59,15 +37,15 @@ class EnergyAttachment(Attachment):
     def __init__(self, weight=1.):
         super().__init__(weight)
 
-    def loss(self, source):
+    def loss(self, source, target):
         if isinstance(source, torch.Tensor):
             x_i = source
             a_i = torch.ones(source.shape[0])
-            y_j = self.target
-            b_j = torch.ones(self.target.shape[0])
+            y_j = target
+            b_j = torch.ones(target.shape[0])
         else:
             x_i, a_i = source
-            y_j, b_j = self.target
+            y_j, b_j = target
 
         K_xx = -distances(x_i, x_i)
         K_xy = -distances(x_i, y_j)
@@ -79,8 +57,8 @@ class L2NormAttachment(Attachment):
     def __init__(self, weight=1.):
         super().__init__(weight)
 
-    def loss(self, source):
-        return torch.dist(source, self.target)
+    def loss(self, source, target):
+        return torch.dist(source, target)
 
 
 class GeomlossAttachment(Attachment):
@@ -88,14 +66,14 @@ class GeomlossAttachment(Attachment):
         super().__init__(weight)
         self.__geomloss = geomloss.SamplesLoss(**kwargs)
 
-    def loss(self, source):
-        return self.__geomloss(source[1], source[0], self.target[1], self.target[0])
+    def loss(self, source, target):
+        return self.__geomloss(source[1], source[0], target[1], target[0])
 
 
 class EuclideanPointwiseDistanceAttachment(Attachment):
     def __init__(self, weight=1.):
         super().__init__(weight)
 
-    def loss(self, source):
-        return torch.sum(torch.norm(source-self.target, dim=1))
+    def loss(self, source, target):
+        return torch.sum(torch.norm(source-target, dim=1))
 

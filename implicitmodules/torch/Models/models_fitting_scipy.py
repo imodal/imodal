@@ -45,9 +45,8 @@ class ModelFittingScipy(ModelFitting):
             self.__numpy_to_model(self.model, x.astype('float64'))
             self.__pytorch_optim.zero_grad()
 
-            with torch.autograd.detect_anomaly():
-                # Shooting + loss computation
-                cost, deformation_cost, attach_cost = self.model.compute(it=shoot_it, method=shoot_method)
+            # Shooting + loss computation
+            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
 
             dx_c = self.__model_to_numpy(self.model, grad=True)
 
@@ -72,8 +71,6 @@ class ModelFittingScipy(ModelFitting):
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
 
             self.__it = self.__it + 1
-
-        CompoundAttachment(self.model.attachments).target = target
 
         step_options = {'disp': disp, 'maxiter': max_iter}
         step_options.update(options)
@@ -106,9 +103,6 @@ class ModelFittingScipy(ModelFitting):
         if not all(param.is_contiguous() for param in self.model.parameters):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
-        # print("====")
-        # print([param.grad for param in model.parameters])
-        # print("****")
         if grad:
             tensors = [param.grad.data.view(-1).cpu().numpy() for param in model.parameters]
         else:

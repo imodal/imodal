@@ -23,11 +23,11 @@ class VarifoldAttachmentBase(Attachment):
     def sigmas(self):
         return self.__sigmas
 
-    def cost_varifold(self, source, sigma):
+    def cost_varifold(self, source, target, sigma):
         raise NotImplementedError
 
-    def loss(self, source):
-        return sum([self.cost_varifold(source, sigma) for sigma in self.__sigmas])
+    def loss(self, source, target):
+        return sum([self.cost_varifold(source, target, sigma) for sigma in self.__sigmas])
 
 
 class VarifoldAttachment2D(VarifoldAttachmentBase):
@@ -40,7 +40,7 @@ class VarifoldAttachment2D(VarifoldAttachmentBase):
 
 
 class VarifoldAttachment2D_Torch(VarifoldAttachment2D):
-    def cost_varifold(self, source, sigma):
+    def cost_varifold(self, source, target, sigma):
         def dot_varifold(x, y, sigma):
             cx, cy = close_shape(x), close_shape(y)
             nx, ny = x.shape[0], y.shape[0]
@@ -63,14 +63,14 @@ class VarifoldAttachment2D_Torch(VarifoldAttachment2D):
 
             return torch.sum(kxy[mask] * vxvy[mask] / (torch.tensordot(nvx, nvy, dims=0)[mask]))
 
-        return dot_varifold(source, source, sigma) + dot_varifold(self.target, self.target, sigma) - 2 * dot_varifold(source, self.target, sigma)
+        return dot_varifold(source, source, sigma) + dot_varifold(target, target, sigma) - 2 * dot_varifold(source, target, sigma)
 
 
 class VarifoldAttachment2D_KeOps(VarifoldAttachment2D):
     def __init__(self, sigmas, weight=1.):
         super().__init__(sigmas, weight=weight)
 
-    def cost_varifold(self, source, sigma):
+    def cost_varifold(self, source, target, sigma):
         raise NotImplementedError
 
 
@@ -81,25 +81,18 @@ class VarifoldAttachment3D(VarifoldAttachmentBase):
     def dim(self):
         return 3
 
-    def precompute(self):
-        vertices_target, faces_target = self.target
-        self.centers_target, normals_target, self.lengths_target = compute_centers_normals_lengths(vertices_target, faces_target)
-        self.normalized_target = normals_target/self.lengths_target
-
-        self.__target_precomputed = {}
-
-        for sigma in self.sigmas:
-            self.__target_precomputed[sigma] = self.varifold_scalar_product(self.centers_target, self.centers_target, self.lengths_target, self.lengths_target, self.normalized_target, self.normalized_target, sigma)
-
     def cost_varifold(self, source, sigma):
         vertices_source, faces_source = source
 
         centers_source, normals_source, lengths_source = compute_centers_normals_lengths(vertices_source, faces_source)
+        centers_target, normals_target, lengths_target = compute_centers_normals_lengths(vertices_target, faces_target)
         normalized_source = normals_source/lengths_source
+        normalized_target = normals_target/lengths_target
+
 
         return self.__target_precomputed[sigma]\
             + self.varifold_scalar_product(centers_source, centers_source, lengths_source, lengths_source, normalized_source, normalized_source, sigma)\
-            - 2. * self.varifold_scalar_product(centers_source, self.centers_target, lengths_source, self.lengths_target, normalized_source, self.normalized_target, sigma)
+            - 2. * self.varifold_scalar_product(centers_source, centers_target, lengths_source, lengths_target, normalized_source, normalized_target, sigma)
 
 
 class VarifoldAttachment3D_Torch(VarifoldAttachment3D):
