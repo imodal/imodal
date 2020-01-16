@@ -74,9 +74,9 @@ for i in range(N_bunny):
 
         bunny, ear_tips = generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, 200, 100)
 
-    #angle = torch.rand(1).item()*math.pi*2.
-    angle = 0.
-    trans = torch.randn(2)
+    angle = torch.rand(1).item()*math.pi*2.
+    #angle = 0.
+    trans = 0.1*torch.randn(2)
     rot_mat = torch.tensor([[math.cos(angle), -math.sin(angle)],
                             [math.sin(angle), math.cos(angle)]])
 

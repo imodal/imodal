@@ -16,7 +16,7 @@ class LocalConstrainedTranslationsBase(DeformationModule):
         super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
-        self.__controls = torch.zeros(1, requires_grad=True).view([])
+        self.__controls = torch.zeros(1).view([]).requires_grad_()
         self.__coeff = coeff
 
         self._f_support = f_support
