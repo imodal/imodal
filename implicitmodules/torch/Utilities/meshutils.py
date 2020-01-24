@@ -3,6 +3,8 @@ import math
 import torch
 from scipy.spatial import ConvexHull
 
+from implicitmodules.torch.Kernels.kernels import K_xy
+
 
 def area_side(points, **kwargs):
     """Marks points that are on one side of the specified separation line on the plan.
@@ -590,4 +592,12 @@ def compute_centers_normals_lengths(vertices, faces):
     lengths = (normals**2).sum(dim=1)[:, None].sqrt()
     return centers, normals, lengths
 
+
+def kernel_smooth(points, kernel):
+    K = kernel(points, points)
+    return torch.mm(K, points)/torch.sum(K, dim=1).unsqueeze(1)
+
+
+def gaussian_kernel_smooth(points, sigma):
+    return kernel_smooth(points, lambda x, y: K_xy(x, y, sigma))
 

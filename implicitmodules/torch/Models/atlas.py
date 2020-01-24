@@ -38,17 +38,16 @@ class Atlas:
         for i in range(self.__population_count):
             manifolds = [module.manifold.clone() for module in modules]
             cur_modules = copy.copy(modules)
-            # for module, man in zip(cur_modules, manifolds):
-            #     module.manifold.fill(man, copy=True)
+
             self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
             if fit_gd is not None and i != 0:
-                for j in range(self.__n_modules):
+                for j in len(modules):
                     if fit_gd[j]:
                         self.__models[i].init_manifold[j+1].gd = self.__models[0].init_manifold[j+1].gd
 
         # Momentum of the LDDMM translation module for the hypertemplate if used
         if self.__optimise_template:
-            self.__cotan_ht = torch.zeros_like(template).view(-1).requires_grad_()
+            self.__cotan_ht = torch.zeros_like(template, requires_grad=True)
 
         self.compute_parameters()
 

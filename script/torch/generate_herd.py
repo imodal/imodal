@@ -3,9 +3,6 @@ import sys
 import pickle
 
 import torch
-import matplotlib.pyplot as plt
-
-N_bunny = 1
 
 def generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, nb_pts_head, nb_pts_ear):
     if head_radius <= 0. or ear_widths[0] <= 0. or ear_widths[1] <= 0. or ear_lengths[0] <= 0. or ear_lengths[1] <= 0.:
@@ -52,7 +49,7 @@ def generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, nb_pts_head
 
 sigma_head_radius = 0.
 sigma_ear_width = 0.
-sigma_ear_length = 0.5
+sigma_ear_length = 0.4
 sigma_ear_angle = 0.
 
 mu_head_radius = 0.8
@@ -63,7 +60,7 @@ mu_ear_angles = [2.*math.pi/3., math.pi/3.]
 mu_bunny_pos = torch.tensor([0., 0.])
 
 N_bunny = int(sys.argv[2])
-herd = [generate_bunny(mu_head_radius, [mu_ear_width, mu_ear_width], [1., 1.], mu_ear_angles, 200, 100)]
+herd = [generate_bunny(mu_head_radius, [mu_ear_width, mu_ear_width], [1., 1.], mu_ear_angles, 30, 20)]
 for i in range(N_bunny):
     bunny = None
     while bunny is None:
@@ -72,14 +69,13 @@ for i in range(N_bunny):
         ear_lengths = (sigma_ear_length*torch.randn(2)+mu_ear_length).tolist()
         ear_angles = (sigma_ear_angle*torch.randn(2)+torch.tensor(mu_ear_angles)).tolist()
 
-        bunny, ear_tips = generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, 200, 100)
+        bunny, ear_tips = generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, 30, 20)
 
     angle = torch.rand(1).item()*math.pi*2.
     #angle = 0.
-    trans = 0.1*torch.randn(2)
+    trans = torch.randn(2)
     rot_mat = torch.tensor([[math.cos(angle), -math.sin(angle)],
                             [math.sin(angle), math.cos(angle)]])
-
     bunny = torch.bmm(rot_mat.repeat(bunny.shape[0], 1, 1), bunny.unsqueeze(1).transpose(1, 2)).view(-1, 2) + trans.repeat(bunny.shape[0], 1)
     
     herd.append((bunny, ear_tips))

@@ -177,9 +177,12 @@ class ModelPointsRegistration(Model):
         compound = CompoundModule(self.modules)
         compound.manifold.fill(self.init_manifold)
 
+        # Compute the deformation cost (constant)
+        compound.compute_geodesic_control(compound.manifold)
+        deformation_cost = compound.cost()
+
         # Shooting
         shoot(Hamiltonian(compound), it, method)
-        deformation_cost = compound.cost()
 
         # We compute the attach cost for each source/target couple
         attach_costs = []
