@@ -123,7 +123,8 @@ class TensorContainer:
         requires_grad : bool, default=True
             Set to true to record futher operations on the tensors.
         """
-        [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
+        if requires_grad is not None:
+            [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
 
     def add(self, tensors):
         """Addition."""

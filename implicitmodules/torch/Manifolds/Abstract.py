@@ -146,7 +146,7 @@ class Manifold(BaseManifold):
             if self.__device is None:
                 raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors are of different dtype!")
 
-    def clone(self, requires_grad=False):
+    def clone(self, requires_grad=None):
         """Returns a copy of the manifold. Detaches the computation graph.
         Parameters
         ----------

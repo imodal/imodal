@@ -66,9 +66,6 @@ class EmptyManifold(BaseManifold):
     def __get_cotan(self):
         return torch.tensor([], requires_grad=True)
 
-    def fill(self, manifold, copy=False, requires_grad=True):
-        pass
-
     def fill_gd(self, gd, copy=False, requires_grad=True):
         pass
 
@@ -91,13 +88,13 @@ class EmptyManifold(BaseManifold):
     tan = property(__get_tan, fill_tan)
     cotan = property(__get_cotan, fill_cotan)
 
-    def muladd_gd(self, gd, scale):
+    def add_gd(self, gd):
         pass
 
-    def muladd_tan(self, tan, scale):
+    def add_tan(self, tan):
         pass
 
-    def muladd_cotan(self, cotan, scale):
+    def add_cotan(self, cotan):
         pass
 
     def negate_gd(self):

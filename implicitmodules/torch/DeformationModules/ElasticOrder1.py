@@ -143,7 +143,7 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
         return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.C, h, torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(self.dim, device=self.device))
 
     def __compute_sks(self):
-        self.__sks = compute_sks(self.manifold.gd[0].view(-1, self.manifold.dim), self.sigma, 1) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
+        self.__sks = compute_sks(self.manifold.gd[0], self.sigma, 1) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.controls)

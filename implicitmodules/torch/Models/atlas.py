@@ -5,10 +5,11 @@ import torch
 
 from implicitmodules.torch.Models import Model, ModelPointsRegistration
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
+from implicitmodules.torch.DeformationModules import ImplicitModule0
 
 
 class Atlas:
-    def __init__(self, template, modules, attachement, population_count, lam=1., sigma_ht=1., fit_gd=None, optimise_template=False, precompute_callback=None, model_precompute_callback=None, other_parameters=None, compute_mode='sequential'):
+    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_coeff=1., precompute_callback=None, model_precompute_callback=None, other_parameters=None, compute_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
 
@@ -22,6 +23,9 @@ class Atlas:
         else:
             raise RuntimeError("Atlas: {compute_mode} not recognised!".format(compute_mode=compute_mode))
 
+        if optimise_template and ht_sigma is None:
+            raise RuntimeError("Atlas.__init__(): optimise_template has been set to True but ht_sigma has not been specified!")
+
         self.__compute_mode = compute_mode
 
         self.__population_count = population_count
@@ -30,18 +34,19 @@ class Atlas:
         self.__init_other_parameters = other_parameters
         self.__fit_gd = fit_gd
         self.__n_modules = len(modules)
-        self.__sigma_ht = sigma_ht
+        self.__ht_sigma = ht_sigma
+        self.__ht_coeff = ht_coeff
         self.__optimise_template = optimise_template
         self.__lam = lam
 
         self.__models = []
         for i in range(self.__population_count):
             manifolds = [module.manifold.clone() for module in modules]
-            cur_modules = copy.copy(modules)
+            cur_modules = copy.deepcopy(modules)
 
             self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
             if fit_gd is not None and i != 0:
-                for j in len(modules):
+                for j in range(len(modules)):
                     if fit_gd[j]:
                         self.__models[i].init_manifold[j+1].gd = self.__models[0].init_manifold[j+1].gd
 
@@ -50,6 +55,29 @@ class Atlas:
             self.__cotan_ht = torch.zeros_like(template, requires_grad=True)
 
         self.compute_parameters()
+
+    def clone_init(self):
+        return Atlas(copy.deepcopy(self.__template),
+                     copy.deepcopy(self.__models[0].modules[1:]),
+                     copy.deepcopy(self.__models[0].attachments),
+                     self.__population_count,
+                     lam=self.__lam,
+                     fit_gd=copy.deepcopy(self.__fit_gd),
+                     optimise_template=self.__optimise_template,
+                     ht_sigma=self.__ht_sigma,
+                     ht_coeff=self.__ht_coeff,
+                     precompute_callback=self.__precompute_callback,
+                     model_precompute_callback=self.__models[0].precompute_callback,
+                     other_parameters=copy.deepcopy(self.__models[0].init_other_parameters),
+                     compute_mode=self.__compute_mode)
+
+    def fill_from(self, atlas):
+        self.__dict__.update(atlas.__dict__)
+
+    def __deepcopy__(self, memodict):
+        out = self.clone()
+        memodict[id(out)] = out
+        return out
 
     @property
     def attachments(self):
@@ -102,39 +130,39 @@ class Atlas:
             self.__parameters.append(self.__cotan_ht)
 
     def compute_template(self, it=10, method='euler'):
-        translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
-
-        shoot(Hamiltonian([translations_ht]), it, method)
-
-        return translations_ht.manifold.gd.detach().view(-1, 2)
-
-    def compute(self, targets, it=10, method='euler'):
-        return self.__compute_func(targets, it, method)
-        
-    def __compute_sequential(self, targets, it, method):
         if self.__optimise_template:
-            translations_ht = ImplicitModule0.build_from_points(2, self.__template.shape[0], self.__sigma_ht, 0.01, gd=self.__template.view(-1).requires_grad_(), cotan=self.__cotan_ht)
+            translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
 
             shoot(Hamiltonian([translations_ht]), it, method)
 
+            return translations_ht.manifold.gd.detach()
+        else:
+            return self.__template
+
+    def compute(self, targets, it=10, method='euler'):
+        return self.__compute_func(targets, it, method)
+
+    def __compute_sequential(self, targets, it, method):
         costs = []
         deformation_costs = []
         attach_costs = []
 
         for i in range(self.__population_count):
+            cost_template = None
             if self.__optimise_template:
+                translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., coeff=self.__ht_coeff, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht, backend='torch')
+                shoot(Hamiltonian([translations_ht]), 10, 'euler')
                 self.__models[i]._Model__init_manifold[0].gd = translations_ht.manifold.gd
+                cost_template = translations_ht.cost()
 
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
-            cost, deformation_cost, attach_cost = self.__models[i].compute([targets[i]], it=it, method=method)
+
+            cost, deformation_cost, attach_cost = self.__models[i].compute([targets[i]], it=it, method=method, ext_cost=cost_template)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
             attach_costs.append(attach_cost)
-
-            # Quick fix used to manualy free up the gradient tree
-            del cost
 
         deformation_cost = sum(deformation_costs)
         attach_cost = sum(attach_costs)
