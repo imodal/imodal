@@ -14,6 +14,14 @@ class SilentBase(DeformationModule):
         super().__init__(label)
         self.__manifold = manifold
 
+    def __str__(self):
+        outstr = "Silent module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Manifold type=" + self.__manifold.__class__.__name__
+        outstr += "  Nb pts=" + self.__manifold.nb_pts
+        return outstr
+
     @classmethod
     def build(cls, dim, nb_pts, manifold, gd=None, tan=None, cotan=None, label=None, **kwargs):
         return cls(manifold(dim, nb_pts, **kwargs, gd=gd, tan=tan, cotan=cotan), label)

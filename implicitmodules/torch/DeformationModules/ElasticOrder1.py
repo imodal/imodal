@@ -24,6 +24,17 @@ class ImplicitModule1Base(DeformationModule):
         self.__sym_dim = int(self.manifold.dim * (self.manifold.dim + 1) / 2)
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
+    def __str__(self):
+        outstr = "Implicit module of order 1\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Sigma=" + str(self.sigma) + "\n"
+        outstr += "  Nu=" + str(self.__nu) + "\n"
+        outstr += "  Coeff=" + str(self.__coeff) + "\n"
+        outstr += "  Dim controls=" + str(self.__dim_controls) + "\n"
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts) + "\n"
+        return outstr
+
     @classmethod
     def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""

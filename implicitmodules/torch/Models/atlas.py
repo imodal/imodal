@@ -61,6 +61,28 @@ class Atlas:
 
         self.compute_parameters()
 
+    def __str__(self):
+        outstr = "Atlas\n"
+        outstr += "=====\n"
+        outstr += ("Template nb pts=" + str(self.__template.shape[0]) + "\n")
+        outstr += ("Population count=" + str(self.__population_count) + "\n")
+        outstr += ("Module count=" + str(len(self.models[0].modules)-1) + "\n")
+        outstr += ("Hypertemplate=" + str(self.__optimise_template==True) + "\n")
+        if self.__optimise_template:
+            outstr += ("Hypertemplate sigma=" + str(self.__ht_sigma) + "\n")
+            outstr += ("Hypertemplate coeff=" + str(self.__ht_coeff) + "\n")
+        outstr += ("Attachment=" + str(self.__models[0].attachments[0]) + "\n")
+        outstr += ("Fit geometrical descriptors=" + str(self.__fit_gd) + "\n")
+        outstr += ("Precompute callback=" + str(self.__precompute_callback is not None) + "\n")
+        outstr += ("Model precompute callback=" + str(self.models[0].precompute_callback is not None) + "\n")
+        outstr += ("Other parameters=" + str(len(self.__init_other_parameters) != 0))
+        outstr += "\n\n"
+        outstr += "Modules\n"
+        outstr += "======="
+        for module in self.models[0].modules[1:]:
+            outstr += ( "\n" + str(module))
+        return outstr
+
     def clone_init(self):
         return Atlas(copy.deepcopy(self.__template),
                      copy.deepcopy(self.__models[0].modules[1:]),
@@ -78,14 +100,6 @@ class Atlas:
 
     def fill_from(self, atlas):
         self.__dict__.update(atlas.__dict__)
-
-    def __str__(self):
-        return "Atlas\n Modules: {modules}\n Population count: {population_count}\n Lambda: {lam}\n fit_gd: {fit_gd}\n Attachment: {attachment}\n Hypertemplate: {optimise_template}\n Precompute callback: {precompute_callback}\nModel precompute_callback: {model_precompute_callback}\n Other parameters: {other_parameters}".format(modules=self.models[0].modules, population_count=self.__population_count, lam=self.__lam, fit_gd=self.__fit_gd, attachment=self.__attachement, optimise_template=self.__optimise_template, precompute_callback=self.__precompute_callback is not None, model_precompute_callback=self.models[0].precompute_callback is not None, other_parameters=self.__init_other_parameters is not None)
-
-    # def __deepcopy__(self, memodict):
-    #     out = self.clone()
-    #     memodict[id(out)] = out
-    #     return out
 
     @property
     def attachments(self):

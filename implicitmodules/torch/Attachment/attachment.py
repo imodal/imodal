@@ -10,6 +10,9 @@ class Attachment:
     def __init__(self, weight=1.):
         self.__weight = weight
 
+    def __str__(self):
+        return "{classname} (weight={weight})".format(classname=self.__class__.__name__, weight=self.weight)
+
     @property
     def weight(self):
         return self.__weight

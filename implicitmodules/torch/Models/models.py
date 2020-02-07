@@ -173,12 +173,12 @@ class ModelPointsRegistration(Model):
 
     def clone_init(self):
         return ModelPointsRegistration(self.__sources,
-                                       copy.deepcopy(self.modules[len(self.__sources):]),
+                                       self.modules[len(self.__sources):],
                                        self.attachments,
                                        fit_gd=self.fit_gd,
                                        lam=self.lam,
                                        precompute_callback=self.precompute_callback,
-                                       other_parameters=copy.deepcopy(self.init_other_parameters))
+                                       other_parameters=self.init_other_parameters)
 
     def compute(self, targets, it=10, method='euler', compute_backward=True, ext_cost=None):
         """ Does shooting. Outputs compute deformation and attach cost. """

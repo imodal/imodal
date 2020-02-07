@@ -13,6 +13,13 @@ class GlobalTranslation(DeformationModule):
         self.__coeff = coeff
         self.__manifold = EmptyManifold(dim)
 
+    def __str__(self):
+        outstr = "Global translation\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Coeff=" + str(self.__coeff)
+        return outstr
+
     @classmethod
     def build(cls, dim, coeff=1., label=None):
         return cls(dim, coeff, label)

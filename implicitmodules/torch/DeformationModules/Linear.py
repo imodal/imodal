@@ -15,6 +15,15 @@ class LinearDeformation(DeformationModule):
 
         self.__A = A
 
+    def __str__(self):
+        outstr = "Linear deformation module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Coeff=" + self.__coeff
+        outstr += "  A=\n"
+        outstr += str(self.__A.detach().cpu().tolist())
+        return outstr
+
     @property
     def A(self):
         return self.__A

@@ -11,25 +11,39 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 class LocalConstrainedTranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
-    def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
+    def __init__(self, manifold, sigma, descstr, f_support, f_vectors, coeff, label):
         assert isinstance(manifold, Landmarks)
         super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
+        self.__descstr = descstr
         self.__controls = torch.zeros(1).view([]).requires_grad_()
         self.__coeff = coeff
 
         self._f_support = f_support
         self._f_vectors = f_vectors
 
+    def __str__(self):
+        outstr = "Local constrained translation module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Type=" + self.descstr + "\n"
+        outstr += "  Coeff=" + str(self.__coeff)
+        return outstr
+
     @classmethod
-    def build(cls, dim, nb_pts, sigma, f_support, f_vectors, coeff=1., gd=None, tan=None, cotan=None, label=None):
+    def build(cls, dim, nb_pts, sigma, descstr, f_support, f_vectors, coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, f_support, f_vectors, coeff, label)
+        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, descstr, f_support, f_vectors, coeff, label)
 
     def to_(self, device):
         self.__manifold.to_(device)
         self.__controls = self.__controls.to(device)
+
+    @property
+    def descstr(self):
+        """Description string. Used by __str__()."""
+        return self.__descstr
 
     @property
     def coeff(self):
@@ -83,8 +97,8 @@ class LocalConstrainedTranslationsBase(DeformationModule):
 
 
 class LocalConstrainedTranslations_Torch(LocalConstrainedTranslationsBase):
-    def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
-        super().__init__(manifold, sigma, f_support, f_vectors, coeff, label)
+    def __init__(self, manifold, sigma, descstr, f_support, f_vectors, coeff, label):
+        super().__init__(manifold, sigma, descstr, f_support, f_vectors, coeff, label)
 
     @property
     def backend(self):
@@ -114,8 +128,8 @@ class LocalConstrainedTranslations_Torch(LocalConstrainedTranslationsBase):
 
 
 class LocalConstrainedTranslations_KeOps(LocalConstrainedTranslationsBase):
-    def __init__(self, manifold, sigma, f_support, f_vectors, coeff, label):
-        super().__init__(manifold, sigma, f_support, f_vectors, coeff, label)
+    def __init__(self, manifold, sigma, descstr, f_support, f_vectors, coeff, label):
+        super().__init__(manifold, sigma, descstr, f_support, f_vectors, coeff, label)
 
     @property
     def backend(self):
@@ -138,7 +152,7 @@ def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None
     def f_support(gd):
         return gd.repeat(3, 1) + sigma/3. * f_vectors(gd)
 
-    return LocalConstrainedTranslations(dim, 1, sigma, f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
+    return LocalConstrainedTranslations(dim, 1, sigma, "Local scaling", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
 
 
 def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
@@ -148,5 +162,5 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
     def f_support(gd):
         return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)])
 
-    return LocalConstrainedTranslations(dim, 1, sigma, f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
+    return LocalConstrainedTranslations(dim, 1, sigma, "Local rotation", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
 
