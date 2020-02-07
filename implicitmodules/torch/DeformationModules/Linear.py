@@ -24,10 +24,6 @@ class LinearDeformation(DeformationModule):
         return cls(Landmarks(A.shape[0], 1, gd=gd, tan=tan, cotan=cotan), A, coeff, label)
 
     @property
-    def dim_controls(self):
-        return self.__controls.shape[0]
-
-    @property
     def coeff(self):
         return self.__coeff
 

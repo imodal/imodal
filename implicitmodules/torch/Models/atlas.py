@@ -9,6 +9,9 @@ from implicitmodules.torch.DeformationModules import ImplicitModule0
 
 
 class Atlas:
+    """
+    TODO: add documentation
+    """
     def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_coeff=1., precompute_callback=None, model_precompute_callback=None, other_parameters=None, compute_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
@@ -41,13 +44,15 @@ class Atlas:
 
         self.__models = []
         for i in range(self.__population_count):
-            manifolds = [module.manifold.clone() for module in modules]
+            #manifolds = [module.manifold.clone() for module in modules]
             cur_modules = copy.deepcopy(modules)
 
             self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
+
             if fit_gd is not None and i != 0:
                 for j in range(len(modules)):
                     if fit_gd[j]:
+                        # We fit the geometrical descriptor of some module. We optimise the one from the first model. For the other models, we assign a reference to the manifold of the first model.
                         self.__models[i].init_manifold[j+1].gd = self.__models[0].init_manifold[j+1].gd
 
         # Momentum of the LDDMM translation module for the hypertemplate if used
@@ -74,10 +79,13 @@ class Atlas:
     def fill_from(self, atlas):
         self.__dict__.update(atlas.__dict__)
 
-    def __deepcopy__(self, memodict):
-        out = self.clone()
-        memodict[id(out)] = out
-        return out
+    def __str__(self):
+        return "Atlas\n Modules: {modules}\n Population count: {population_count}\n Lambda: {lam}\n fit_gd: {fit_gd}\n Attachment: {attachment}\n Hypertemplate: {optimise_template}\n Precompute callback: {precompute_callback}\nModel precompute_callback: {model_precompute_callback}\n Other parameters: {other_parameters}".format(modules=self.models[0].modules, population_count=self.__population_count, lam=self.__lam, fit_gd=self.__fit_gd, attachment=self.__attachement, optimise_template=self.__optimise_template, precompute_callback=self.__precompute_callback is not None, model_precompute_callback=self.models[0].precompute_callback is not None, other_parameters=self.__init_other_parameters is not None)
+
+    # def __deepcopy__(self, memodict):
+    #     out = self.clone()
+    #     memodict[id(out)] = out
+    #     return out
 
     @property
     def attachments(self):
@@ -115,17 +123,25 @@ class Atlas:
         """ Updates the parameter list sent to the optimizer. """
         self.__parameters = []
 
-        for i in range(len(self.__models)):
-            self.__models[i].compute_parameters()
-            self.__parameters.extend(self.__models[i].init_manifold.unroll_cotan())
+        # for i in range(len(self.__models)):
+        #     self.__models[i].compute_parameters()
+        #     self.__parameters.extend(self.__models[i].init_manifold.unroll_cotan())
+
+        # Moments of each modules in each models
+        for model in self.__models:
+            model.compute_parameters()
+            self.__parameters.extend(model.init_manifold.unroll_cotan())
 
         if self.__fit_gd is not None:
             for i in range(self.__n_modules):
                 if self.__fit_gd[i]:
+                    # We optimise the manifold of the first model (which wil reflect on the other models as the manifolds reference is shared).
                     self.__parameters.extend(self.__models[0].init_manifold[i+1].unroll_gd())
 
+        # Other parameters
         self.__parameters.extend(self.__init_other_parameters)
 
+        # Hyper template moments
         if self.__optimise_template:
             self.__parameters.append(self.__cotan_ht)
 

@@ -25,13 +25,7 @@ class Model:
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
         self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
 
-        # We copy each parameters
-        self.__init_other_parameters = []
-        for p in other_parameters:
-            #self.__init_other_parameters.append(p.detach().clone().requires_grad_())
-            self.__init_other_parameters.append(p)
-
-        #self.__init_other_parameters = copy.deepcopy(other_parameters)
+        self.__init_other_parameters = other_parameters
 
         # Called to update the parameter list sent to the optimizer
         self.compute_parameters()
@@ -160,7 +154,7 @@ class ModelPointsRegistration(Model):
         model_modules = []
         self.__weights = []
         for source in self.__sources:
-            # Some weights are provided
+            # Some weights provided
             if isinstance(source, tuple) and len(source) == 2:
                 model_modules.append(SilentLandmarks(source[0].shape[1], source[0].shape[0], gd=source[0].clone().requires_grad_(), cotan=torch.zeros_like(source[0], requires_grad=True)))
                 self.__weights.append(source[1])
@@ -213,16 +207,16 @@ class ModelPointsRegistration(Model):
             else:
                 attach_costs.append(attachment((silent.manifold.gd, source[1]), target))
 
+        attach_cost = self.lam*sum(attach_costs)
+        cost = deformation_cost + attach_cost
+
+        if pc_cost is not None:
+            cost = cost + pc_cost
+
+        if ext_cost is not None:
+            cost = cost + ext_cost
+
         if compute_backward:
-            attach_cost = self.lam*sum(attach_costs)
-            cost = deformation_cost + attach_cost
-
-            if pc_cost is not None:
-                cost = cost + pc_cost
-
-            if ext_cost is not None:
-                cost = cost + ext_cost
-
             cost_item = cost.detach().item()
             cost.backward()
             del cost

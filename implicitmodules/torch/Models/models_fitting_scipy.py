@@ -82,7 +82,7 @@ class ModelFittingScipy(ModelFitting):
         step_options = {'disp': False, 'maxiter': max_iter}
         step_options.update(options)
 
-        x_0 = self.__model_to_numpy(self.model.clone_init())
+        x_0 = self.__model_to_numpy(copy.deepcopy(self.model))
         closure(x_0)
 
         if disp:
@@ -109,6 +109,7 @@ class ModelFittingScipy(ModelFitting):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
+            #print([param.grad for param in model.parameters])
             tensors = [param.grad.data.flatten().cpu().numpy() for param in model.parameters]
         else:
             tensors = [param.detach().flatten().cpu().numpy() for param in model.parameters]

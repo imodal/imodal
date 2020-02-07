@@ -76,7 +76,7 @@ class SilentBase(DeformationModule):
 
 Silent = SilentBase.build
 
-def SilentLandmarks(dim, nb_pts, gd=None, tan=None, cotan=None):
-    return SilentBase.build(dim, nb_pts, Landmarks, gd=gd, tan=tan, cotan=cotan)
+def SilentLandmarks(dim, nb_pts, gd=None, tan=None, cotan=None, label=None):
+    return SilentBase.build(dim, nb_pts, Landmarks, gd=gd, tan=tan, cotan=cotan, label=label)
 
 
