@@ -82,7 +82,6 @@ class ModelFittingScipy(ModelFitting):
 
         if disp:
             print("Initial energy = %.3f" % last_costs['cost'])
-            print(last_costs)
 
         start_time = time.perf_counter()
         res = scipy.optimize.minimize(closure, x_0, method='L-BFGS-B', jac=True, options=step_options, callback=callback, bounds=bounds)
