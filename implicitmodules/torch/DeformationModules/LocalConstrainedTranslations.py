@@ -28,6 +28,7 @@ class LocalConstrainedTranslationsBase(DeformationModule):
         if self.label:
             outstr += "  Label=" + self.label + "\n"
         outstr += "  Type=" + self.descstr + "\n"
+        outstr += "  Sigma=" + str(self.__sigma) + "\n"
         outstr += "  Coeff=" + str(self.__coeff)
         return outstr
 

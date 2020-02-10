@@ -83,24 +83,6 @@ class Atlas:
             outstr += ( "\n" + str(module))
         return outstr
 
-    def clone_init(self):
-        return Atlas(copy.deepcopy(self.__template),
-                     copy.deepcopy(self.__models[0].modules[1:]),
-                     copy.deepcopy(self.__models[0].attachments),
-                     self.__population_count,
-                     lam=self.__lam,
-                     fit_gd=copy.deepcopy(self.__fit_gd),
-                     optimise_template=self.__optimise_template,
-                     ht_sigma=self.__ht_sigma,
-                     ht_coeff=self.__ht_coeff,
-                     precompute_callback=self.__precompute_callback,
-                     model_precompute_callback=self.__models[0].precompute_callback,
-                     other_parameters=copy.deepcopy(self.__models[0].init_other_parameters),
-                     compute_mode=self.__compute_mode)
-
-    def fill_from(self, atlas):
-        self.__dict__.update(atlas.__dict__)
-
     @property
     def attachments(self):
         return list(list(zip(*[model.attachments for model in self.__models]))[0])

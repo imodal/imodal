@@ -1,5 +1,4 @@
 import time
-import copy
 import gc
 
 import numpy as np
@@ -12,8 +11,6 @@ from implicitmodules.torch.Attachment import CompoundAttachment
 class ModelFittingScipy(ModelFitting):
     def __init__(self, model, post_iteration_callback=None):
         super().__init__(model, post_iteration_callback)
-
-        self.__post_iteration_callback = post_iteration_callback
 
     def reset(self):
         pass
@@ -40,15 +37,15 @@ class ModelFittingScipy(ModelFitting):
 
         # Function that will be optimized, returns the cost for a given state of the model.
         def closure(x):
-            model = self.__numpy_to_model(x.astype('float64'))
+            self.__numpy_to_model(x)
+            self.__zero_grad()
 
             # Evaluate the model.
-            cost, deformation_cost, attach_cost = model.compute(target, it=shoot_it, method=shoot_method)
+            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
 
-            d_cost = self.__model_to_numpy(model, grad=True)
+            d_cost = self.__model_to_numpy(self.model, grad=True)
 
-            # Delete the model and force the garbage collector to cleanup.
-            del model
+            # Manualy fire garbage collection
             gc.collect()
 
             # Save for printing purpose.
@@ -61,11 +58,6 @@ class ModelFittingScipy(ModelFitting):
 
         # Callback function called at the end of each iteration for printing and logging purpose.
         def callback(xk):
-            # Update the model with the current state
-            self.model.fill_from(self.__numpy_to_model(xk.astype('float64')))
-
-            if self.__post_iteration_callback:
-                self.__post_iteration_callback(self.model)
 
             if (self.__it % log_interval == 0 or self.__it == 1) and log_interval != -1 and disp:
                 print("="*80)
@@ -73,6 +65,9 @@ class ModelFittingScipy(ModelFitting):
                     print("Time: {time}".format(time=time.perf_counter() - start_time))
 
                 print("Iteration: {it} \nTotal energy = {cost} \nAttach cost = {attach} \nDeformation cost = {deformation}".format(it=self.__it, cost=last_costs['cost'], attach=last_costs['attach_cost'], deformation=last_costs['deformation_cost']))
+
+            if self.post_iteration_callback:
+                self.post_iteration_callback(self.model)
 
             costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
             last_costs.clear()
@@ -82,17 +77,15 @@ class ModelFittingScipy(ModelFitting):
         step_options = {'disp': False, 'maxiter': max_iter}
         step_options.update(options)
 
-        x_0 = self.__model_to_numpy(copy.deepcopy(self.model))
+        x_0 = self.__model_to_numpy(self.model)
         closure(x_0)
 
         if disp:
             print("Initial energy = %.3f" % last_costs['cost'])
+            print(last_costs)
 
         start_time = time.perf_counter()
         res = scipy.optimize.minimize(closure, x_0, method='L-BFGS-B', jac=True, options=step_options, callback=callback, bounds=bounds)
-
-        # TODO: Is this really necessary ? We already update the model state at the end of each iteration.
-        self.model.fill_from(self.__numpy_to_model(res.x.astype('float64')))
 
         if disp:
             print("="*80)
@@ -105,11 +98,10 @@ class ModelFittingScipy(ModelFitting):
 
     def __model_to_numpy(self, model, grad=False):
         """Converts model parameters into a single state vector."""
-        if not all(param.is_contiguous() for param in model.parameters):
+        if not all(param.is_contiguous() for param in self.model.parameters):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
-            #print([param.grad for param in model.parameters])
             tensors = [param.grad.data.flatten().cpu().numpy() for param in model.parameters]
         else:
             tensors = [param.detach().flatten().cpu().numpy() for param in model.parameters]
@@ -117,17 +109,20 @@ class ModelFittingScipy(ModelFitting):
         return np.ascontiguousarray(np.hstack(tensors), dtype='float64')
 
     def __numpy_to_model(self, x):
-        """Fill a cloned model with the state vector x."""
+        """Fill the model with the state vector x."""
         i = 0
 
-        model = self.model.clone_init()
-
-        for param in model.parameters:
+        for param in self.model.parameters:
             offset = param.numel()
             param.data = torch.from_numpy(x[i:i+offset]).view(param.data.size()).type(param.data.type())
             i += offset
 
         assert i == len(x)
 
-        return model
+    def __zero_grad(self):
+        """ Frees parameters computation graphs and zero out their accumulated gradients. """
+        for param in self.model.parameters:
+            if param.grad is not None:
+                param.grad.detach_()
+                param.grad.zero_()
 

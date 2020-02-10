@@ -30,12 +30,6 @@ class Model:
         # Called to update the parameter list sent to the optimizer
         self.compute_parameters()
 
-    def clone_init(self):
-        raise NotImplementedError()
-
-    def fill_from(self, model):
-        self.__dict__.update(model.__dict__)
-
     @property
     def modules(self):
         return self.__modules
@@ -170,15 +164,6 @@ class ModelPointsRegistration(Model):
         model_modules.extend(modules)
 
         super().__init__(model_modules, attachments, fit_gd, lam, precompute_callback, other_parameters)
-
-    def clone_init(self):
-        return ModelPointsRegistration(self.__sources,
-                                       self.modules[len(self.__sources):],
-                                       self.attachments,
-                                       fit_gd=self.fit_gd,
-                                       lam=self.lam,
-                                       precompute_callback=self.precompute_callback,
-                                       other_parameters=self.init_other_parameters)
 
     def compute(self, targets, it=10, method='euler', compute_backward=True, ext_cost=None):
         """ Does shooting. Outputs compute deformation and attach cost. """
