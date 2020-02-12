@@ -18,9 +18,9 @@ class Stiefel(Manifold):
         assert (cotan is None) or ((cotan[0].shape[0] == nb_pts) and (cotan[0].shape[1] == dim) and\
                                    (cotan[1].shape[0] == nb_pts) and (cotan[1].shape[1] == dim) and\
                                    (cotan[1].shape[2] == dim))
-        super().__init__(((dim,), (dim, dim)), nb_pts, gd, tan, cotan)
 
-        self.to_(device=device)
+        super().__init__(((dim,), (dim, dim)), nb_pts, gd, tan, cotan, device=device)
+
         self.__dim = dim
 
     @property
@@ -29,7 +29,6 @@ class Stiefel(Manifold):
 
     def inner_prod_field(self, field):
         man = self.infinitesimal_action(field)
-
         return torch.dot(self.cotan[0].flatten(), man.tan[0].flatten()) + \
             torch.einsum('nij, nij->', self.cotan[1], man.tan[1])
 

@@ -9,9 +9,9 @@ class Landmarks(Manifold):
         assert (gd is None) or ((gd.shape[0] == nb_pts) and (gd.shape[1] == dim))
         assert (tan is None) or ((tan.shape[0] == nb_pts) and (tan.shape[1] == dim))
         assert (cotan is None) or ((cotan.shape[0] == nb_pts) and (cotan.shape[1] == dim))
-        super().__init__(((dim,),), nb_pts, gd, tan, cotan)
 
-        self.to_(device=device)
+        super().__init__(((dim,),), nb_pts, gd, tan, cotan, device=device)
+
         self.__dim = dim
 
     @property
@@ -20,8 +20,6 @@ class Landmarks(Manifold):
 
     def inner_prod_field(self, field):
         man = self.infinitesimal_action(field)
-        # print(man.tan)
-        # print("===")
         return torch.dot(self.cotan.flatten(), man.tan.flatten())
 
     def infinitesimal_action(self, field):

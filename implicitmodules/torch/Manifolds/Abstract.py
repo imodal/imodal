@@ -4,17 +4,62 @@ from typing import Iterable
 import torch
 from numpy import prod
 
-from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
+from implicitmodules.torch.Utilities import tensors_device, tensors_dtype, flatten_tensor_list
 from implicitmodules.torch.Manifolds.tensor_container import TensorContainer
 
 
 class BaseManifold:
     """Base manifold class."""
-    def __init__(self):
-        pass
+    def __init__(self, device, dtype):
+        self.__device = device
+        self.__dtype = dtype
 
     def clone(self):
         """Returns a copy of the manifold. The computation tree gets detached."""
+        raise NotImplementedError()
+
+    def __get_device(self):
+        return self.__device
+
+    def __set_device(self, device):
+        self.__device = device
+        self._to_device(device)
+
+    def __get_dtype(self):
+        return self.__dtype
+
+    def __set_dtype(self, dtype):
+        self.__dtype = dtype
+        self._to_dtype(dtype)
+
+    device = property(__get_device, __set_device)
+    dtype = property(__get_dtype, __set_dtype)
+
+    def to_(self, *argv, **kwargs):
+        """Performs manifold dtype or/and device conversion. A torch.dtype and torch.device are inferred from the arguments of self.to(*argv, **kwargs)."""
+        for arg in argv:
+            if isinstance(arg, str):
+                self.__set_device(torch.device(arg))
+            elif isinstance(arg, torch.dtype):
+                self.__set_dtype(arg)
+            elif arg is None:
+                self.__set_device('cpu')
+            else:
+                raise ValueError("BaseManifold.__BaseManifold.to_(): Unrecognised argument! {arg}".format(arg=arg))
+
+        if 'device' in kwargs:
+            if kwargs['device'] is None:
+                self.__set_device(torch.device('cpu'))
+            else:
+                self.__set_device(kwargs['device'])
+
+        if 'dtype' in kwargs:
+            self.__set_dtype(kwargs['dtype'])
+
+    def _to_device(self, device):
+        raise NotImplementedError()
+
+    def _to_dtype(self, dtype):
         raise NotImplementedError()
 
     def inner_prod_field(self, field):
@@ -112,17 +157,44 @@ class BaseManifold:
 # TODO: maybe rename into TensorManifold ? (or something else)
 class Manifold(BaseManifold):
     """Manifold class built using ManifoldTensorContainer as manifold tensors storage. Base class for most manifold class."""
-    def __init__(self, shapes, nb_pts, gd, tan, cotan):
-        super().__init__()
-
+    def __init__(self, shapes, nb_pts, gd, tan, cotan, device=None, dtype=None):
         self.__shapes = shapes
         self.__nb_pts = nb_pts
 
-        self.__gd = TensorContainer(self.shape_gd)
-        self.__tan = TensorContainer(self.shape_gd)
-        self.__cotan = TensorContainer(self.shape_gd)
-
         self.__initialised = True
+
+        # No tensors are filled
+        if (gd is None) and (tan is None) and (cotan is None):
+            # Default device set to cpu if device is not specified.
+            if device is None:
+                device = torch.device('cpu')
+
+            # Default dtype set to float32 if dtype is not specified.
+            if dtype==None:
+                dtype = torch.float
+
+            self.__initialised = False
+        # Some tensors (or all) are filled
+        else:
+            # No device is specified, we infer it from the filled tensors.
+            if device is None:
+                device = tensors_device(flatten_tensor_list([gd, tan, cotan]))
+
+                # Found device is None, meaning the filled tensors lives on different devices.
+                if device is None:
+                    raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors live on different devices!")
+
+            # No dtype is specified, we infer it from the filled tensors.
+            if dtype is None:
+                dtype = tensors_dtype(flatten_tensor_list([gd, tan, cotan]))
+
+                # Found dtype is None, meaning the filled tensors are of different dtypes.
+                if dtype is None:
+                    raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors are of different dtype!")
+
+        self.__gd = TensorContainer(self.shape_gd, device, dtype)
+        self.__tan = TensorContainer(self.shape_gd, device, dtype)
+        self.__cotan = TensorContainer(self.shape_gd, device, dtype)
 
         if gd is not None:
             self.__gd.fill(gd, False, False)
@@ -133,18 +205,7 @@ class Manifold(BaseManifold):
         if cotan is not None:
             self.__cotan.fill(cotan, False, False)
 
-        if (gd is None) and (tan is None) and (cotan is None):
-            self.__device = None
-            self.__dtype = None
-            self.__initialised = False
-        else:
-            self.__device = tensors_device([self.__gd, self.__tan, self.__cotan])
-            if self.__device is None:
-                raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors live on different devices!")
-
-            self.__dtype = tensors_dtype([self.__gd, self.__tan, self.__cotan])
-            if self.__device is None:
-                raise RuntimeError("BaseManifold.__init__(): at least two initial manifold tensors are of different dtype!")
+        super().__init__(device, dtype)
 
     def clone(self, requires_grad=None):
         """Returns a copy of the manifold. Detaches the computation graph.
@@ -159,6 +220,16 @@ class Manifold(BaseManifold):
         out.__cotan.requires_grad_(requires_grad)
 
         return out
+
+    def _to_device(self, device):
+        self.__gd.to_device(device)
+        self.__tan.to_device(device)
+        self.__cotan.to_device(device)
+
+    def _to_dtype(self, dtype):
+        self.__gd.to_dtype(dtype)
+        self.__tan.to_dtype(dtype)
+        self.__cotan.to_dtype(dtype)
 
     @property
     def nb_pts(self):
@@ -179,47 +250,6 @@ class Manifold(BaseManifold):
     def numel_gd(self):
         """Returns the total number of elements for a manifold tensor of the manifold."""
         return tuple(prod(shape) for shape in self.shape_gd)
-
-    @property
-    def device(self):
-        return self.__device
-
-    @property
-    def dtype(self):
-        return self.__dtype
-
-    def __to_device(self, device):
-        self.__device = device
-        self.__gd.to_device(device)
-        self.__tan.to_device(device)
-        self.__cotan.to_device(device)
-
-    def __to_dtype(self, dtype):
-        self.__dtype = dtype
-        self.__gd.to_dtype(dtype)
-        self.__tan.to_dtype(dtype)
-        self.__cotan.to_dtype(dtype)
-
-    def to_(self, *argv, **kwargs):
-        """Performs manifold dtype or/and device conversion. A torch.dtype and torch.device are inferred from the arguments of self.to(*argv, **kwargs)."""
-        for arg in argv:
-            if isinstance(arg, str):
-                self.__to_device(torch.device(arg))
-            elif isinstance(arg, torch.dtype):
-                self.__to_dtype(arg)
-            elif arg is None:
-                self.__to_device('cpu')
-            else:
-                raise ValueError("BaseManifold.__BaseManifold.to_(): Unrecognised argument! {arg}".format(arg=arg))
-
-        if 'device' in kwargs:
-            if kwargs['device'] is None:
-                self.__to_device(torch.device('cpu'))
-            else:
-                self.__to_device(kwargs['device'])
-
-        if 'dtype' in kwargs:
-            self.__to_dtype(kwargs['dtype'])        
 
     def unroll_gd(self):
         return self.__gd.unroll()

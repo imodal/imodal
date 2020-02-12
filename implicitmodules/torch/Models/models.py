@@ -24,7 +24,6 @@ class Model:
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
         self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
-
         self.__init_other_parameters = other_parameters
 
         # Called to update the parameter list sent to the optimizer
@@ -150,12 +149,12 @@ class ModelPointsRegistration(Model):
         for source in self.__sources:
             # Some weights provided
             if isinstance(source, tuple) and len(source) == 2:
-                model_modules.append(SilentLandmarks(source[0].shape[1], source[0].shape[0], gd=source[0].clone().requires_grad_(), cotan=torch.zeros_like(source[0], requires_grad=True)))
+                model_modules.append(SilentLandmarks(source[0].shape[1], source[0].shape[0], gd=source[0].clone().requires_grad_(), cotan=torch.zeros_like(source[0], requires_grad=True, device=source[0].device, dtype=source[0].dtype)))
                 self.__weights.append(source[1])
 
             # No weights provided
             elif isinstance(source, torch.Tensor):
-                model_modules.append(SilentLandmarks(source.shape[1], source.shape[0], gd=source.clone().requires_grad_(), cotan=torch.zeros_like(source, requires_grad=True)))
+                model_modules.append(SilentLandmarks(source.shape[1], source.shape[0], gd=source.clone().requires_grad_(), cotan=torch.zeros_like(source, requires_grad=True, device=source.device, dtype=source.dtype)))
                 self.__weights.append(None)
 
             else:

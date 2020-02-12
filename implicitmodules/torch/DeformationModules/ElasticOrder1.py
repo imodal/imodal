@@ -44,9 +44,9 @@ class ImplicitModule1Base(DeformationModule):
     def dim(self):
         return self.__manifold.dim
 
-    def to(self, device):
-        self.__manifold = self.__manifold.to(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):

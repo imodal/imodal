@@ -31,9 +31,9 @@ class TranslationsBase(DeformationModule):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):

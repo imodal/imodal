@@ -24,8 +24,8 @@ class CompoundModule(DeformationModule, Iterable):
         outstr += "*"*20
         return outstr
 
-    def to(self, device):
-        [mod.to(device) for mod in self.__modules]
+    def to(self, *args, **kwargs):
+        [mod.to(*args, **kwargs) for mod in self.__modules]
 
     @property
     def device(self):

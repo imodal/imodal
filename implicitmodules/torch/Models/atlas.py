@@ -44,7 +44,6 @@ class Atlas:
 
         self.__models = []
         for i in range(self.__population_count):
-            #manifolds = [module.manifold.clone() for module in modules]
             cur_modules = copy.deepcopy(modules)
 
             self.__models.append(ModelPointsRegistration([self.__template], cur_modules, attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
@@ -57,7 +56,7 @@ class Atlas:
 
         # Momentum of the LDDMM translation module for the hypertemplate if used
         if self.__optimise_template:
-            self.__cotan_ht = torch.zeros_like(template, requires_grad=True)
+            self.__cotan_ht = torch.zeros_like(template, requires_grad=True, device=self.__template.device, dtype=self.__template.dtype)
 
         self.compute_parameters()
 
@@ -119,10 +118,6 @@ class Atlas:
         """ Updates the parameter list sent to the optimizer. """
         self.__parameters = []
 
-        # for i in range(len(self.__models)):
-        #     self.__models[i].compute_parameters()
-        #     self.__parameters.extend(self.__models[i].init_manifold.unroll_cotan())
-
         # Moments of each modules in each models
         for model in self.__models:
             model.compute_parameters()
@@ -141,15 +136,22 @@ class Atlas:
         if self.__optimise_template:
             self.__parameters.append(self.__cotan_ht)
 
-    def compute_template(self, it=10, method='euler'):
+    def compute_template(self, it=10, method='euler', detach=True):
         if self.__optimise_template:
             translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
 
+            translations_ht.compute_geodesic_control(translations_ht.manifold)
+            cost = translations_ht.cost()
+            translations_ht.to_(device=self.__template.device)
+
             shoot(Hamiltonian([translations_ht]), it, method)
 
-            return translations_ht.manifold.gd.detach()
+            if detach:
+                return translations_ht.manifold.gd.detach(), cost.detach()
+            else:
+                return translations_ht.manifold.gd, cost
         else:
-            return self.__template
+            return self.__template, torch.tensor(0.)
 
     def compute(self, targets, it=10, method='euler'):
         return self.__compute_func(targets, it, method)
@@ -162,10 +164,13 @@ class Atlas:
         for i in range(self.__population_count):
             cost_template = None
             if self.__optimise_template:
-                translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., coeff=self.__ht_coeff, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht, backend='torch')
-                shoot(Hamiltonian([translations_ht]), 10, 'euler')
-                self.__models[i]._Model__init_manifold[0].gd = translations_ht.manifold.gd
-                cost_template = translations_ht.cost()
+                # translations_ht = ImplicitModule0(self.__template.shape[1], self.__template.shape[0], self.__ht_sigma, 0., coeff=self.__ht_coeff, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht, backend='torch')
+                # shoot(Hamiltonian([translations_ht]), 10, 'euler')
+                # self.__models[i]._Model__init_manifold[0].gd = translations_ht.manifold.gd
+                # cost_template = translations_ht.cost()
+
+                deformed_template, cost_template = self.compute_template(detach=False)
+                self.__models[i]._Model__init_manifold[0].gd = deformed_template
 
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)

@@ -18,7 +18,7 @@ class OrientedTranslationsBase(DeformationModule):
         self.__manifold = manifold
         self.__sigma = sigma
         self.__coeff = coeff
-        self.__controls = torch.zeros(self.__manifold.nb_pts)
+        self.__controls = torch.zeros(self.__manifold.nb_pts, device=manifold.device, dtype=manifold.dtype)
 
     def __str__(self):
         outstr = "Oriented translation\n"
@@ -34,9 +34,9 @@ class OrientedTranslationsBase(DeformationModule):
         """Builds the Translations deformation module from tensors."""
         return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, coeff, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):
@@ -67,7 +67,7 @@ class OrientedTranslationsBase(DeformationModule):
     controls = property(__get_controls, fill_controls)
 
     def fill_controls_zero(self):
-        self.__controls = torch.zeros(self.__manifold.nb_pts, requires_grad=True)
+        self.__controls = torch.zeros(self.__manifold.nb_pts, device=self.__manifold.device, dtype=self.__manifold.dtype)
 
     def __call__(self, points, k=0):
         """Applies the generated vector field on given points."""
@@ -128,5 +128,5 @@ class OrientedTranslations_KeOps(OrientedTranslationsBase):
     def compute_geodesic_control(self, man):
         raise NotImplementedError()
 
-OrientedTranslations = create_deformation_module_with_backends(OrientedTranslations_Torch.build, OrientedTranslations_KeOps.build)
+OrientedTranslations = create_deformation_module_with_backends(OrientedTranslations_Torch.build, OrientedTranslations_Torch.build)
 

@@ -17,7 +17,7 @@ class LocalConstrainedTranslationsBase(DeformationModule):
         self.__manifold = manifold
         self.__sigma = sigma
         self.__descstr = descstr
-        self.__controls = torch.zeros(1).view([]).requires_grad_()
+        self.__controls = torch.zeros(1).view([])
         self.__coeff = coeff
 
         self._f_support = f_support
@@ -37,9 +37,9 @@ class LocalConstrainedTranslationsBase(DeformationModule):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, descstr, f_support, f_vectors, coeff, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def descstr(self):
@@ -143,12 +143,12 @@ class LocalConstrainedTranslations_KeOps(LocalConstrainedTranslationsBase):
         raise NotImplementedError()
 
 
-LocalConstrainedTranslations = create_deformation_module_with_backends(LocalConstrainedTranslations_Torch.build, LocalConstrainedTranslations_KeOps.build)
+LocalConstrainedTranslations = create_deformation_module_with_backends(LocalConstrainedTranslations_Torch.build, LocalConstrainedTranslations_Torch.build)
 
 
 def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
     def f_vectors(gd):
-        return torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)])
+        return torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
     def f_support(gd):
         return gd.repeat(3, 1) + sigma/3. * f_vectors(gd)
@@ -158,10 +158,10 @@ def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None
 
 def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
     def f_vectors(gd):
-        return torch.tensor([[-math.sin(2.*math.pi/3.*i), math.cos(2.*math.pi/3.*i)] for i in range(3)])
+        return torch.tensor([[-math.sin(2.*math.pi/3.*i), math.cos(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
     def f_support(gd):
-        return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)])
+        return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
     return LocalConstrainedTranslations(dim, 1, sigma, "Local rotation", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
 

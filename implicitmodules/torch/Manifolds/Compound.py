@@ -1,14 +1,23 @@
 from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
 from implicitmodules.torch.Manifolds.Abstract import BaseManifold
+from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
 
 
 class CompoundManifold(BaseManifold):
     def __init__(self, manifolds):
-        super().__init__()
         self.__manifolds = manifolds
+        device = tensors_device(self.__manifolds)
+        dtype = tensors_dtype(self.__manifolds)
+        super().__init__(device, dtype)
 
     def to_(self, *argv, **kwargs):
-        [man.to_(*argv, **kwargs) for man in self.__manifolds]
+        [manifold.to_(*argv, **kwargs) for manifold in self.__manifolds]
+
+    def _to_device(self, device):
+        [manifold._to_device(device) for manifold in self.__manifolds]
+
+    def _to_dtype(self, dtype):
+        [manifold._to_dtype(dtype) for manifold in self.__manifolds]
 
     @property
     def device(self):

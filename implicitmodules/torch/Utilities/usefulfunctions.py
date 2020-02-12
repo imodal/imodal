@@ -41,6 +41,22 @@ def make_grad_graph(tensor, filename):
     make_dot(tensor).render(filename)
 
 
+def flatten_tensor_list(l, out_list=None):
+    """Simple recursive list flattening function that stops at torch.Tensor (without unwrapping)."""
+    if out_list is None:
+        out_list = []
+
+    for el in l:
+        if isinstance(el, Iterable) and not isinstance(el, torch.Tensor):
+            flatten_tensor_list(el, out_list)
+        elif isinstance(el, torch.Tensor):
+            out_list.append(el)
+        else:
+            continue
+
+    return out_list
+
+
 # TODO: Maybe generalise this to more than torch.Tensor? (duck typing)
 def shared_tensors_property(tensors, prop):
     """ Check if all tensors share the same property given by prop(tensor). Ignores None tensors and None property values. Returns the shared property or None if the property is not shared. """

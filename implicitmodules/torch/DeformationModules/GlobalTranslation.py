@@ -24,9 +24,9 @@ class GlobalTranslation(DeformationModule):
     def build(cls, dim, coeff=1., label=None):
         return cls(dim, coeff, label)
 
-    @property
-    def dim_controls(self):
-        return self.__controls.shape[0]
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def coeff(self):
