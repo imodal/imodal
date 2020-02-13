@@ -89,17 +89,20 @@ class CompoundManifold(BaseManifold):
         self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
         self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
-    def fill_gd(self, gd, copy=False, requires_grad=True):
+    def fill_gd(self, gd, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, gd):
+            manifold.fill_gd(elem, copy=copy, requires_grad=requires_grad)
+
         for i in range(len(self.__manifolds)):
             self.__manifolds[i].fill_gd(gd[i], copy=copy, requires_grad=requires_grad)
 
-    def fill_tan(self, tan, copy=False, requires_grad=True):
-        for i in range(len(self.__manifolds)):
-            self.__manifolds[i].fill_tan(tan[i], copy=copy, requires_grad=requires_grad)
+    def fill_tan(self, tan, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, tan):
+            manifold.fill_tan(elem, copy=copy, requires_grad=requires_grad)
 
-    def fill_cotan(self, cotan, copy=False, requires_grad=True):
-        for i in range(len(self.__manifolds)):
-            self.__manifolds[i].fill_cotan(cotan[i], copy=copy, requires_grad=requires_grad)
+    def fill_cotan(self, cotan, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, cotan):
+            manifold.fill_cotan(elem, copy=copy, requires_grad=requires_grad)
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)

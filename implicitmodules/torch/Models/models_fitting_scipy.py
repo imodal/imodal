@@ -113,7 +113,7 @@ class ModelFittingScipy(ModelFitting):
 
         for param in self.model.parameters:
             offset = param.numel()
-            param.data = torch.from_numpy(x[i:i+offset]).view(param.data.size()).type(param.data.type())
+            param.data = torch.from_numpy(x[i:i+offset]).view(param.data.size()).to(dtype=param.dtype, device=param.device)
             i += offset
 
         assert i == len(x)

@@ -23,6 +23,7 @@ class Model:
             other_parameters = []
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
+
         self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
         self.__init_other_parameters = other_parameters
 
@@ -174,7 +175,8 @@ class ModelPointsRegistration(Model):
 
         # We first create and fill the compound module we will shoot
         compound = CompoundModule(self.modules)
-        compound.manifold.fill(self.init_manifold)
+        compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
+        compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
 
         # Compute the deformation cost (constant)
         compound.compute_geodesic_control(compound.manifold)
@@ -201,9 +203,7 @@ class ModelPointsRegistration(Model):
             cost = cost + ext_cost
 
         if compute_backward:
-            cost_item = cost.detach().item()
             cost.backward()
-            del cost
 
-            return cost_item, deformation_cost.detach().item(), attach_cost.detach().item()
+            return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
 
