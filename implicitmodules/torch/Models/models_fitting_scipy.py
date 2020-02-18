@@ -1,3 +1,4 @@
+
 import time
 import gc
 
@@ -52,6 +53,7 @@ class ModelFittingScipy(ModelFitting):
             last_costs['deformation_cost'] = deformation_cost
             last_costs['attach_cost'] = attach_cost
             last_costs['cost'] = cost
+
             return (cost, d_cost)
 
         self.__it = 1
@@ -78,7 +80,8 @@ class ModelFittingScipy(ModelFitting):
         step_options.update(options)
 
         x_0 = self.__model_to_numpy(self.model)
-        closure(x_0)
+        with torch.autograd.no_grad():
+            closure(x_0)
 
         if disp:
             print("Initial energy = %.3f" % last_costs['cost'])

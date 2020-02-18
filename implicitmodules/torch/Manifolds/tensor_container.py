@@ -123,6 +123,16 @@ class TensorContainer:
         """
         self.fill(tuple(torch.zeros(shape, device=self.__device, dtype=self.__dtype) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
 
+    def fill_randn(self, requires_grad=False):
+        """Fill each tensors of the manifold tensor with zeros.
+
+        Parameters
+        ----------
+        requires_grad : bool, default=False
+            Set to true to record futher operations on the tensors.
+        """
+        self.fill(tuple(torch.randn(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+
     def requires_grad_(self, requires_grad=True):
         """Set operation recording flag.
 

@@ -202,8 +202,8 @@ class ModelPointsRegistration(Model):
         if ext_cost is not None:
             cost = cost + ext_cost
 
-        if compute_backward:
+        if compute_backward and cost.requires_grad:
             cost.backward()
 
-            return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
+        return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
 

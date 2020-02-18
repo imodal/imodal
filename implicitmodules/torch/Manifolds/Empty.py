@@ -87,6 +87,15 @@ class EmptyManifold(BaseManifold):
     def fill_cotan_zeros(self, requires_grad=True):
         pass
 
+    def fill_gd_randn(self, requires_grad=True):
+        pass
+
+    def fill_tan_randn(self, requires_grad=True):
+        pass
+
+    def fill_cotan_randn(self, requires_grad=True):
+        pass
+
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)
     cotan = property(__get_cotan, fill_cotan)

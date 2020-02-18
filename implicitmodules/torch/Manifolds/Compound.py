@@ -104,6 +104,15 @@ class CompoundManifold(BaseManifold):
         for manifold, elem in zip(self.__manifolds, cotan):
             manifold.fill_cotan(elem, copy=copy, requires_grad=requires_grad)
 
+    def fill_gd_randn(self, requires_grad=True):
+        [manifold.fill_gd_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
+
+    def fill_tan_randn(self, requires_grad=True):
+        [manifold.fill_tan_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
+
+    def fill_cotan_randn(self, requires_grad=True):
+        [manifold.fill_cotan_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
+
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)
     cotan = property(__get_cotan, fill_cotan)

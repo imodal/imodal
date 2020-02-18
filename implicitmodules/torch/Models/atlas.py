@@ -71,6 +71,7 @@ class Atlas:
             outstr += ("Hypertemplate sigma=" + str(self.__ht_sigma) + "\n")
             outstr += ("Hypertemplate coeff=" + str(self.__ht_coeff) + "\n")
         outstr += ("Attachment=" + str(self.__models[0].attachments[0]) + "\n")
+        outstr += ("Lambda=" + str(self.__lam) + "\n")
         outstr += ("Fit geometrical descriptors=" + str(self.__fit_gd) + "\n")
         outstr += ("Precompute callback=" + str(self.__precompute_callback is not None) + "\n")
         outstr += ("Model precompute callback=" + str(self.models[0].precompute_callback is not None) + "\n")

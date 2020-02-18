@@ -123,6 +123,24 @@ class BaseManifold:
         """Same as **fill_gd_zeros()**, for cotangents."""
         raise NotImplementedError()
 
+    def fill_gd_randn(self, requires_grad=True):
+        """ Fill geometrical descriptors with a standard normal distribution.
+
+        Parameters
+        ----------
+        requires_grad : bool, default=True
+            Value given to the requires_grad flag of the random tensors.
+        """
+        raise NotImplementedError()
+
+    def fill_tan_randn(self, requires_grad=True):
+        """Same as **fill_gd_randn()**, for tangents."""
+        raise NotImplementedError()
+
+    def fill_cotan_randn(self, requires_grad=True):
+        """Same as **fill_gd_randn()**, for cotangents."""
+        raise NotImplementedError()
+
     def add_gd(self, gd):
         """Adds **gd** to the manifold geometrical descriptors.
 
@@ -307,6 +325,15 @@ class Manifold(BaseManifold):
 
     def fill_cotan_zeros(self, requires_grad=True):
         self.__cotan.fill_zeros(requires_grad=requires_grad)
+
+    def fill_gd_randn(self, requires_grad=True):
+        self.__gd.fill_randn(requires_grad=requires_grad)
+
+    def fill_tan_randn(self, requires_grad=True):
+        self.__tan.fill_randn(requires_grad=requires_grad)
+
+    def fill_cotan_randn(self, requires_grad=True):
+        self.__cotan.fill_randn(requires_grad=requires_grad)
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)
