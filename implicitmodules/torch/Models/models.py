@@ -13,6 +13,7 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 class Model:
     def __init__(self, modules, attachments, fit_gd, lam, precompute_callback, other_parameters):
+        assert (fit_gd is None) or (len(fit_gd) == len(modules))
         self.__modules = modules
         self.__attachments = attachments
         self.__precompute_callback = precompute_callback
@@ -95,20 +96,27 @@ class Model:
         """
         Fill the parameter list that will be given to the optimizer. 
         """
-        self.__parameters = []
+        self.__parameters = {}
 
         # Initial moments
-        self.__parameters.extend(self.__init_manifold.unroll_cotan())
+        self.__parameters['cotan'] = self.__init_manifold.unroll_cotan()
 
         # Geometrical descriptors if specified
         # TODO: Pythonise this ?
-        if self.__fit_gd is not None:
-            for i in range(len(self.__modules)):
-                if self.__fit_gd[i]:
-                    self.__parameters.extend(self.__init_manifold[i].unroll_gd())
+        list_gd = []
+        if self.__fit_gd:
+            for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold):
+                if fit_gd:
+                    list_gd.extend(init_manifold.unroll_gd())
+        # if self.__fit_gd is not None:
+        #     for i in range(len(self.__modules)):
+        #         if self.__fit_gd[i]:
+        #             list_gd.extend(self.__init_manifold[i].unroll_gd())
+        if len(list_gd) > 0:
+            self.__parameters['gd'] = list_gd
 
         # Other parameters
-        self.__parameters.extend(self.__init_other_parameters)
+        self.__parameters.update(self.__init_other_parameters)
 
     def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=10, method="euler", intermediates=False):
         x, y = torch.meshgrid([

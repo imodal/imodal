@@ -2,6 +2,7 @@ import time
 import gc
 import copy
 import math
+from itertools import chain
 
 import torch
 
@@ -10,11 +11,27 @@ from implicitmodules.torch.Attachment import CompoundAttachment
 
 
 class GradientDescentOptimizer:
-    def __init__(self, parameters, alpha=1., gamma_1=0.5, gamma_2=1.5):
+    def __init__(self, parameters, alpha=1., gamma1=0.5, gamma2=1.5, fit_parameters=None):
+        assert fit_parameters is None or isinstance(fit_parameters, dict)
+
         self.__parameters = parameters
-        self.__gamma_1 = gamma_1
-        self.__gamma_2 = gamma_2
+        self.__gamma1 = gamma1
+        self.__gamma2 = gamma2
         self.__alpha = alpha
+        if fit_parameters is None:
+            fit_parameters = {}
+        self.__fit_parameters = fit_parameters
+
+        for param_group in self.__parameters:
+            if param_group in self.__fit_parameters:
+                if 'gamma1' not in self.__fit_parameters[param_group]:
+                    self.__fit_parameters['gamma1'] = self.__gamma1
+                if 'gamma2' not in self.__fit_parameters[param_group]:
+                    self.__fit_parameters['gamma2'] = self.__gamma2
+                if 'alpha' not in self.__fit_parameters[param_group]:
+                    self.__fit_parameters['alpha'] = self.__alpha
+            else:
+                self.__fit_parameters[param_group] = {'gamma1': self.__gamma1, 'gamma2': self.__gamma2, 'alpha': self.__alpha}
 
         self.reset()
 
@@ -34,20 +51,33 @@ class GradientDescentOptimizer:
     def total_evaluation_count(self):
         return self.__total_evaluation_count
 
+    def __parameters_to_list(self, parameters):
+        if isinstance(parameters, dict):
+            return list(chain(*parameters.values()))
+
+        return list(parameters)
+
+    def __fill_model_parameters(self, parameters):
+        for model_parameter, parameter in zip(self.__parameters_to_list(self.__parameters), self.__parameters_to_list(parameters)):
+            model_parameter.data = parameter
+
+    def __copy_model_parameters(self, parameters, getter=lambda x: x.data, copy_op=lambda x: x.clone()):
+        return dict([(key, list(copy_op(getter(param)) for param in parameters[key])) for key in parameters])
+
+    def __update_fit_parameters_alpha(self, key, fit_parameters):
+        for param_group in fit_parameters:
+            fit_parameters[param_group]['alpha'] *= fit_parameters[param_group][key]
+
     def reset(self):
         self.__minimum_found = False
         self.__total_evaluation_count = 0
 
     def zero_grad(self):
         """ Frees parameters computation graphs and zero out their accumulated gradients. """
-        for param in self.__parameters:
+        for param in self.__parameters_to_list(self.__parameters):
             if param.grad is not None:
                 param.grad.detach_()
                 param.grad.zero_()
-
-    def __fill_model_parameters(self, parameters):
-        for model_parameter, parameter in zip(self.__parameters, parameters):
-            model_parameter.data = parameter
 
     def step(self, closure):
         def evaluate(parameters, compute_backward=False):
@@ -57,12 +87,12 @@ class GradientDescentOptimizer:
                 cost = closure()
 
             if compute_backward:
-                d_cost = copy.deepcopy([param.grad.data for param in self.__parameters])
+                d_cost = self.__copy_model_parameters(self.__parameters, getter=lambda x: x.grad.data)
                 return cost, d_cost
             else:
                 return cost
 
-        x_k = copy.deepcopy([param.data for param in self.__parameters])
+        x_k = self.__copy_model_parameters(self.__parameters)
 
         cost_x_k, d_cost = evaluate(x_k, compute_backward=True)
         self.__total_evaluation_count += 1
@@ -70,7 +100,7 @@ class GradientDescentOptimizer:
         found_minimizer = False
         evalcount = 1
         while not found_minimizer:
-            x_k_p1 = list(map(lambda x, y: x - self.__alpha * y, x_k, d_cost))
+            x_k_p1 = dict([(param_group, list(map(lambda x, y: x - self.__fit_parameters[param_group]['alpha'] * y, x_k[param_group], d_cost[param_group]))) for param_group in x_k])
 
             cost_x_kp1 = evaluate(x_k_p1)
             self.__total_evaluation_count += 1
@@ -78,7 +108,8 @@ class GradientDescentOptimizer:
             if cost_x_kp1 < cost_x_k and math.isfinite(cost_x_kp1):
                 found_minimizer = True
                 if evalcount == 1:
-                    self.__alpha *= self.__gamma_2
+                    for param_group in self.__fit_parameters:
+                        self.__update_fit_parameters_alpha('gamma2', self.__fit_parameters)
                 return evalcount
 
             elif cost_x_kp1 == cost_x_k:
@@ -86,7 +117,7 @@ class GradientDescentOptimizer:
 
             else:
                 evalcount += 1
-                self.__alpha *= self.__gamma_1
+                self.__update_fit_parameters_alpha('gamma1', self.__fit_parameters)
 
 
 class ModelFittingGradientDescent(ModelFitting):
