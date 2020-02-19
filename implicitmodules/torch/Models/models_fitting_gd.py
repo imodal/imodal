@@ -40,6 +40,10 @@ class GradientDescentOptimizer:
         return self.__parameters
 
     @property
+    def fit_parameters(self):
+        return self.__fit_parameters
+
+    @property
     def minimum_found(self):
         return self.__minimum_found
 
@@ -81,12 +85,13 @@ class GradientDescentOptimizer:
 
     def step(self, closure):
         def evaluate(parameters, compute_backward=False):
-            # Evaluate for f(x_k)
+            # Evaluate f(x_k)
             self.__fill_model_parameters(parameters)
             with torch.autograd.set_grad_enabled(compute_backward):
                 cost = closure()
 
             if compute_backward:
+                # Gradients are needed, so we extract them
                 d_cost = self.__copy_model_parameters(self.__parameters, getter=lambda x: x.grad.data)
                 return cost, d_cost
             else:
@@ -112,6 +117,7 @@ class GradientDescentOptimizer:
                         self.__update_fit_parameters_alpha('gamma2', self.__fit_parameters)
                 return evalcount
 
+            # Maybe have a better termination condition?
             elif cost_x_kp1 == cost_x_k:
                 self.__minimum_found = True
 
@@ -172,11 +178,10 @@ class ModelFittingGradientDescent(ModelFitting):
             eval_count = self.__optim.step(closure)
 
             # Retrieving costs
-            #costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
             costs.append(list(last_costs.values()))
 
             print("="*80)
-            print("Iteration {it}\n Total cost={cost}\n Attach cost={attach_cost}\n Deformation cost={deformation_cost}\n Step length={alpha}\n Model evaluation count={eval_count}".format(it=i+1, cost=last_costs['cost'], attach_cost=last_costs['attach_cost'], deformation_cost=last_costs['deformation_cost'], alpha=self.__optim.alpha, eval_count=eval_count))
+            print("Iteration {it}\n Total cost={cost}\n Attach cost={attach_cost}\n Deformation cost={deformation_cost}\n Step length={alpha}\n Model evaluation count={eval_count}".format(it=i+1, cost=last_costs['cost'], attach_cost=last_costs['attach_cost'], deformation_cost=last_costs['deformation_cost'], alpha=dict([(group_param, self.__optim.fit_parameters[group_param]['alpha']) for group_param in self.__optim.fit_parameters]), eval_count=eval_count))
 
             if self.__optim.minimum_found:
                 break
