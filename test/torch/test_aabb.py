@@ -1,146 +1,165 @@
 import os.path
 import sys
 import math
+import itertools
+from functools import reduce
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + (os.path.sep + '..') * 2)
 
 import unittest
 
 import torch
+import numpy as np
 
 import implicitmodules.torch as im
 
-class TestAABB(unittest.TestCase):
-    def test_aabb(self):
-        points = torch.rand(10, 2)
-        aabb = im.Utilities.AABB.build_from_points(points)
+def make_test_aabb(dim):
+    class TestAABB(unittest.TestCase):
+        def setUp(self):
+            self.kmin = (torch.rand(dim)-1.).tolist()
+            self.kmax = (torch.rand(dim)+1.).tolist()
 
-        self.assertEqual(aabb.xmin, torch.min(points[:, 0]))
-        self.assertEqual(aabb.ymin, torch.min(points[:, 1]))
-        self.assertEqual(aabb.xmax, torch.max(points[:, 0]))
-        self.assertEqual(aabb.ymax, torch.max(points[:, 1]))
+        def test_init(self):
+            args = list(itertools.chain.from_iterable([(kmin, kmax) for kmin, kmax in zip(self.kmin, self.kmax)]))
+            kwargs = dict((pre+'min', val) for pre, val in zip(im.Utilities.AABB.dim_prefix, self.kmin))
+            kwargs.update({(pre+'max', val) for pre, val in zip(im.Utilities.AABB.dim_prefix, self.kmax)})
+            
+            aabb1 = im.Utilities.AABB(*args)
+            aabb2 = im.Utilities.AABB(self.kmin, self.kmax)
+            aabb3 = im.Utilities.AABB(**kwargs)
 
-        self.assertEqual(aabb.width, torch.max(points[:, 0]) - torch.min(points[:, 0]))
-        self.assertEqual(aabb.height, torch.max(points[:, 1]) - torch.min(points[:, 1]))
+            self.assertEqual(aabb1.totuple(), aabb2.totuple())
+            self.assertEqual(aabb1.totuple(), aabb3.totuple())
 
-        self.assertIsInstance(aabb.get_list(), list)
-        self.assertEqual(len(aabb.get_list()), 4)
-        
-        aabb_list = aabb.get_list()
-        self.assertEqual(aabb_list[0], aabb.xmin)
-        self.assertEqual(aabb_list[1], aabb.xmax)
-        self.assertEqual(aabb_list[2], aabb.ymin)
-        self.assertEqual(aabb_list[3], aabb.ymax)
-        
-        self.assertEqual(aabb[0], aabb.xmin)
-        self.assertEqual(aabb[1], aabb.xmax)
-        self.assertEqual(aabb[2], aabb.ymin)
-        self.assertEqual(aabb[3], aabb.ymax)
+        def test_aabb(self):
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
 
-    def test_aabb_is_inside(self):
-        points = torch.tensor([[1., 0.],   # Inside
-                               [2., 1.],   # Not inside
-                               [0.5, 0.5], # Inside
-                               [-1., 0.5], # Not inside
-                               [0.5, -1]]) # Not inside
+            for pre, kmin, kmax in zip(im.Utilities.AABB.dim_prefix, aabb.kmin, aabb.kmax):
+                self.assertEqual(getattr(aabb, pre+'min'), kmin)
+                self.assertEqual(getattr(aabb, pre+'max'), kmax)
+                self.assertEqual(aabb[pre+'min'], kmin)
+                self.assertEqual(aabb[pre+'max'], kmax)
 
-        aabb = im.Utilities.AABB(0., 1., 0., 1.)
-        
-        is_inside = aabb.is_inside(points)
+            self.assertEqual(aabb.shape, tuple(kmax - kmin for kmax, kmin in zip(aabb.kmax, aabb.kmin)))
 
-        self.assertIsInstance(is_inside, torch.Tensor)
-        self.assertEqual(is_inside.shape[0], points.shape[0])
-        self.assertTrue(is_inside[0])
-        self.assertFalse(is_inside[1])
-        self.assertTrue(is_inside[2])
-        self.assertFalse(is_inside[3])
-        self.assertFalse(is_inside[4])
+            self.assertIsInstance(aabb.totuple(), tuple)
+            self.assertEqual(len(aabb.totuple()), 2*dim)
 
-    def test_aabb_fill_uniform(self):
-        aabb = im.Utilities.AABB(0., 1., 0., 2.)
+        def test_aabb_from_points(self):
+            points = torch.rand(10, dim)
+            aabb_points = im.Utilities.AABB.build_from_points(points)
+            aabb = im.Utilities.AABB(torch.min(points, dim=0)[0].tolist(), torch.max(points, dim=0)[0].tolist())
 
-        spacing = 0.2
-        sampled = aabb.fill_uniform(spacing)
-        nb_pts = int(aabb.area/spacing/spacing)
+            self.assertEqual(aabb_points.totuple(), aabb.totuple())
 
-        self.assertIsInstance(sampled, torch.Tensor)
-        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
-        # Conversion need to validate test on torch version 1.1
-        self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
+        def test_aabb_is_inside(self):
+            if dim == 2:
+                points = torch.tensor([[1., 0.],   # Inside
+                                       [2., 1.],   # Not inside
+                                       [0.5, 0.5], # Inside
+                                       [-1., 0.5], # Not inside
+                                       [0.5, -1]]) # Not inside
 
-    def test_aabb_fill_uniform_density(self):
-        aabb = im.Utilities.AABB(0., 1., 0., 2.)
+                aabb = im.Utilities.AABB(0., 1., 0., 1.)
 
-        # Inconsistant test, only works with some values of density. Maybe because of rounding when converting density to spacing or vice versa. Low importance so we do not bother.
-        density = 25.
-        sampled = aabb.fill_uniform_density(density)
-        nb_pts = int(aabb.area*density)
+                is_inside = aabb.is_inside(points)
 
-        self.assertIsInstance(sampled, torch.Tensor)
-        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
-        # Conversion need to validate test on torch version 1.1
-        self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
+                self.assertIsInstance(is_inside, torch.Tensor)
+                self.assertEqual(is_inside.shape[0], points.shape[0])
+                self.assertTrue(is_inside[0])
+                self.assertFalse(is_inside[1])
+                self.assertTrue(is_inside[2])
+                self.assertFalse(is_inside[3])
+                self.assertFalse(is_inside[4])
 
-    def test_aabb_fill_random(self):
-        aabb = im.Utilities.AABB(0., 1., 0., 1.)
+        def test_aabb_fill_uniform_spacing(self):
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
 
-        nb_pts = 100
+            spacing = 0.2
+            sampled = aabb.fill_uniform_spacing(spacing)
 
-        sampled = aabb.fill_random(nb_pts)
+            self.assertIsInstance(sampled, torch.Tensor)
+            self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
 
-        self.assertIsInstance(sampled, torch.Tensor)
-        self.assertEqual(sampled.shape, torch.Size([nb_pts, 2]))
-        self.assertTrue(all(aabb.is_inside(sampled)))
+        def test_aabb_fill_uniform_density(self):
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
 
-    def test_aabb_fill_random(self):
-        aabb = im.Utilities.AABB(0., 1., 0., 2.)
+            # Inconsistant test, only works with some values of density. Maybe because of rounding when converting density to spacing or vice versa. Low importance so we do not bother.
+            density = 25.
+            sampled = aabb.fill_uniform_density(density)
 
-        density = 50.
-        nb_pts = int(aabb.area*density)
-        sampled = aabb.fill_random_density(density)
+            self.assertIsInstance(sampled, torch.Tensor)
+            self.assertTrue(torch.all(aabb.is_inside(sampled).to(dtype=torch.uint8)))
 
-        self.assertIsInstance(sampled, torch.Tensor)
-        self.assertTrue(sampled.shape, torch.Size([nb_pts, 2]))
-        self.assertTrue(all(aabb.is_inside(sampled)))
+        def test_aabb_fill_random(self):
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
 
-    def test_aabb_center(self):
-        aabb = im.Utilities.AABB(-2., 2., -2., 2.)
-        self.assertTrue(torch.allclose(aabb.center, torch.zeros(2)))
+            nb_pts = 100
+            sampled = aabb.fill_random(nb_pts)
 
-        aabb = im.Utilities.AABB(1., 3., 1., 5.)
-        self.assertTrue(torch.allclose(aabb.center, torch.tensor([2., 3.])))
+            self.assertIsInstance(sampled, torch.Tensor)
+            self.assertEqual(sampled.shape, torch.Size([nb_pts, dim]))
+            self.assertTrue(all(aabb.is_inside(sampled)))
 
-    def test_aabb_scale_self(self):
-        aabb = im.Utilities.AABB(-2., 2., -2., 2.)
-        aabb.scale_(2)
+        def test_aabb_fill_random(self):
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
 
-        self.assertTrue(math.isclose(aabb.xmin, -4.))
-        self.assertTrue(math.isclose(aabb.xmax, 4.))
-        self.assertTrue(math.isclose(aabb.ymin, -4.))
-        self.assertTrue(math.isclose(aabb.ymax, 4.))
+            density = 50.
+            nb_pts = int(aabb.shape[dim-1]*density)
+            sampled = aabb.fill_random_density(density)
 
-        aabb = im.Utilities.AABB(1., 3., 1., 5.)
-        aabb.scale_(2)
+            self.assertIsInstance(sampled, torch.Tensor)
+            self.assertTrue(sampled.shape, torch.Size([nb_pts, dim]))
+            self.assertTrue(all(aabb.is_inside(sampled)))
 
-        self.assertTrue(math.isclose(aabb.xmin, 0.))
-        self.assertTrue(math.isclose(aabb.xmax, 4.))
-        self.assertTrue(math.isclose(aabb.ymin, -1.))
-        self.assertTrue(math.isclose(aabb.ymax, 7.))
+        def test_aabb_center(self):
+            aabb = im.Utilities.AABB([-2.]*dim, [2.]*dim)
+            self.assertTrue(torch.allclose(torch.tensor(aabb.centers), torch.zeros(dim)))
 
-    def test_aabb_scale(self):
-        aabb = im.Utilities.AABB(-2., 2., -2., 2.)
-        aabb = aabb.scale(2)
+            aabb = im.Utilities.AABB(self.kmin, self.kmax)
+            self.assertTrue(torch.allclose(torch.tensor(aabb.centers), torch.tensor([(kmax+kmin)/2. for kmax, kmin in zip(self.kmax, self.kmin)])))
 
-        self.assertTrue(math.isclose(aabb.xmin, -4.))
-        self.assertTrue(math.isclose(aabb.xmax, 4.))
-        self.assertTrue(math.isclose(aabb.ymin, -4.))
-        self.assertTrue(math.isclose(aabb.ymax, 4.))
+        def test_aabb_scale(self):
+            aabb = im.Utilities.AABB([-2.]*dim, [2.]*dim)
+            aabb.scale_(2)
 
-        aabb = im.Utilities.AABB(1., 3., 1., 5.)
-        aabb = aabb.scale(2)
+            self.assertTrue(all(kmin == -4. for kmin in aabb.kmin))
+            self.assertTrue(all(kmax == 4. for kmax in aabb.kmax))
 
-        self.assertTrue(math.isclose(aabb.xmin, 0.))
-        self.assertTrue(math.isclose(aabb.xmax, 4.))
-        self.assertTrue(math.isclose(aabb.ymin, -1.))
-        self.assertTrue(math.isclose(aabb.ymax, 7.))
+            aabb = im.Utilities.AABB(list(map(lambda x: -x - 2., range(dim))), range(dim))
+            aabb.scale_(2)
+
+            self.assertTrue(all(list(kmin == (-1. - 2.*(n+1)) for kmin, n in zip(aabb.kmin, range(dim)))))
+            self.assertTrue(all(list(kmax == (1. + 2.*n) for kmax, n in zip(aabb.kmax, range(dim)))))
+
+            aabb2 = aabb.scale(3.)
+            aabb.scale_(3.)
+            self.assertTrue(aabb.totuple(), aabb2.totuple())
+
+        def test_aabb_squared(self):
+            aabb = im.Utilities.AABB((torch.rand(dim)-2.).tolist(), (torch.rand(dim)+5.).tolist())
+
+            # Check if squared() is idempotent
+            self.assertTrue(np.allclose(aabb.squared().totuple(), aabb.squared().squared().totuple()))
+
+            # Check if the aabb does not move
+            self.assertTrue(np.allclose(aabb.centers, aabb.squared().centers))
+
+            aabb2 = aabb.squared()
+            aabb.squared_()
+
+            # Check if the self operation squared_() does the same as squared()
+            self.assertEqual(aabb.totuple(), aabb2.totuple())
+
+            # Check if the shape of the resulting AABB as all component equal i.e. if it is a square or a cube
+            self.assertTrue(np.allclose(aabb.shape, [aabb.shape[0]]*dim))
+
+    return TestAABB
+
+
+class TestAABB2D(make_test_aabb(2)):
+    pass
+
+class TestAABB3D(make_test_aabb(3)):
+    pass
 

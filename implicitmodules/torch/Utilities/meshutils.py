@@ -501,7 +501,7 @@ def fill_area_uniform(area, enclosing_aabb, spacing, **kwargs):
         Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points.
 
     """
-    grid = enclosing_aabb.fill_uniform(spacing)
+    grid = enclosing_aabb.fill_uniform_spacing(spacing)
     return grid[area(grid, **kwargs)]
 
 

@@ -5,14 +5,15 @@ import torch
 from torchviz import make_dot
 from .meshutils import close_shape, point_side
 
-def grid2vec(*argv):
+# TODO: pythonize this
+def grid2vec(*args):
     """Convert a grid of points (such as given by torch.meshgrid) to a tensor of vectors."""
-    return torch.cat([argv[i].contiguous().view(1, -1) for i in range(len(argv))], 0).t().contiguous()
+    return torch.cat([args[i].contiguous().view(1, -1) for i in range(len(args))], 0).t().contiguous()
 
 
-def vec2grid(vec, *argv):
+def vec2grid(vec, *args):
     """Convert a tensor of vectors to a grid of points."""
-    return tuple((vec.t()[i].view(argv).contiguous()).contiguous() for i in range(len(argv)))
+    return tuple((vec.t()[i].view(args).contiguous()).contiguous() for i in range(len(args)))
 
 
 def indices2coords(indices, shape, pixel_size=torch.tensor([1., 1.])):
