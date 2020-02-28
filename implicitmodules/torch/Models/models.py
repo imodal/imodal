@@ -12,11 +12,10 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 
 class Model:
-    def __init__(self, modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters):
+    def __init__(self, modules, attachments, fit_gd, lam, precompute_callback, other_parameters):
         self.__modules = modules
         self.__attachments = attachments
         self.__precompute_callback = precompute_callback
-        self.__fit_moments = fit_moments
         self.__fit_gd = fit_gd
         self.__lam = lam
 
@@ -24,13 +23,9 @@ class Model:
             other_parameters = []
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
-        self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
 
-        # We copy each parameters
-        self.__init_other_parameters = []
-        for p in other_parameters:
-            #self.__init_other_parameters.append(p.detach().clone().requires_grad_())
-            self.__init_other_parameters.append(p)
+        self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
+        self.__init_other_parameters = other_parameters
 
         # Called to update the parameter list sent to the optimizer
         self.compute_parameters()
@@ -48,8 +43,8 @@ class Model:
         return self.__precompute_callback
 
     @property
-    def fit_moments(self):
-        return self.__fit_moments
+    def fit_gd(self):
+        return self.__fit_gd
 
     @property
     def init_manifold(self):
@@ -58,6 +53,10 @@ class Model:
     @property
     def init_parameters(self):
         return self.__init_parameters
+
+    @property
+    def init_other_parameters(self):
+        return self.__init_other_parameters
 
     @property
     def parameters(self):
@@ -77,12 +76,9 @@ class Model:
             init_manifold = []
             init_other_parameters = []
 
-            if self.__fit_moments:
-                init_manifold = parameters[:self.__init_manifold.len_gd]
-                self.__init_other_parameters = parameters[len(init_manifold):]
-                self.__init_manifold.fill_cotan(self.__init_manifold.roll_cotan(init_manifold))
-            else:
-                self.__init_other_parameters = parameters
+            init_manifold = parameters[:self.__init_manifold.len_gd]
+            self.__init_other_parameters = parameters[len(init_manifold):]
+            self.__init_manifold.fill_cotan(self.__init_manifold.roll_cotan(init_manifold))
 
             self.compute_parameters()
 
@@ -97,20 +93,21 @@ class Model:
 
     def compute_parameters(self):
         """
-        Fill the parameter list that will be optimized by the optimizer. 
-        We first fill in the moments of each modules and then adds other model parameters.
+        Fill the parameter list that will be given to the optimizer. 
         """
         self.__parameters = []
 
-        if self.__fit_moments:
-            self.__parameters.extend(self.__init_manifold.unroll_cotan())
+        # Initial moments
+        self.__parameters.extend(self.__init_manifold.unroll_cotan())
 
-        # Pythonise this
+        # Geometrical descriptors if specified
+        # TODO: Pythonise this ?
         if self.__fit_gd is not None:
             for i in range(len(self.__modules)):
                 if self.__fit_gd[i]:
                     self.__parameters.extend(self.__init_manifold[i].unroll_gd())
 
+        # Other parameters
         self.__parameters.extend(self.__init_other_parameters)
 
     def compute_deformation_grid(self, grid_origin, grid_size, grid_resolution, it=10, method="euler", intermediates=False):
@@ -138,34 +135,37 @@ class ModelPointsRegistration(Model):
     """
     TODO: add documentation
     """
-    def __init__(self, source, modules, attachments, lam=1., fit_gd=None, fit_moments=True, precompute_callback=None, other_parameters=None):
+    def __init__(self, source, modules, attachments, lam=1., fit_gd=None, precompute_callback=None, other_parameters=None):
         assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
 
         if other_parameters is None:
             other_parameters = []
 
-        # We first determinate the number of sources
-        self.source_count = len(source)
+        # We keep a copy of the sources
+        self.__sources = copy.deepcopy(source)
 
-        # We now create the corresponding silent landmarks and save the alpha values
-        self.weights = []
-        self.__source_dim = []
-        for i in range(self.source_count):
-            if isinstance(source[i], tuple):
-                # Weights are provided
-                self.weights.insert(i, source[i][1])
-                self.__source_dim.append(source[i][0].shape[1])
-                modules.insert(i, SilentLandmarks(source[i][0].shape[1], source[i][0].shape[0], gd=source[i][0].clone().requires_grad_(), cotan=torch.zeros_like(source[i][0], requires_grad=True)))
+        # We now create the corresponding silent modules
+        model_modules = []
+        self.__weights = []
+        for source in self.__sources:
+            # Some weights provided
+            if isinstance(source, tuple) and len(source) == 2:
+                model_modules.append(SilentLandmarks(source[0].shape[1], source[0].shape[0], gd=source[0].clone().requires_grad_(), cotan=torch.zeros_like(source[0], requires_grad=True, device=source[0].device, dtype=source[0].dtype)))
+                self.__weights.append(source[1])
 
-            elif isinstance(source[i], torch.Tensor):
-                # No weights provided
-                self.weights.insert(i, None)
-                modules.insert(i, SilentLandmarks(source[i].shape[1], source[i].shape[0], gd=source[i].clone().requires_grad_(), cotan=torch.zeros_like(source[i], requires_grad=True)))
-                self.__source_dim.append(source[i].shape[1])
+            # No weights provided
+            elif isinstance(source, torch.Tensor):
+                model_modules.append(SilentLandmarks(source.shape[1], source.shape[0], gd=source.clone().requires_grad_(), cotan=torch.zeros_like(source, requires_grad=True, device=source.device, dtype=source.dtype)))
+                self.__weights.append(None)
 
-        super().__init__(modules, attachments, fit_moments, fit_gd, lam, precompute_callback, other_parameters)
+            else:
+                raise RuntimeError("ModelPointsRegistration.__init__(): source type {source_type} not implemented or of wrong length!".format(source_type=source.__class__.__name__))
 
-    def compute(self, target, it=10, method='euler'):
+        model_modules.extend(modules)
+
+        super().__init__(model_modules, attachments, fit_gd, lam, precompute_callback, other_parameters)
+
+    def compute(self, targets, it=10, method='euler', compute_backward=True, ext_cost=None):
         """ Does shooting. Outputs compute deformation and attach cost. """
         # Call precompute callback if available
         # TODO: maybe do this in Model and not ModelPointsRegistration ?
@@ -175,7 +175,8 @@ class ModelPointsRegistration(Model):
 
         # We first create and fill the compound module we will shoot
         compound = CompoundModule(self.modules)
-        compound.manifold.fill(self.init_manifold)
+        compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
+        compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
 
         # Compute the deformation cost (constant)
         compound.compute_geodesic_control(compound.manifold)
@@ -186,20 +187,23 @@ class ModelPointsRegistration(Model):
 
         # We compute the attach cost for each source/target couple
         attach_costs = []
-        for i in range(self.source_count):
-            if self.weights[i] is not None:
-                attach_costs.append(self.attachments[i]((compound[i].manifold.gd.view(-1, self.__source_dim[i]), self.weights[i]), target[i]))
+        for source, target, silent, attachment in zip(self.__sources, targets, compound, self.attachments):
+            if isinstance(source, torch.Tensor):
+                attach_costs.append(attachment(silent.manifold.gd, target))
             else:
-                attach_costs.append(self.attachments[i](compound[i].manifold.gd.view(-1, self.__source_dim[i]), target[i]))
+                attach_costs.append(attachment((silent.manifold.gd, source[1]), target))
 
         attach_cost = self.lam*sum(attach_costs)
-        c = deformation_cost + attach_cost
+        cost = deformation_cost + attach_cost
+
         if pc_cost is not None:
-            c = c + pc_cost
+            cost = cost + pc_cost
 
-        cost = c.detach()
-        c.backward()
-        del c
+        if ext_cost is not None:
+            cost = cost + ext_cost
 
-        return cost, deformation_cost.detach(), attach_cost.detach()
+        if compute_backward and cost.requires_grad:
+            cost.backward()
+
+        return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
 

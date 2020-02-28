@@ -24,6 +24,17 @@ class ImplicitModule1Base(DeformationModule):
         self.__sym_dim = int(self.manifold.dim * (self.manifold.dim + 1) / 2)
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
+    def __str__(self):
+        outstr = "Implicit module of order 1\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Sigma=" + str(self.sigma) + "\n"
+        outstr += "  Nu=" + str(self.__nu) + "\n"
+        outstr += "  Coeff=" + str(self.__coeff) + "\n"
+        outstr += "  Dim controls=" + str(self.__dim_controls) + "\n"
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts) + "\n"
+        return outstr
+
     @classmethod
     def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
@@ -33,9 +44,9 @@ class ImplicitModule1Base(DeformationModule):
     def dim(self):
         return self.__manifold.dim
 
-    def to(self, device):
-        self.__manifold = self.__manifold.to(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):
@@ -143,7 +154,7 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
         return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.C, h, torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(self.dim, device=self.device))
 
     def __compute_sks(self):
-        self.__sks = compute_sks(self.manifold.gd[0].view(-1, self.manifold.dim), self.sigma, 1) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
+        self.__sks = compute_sks(self.manifold.gd[0], self.sigma, 1) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.controls)

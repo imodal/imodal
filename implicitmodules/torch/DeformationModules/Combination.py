@@ -13,8 +13,19 @@ class CompoundModule(DeformationModule, Iterable):
         super().__init__(label)
         self.__modules = [*modules]
 
-    def to(self, device):
-        [mod.to(device) for mod in self.__modules]
+    def __str__(self):
+        outstr = "Compound Module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "Modules=\n"
+        for module in self.__modules:
+            outstr += "*"*20
+            outstr += str(modules) + "\n"
+        outstr += "*"*20
+        return outstr
+
+    def to(self, *args, **kwargs):
+        [mod.to(*args, **kwargs) for mod in self.__modules]
 
     @property
     def device(self):

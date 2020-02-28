@@ -1,24 +1,33 @@
 import torch
 
 from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
+from implicitmodules.torch.Manifolds.Abstract import BaseManifold
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_Null
 
 
-class SilentLandmarksBase(DeformationModule):
+class SilentBase(DeformationModule):
     """Module handling silent points."""
 
     def __init__(self, manifold, label):
-        assert isinstance(manifold, Landmarks)
+        assert isinstance(manifold, BaseManifold)
         super().__init__(label)
         self.__manifold = manifold
 
-    @classmethod
-    def build(cls, dim, nb_pts, gd=None, tan=None, cotan=None, label=None):
-        return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), label)
+    def __str__(self):
+        outstr = "Silent module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Manifold type=" + self.__manifold.__class__.__name__
+        outstr += "  Nb pts=" + self.__manifold.nb_pts
+        return outstr
 
-    def to_(self, device):
-        self.__manifold.to_(device)
+    @classmethod
+    def build(cls, dim, nb_pts, manifold, gd=None, tan=None, cotan=None, label=None, **kwargs):
+        return cls(manifold(dim, nb_pts, **kwargs, gd=gd, tan=tan, cotan=cotan), label)
+
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
 
     @property
     def device(self):
@@ -47,7 +56,7 @@ class SilentLandmarksBase(DeformationModule):
     # Disable if necessary
     def __call__(self, points):
         """Applies the generated vector field on given points."""
-        return torch.zeros_like(points, requires_grad=True, device=self.device)
+        return torch.zeros_like(points, requires_grad=points.requires_grad, device=self.device)
 
     # Experimental: requires_grad=True
     # Disable if necessary
@@ -66,6 +75,10 @@ class SilentLandmarksBase(DeformationModule):
         return StructuredField_Null(self.__manifold.dim, device=self.device)
 
 
-# Give SilentLandmarks the same interface than other deformations modules
-SilentLandmarks = SilentLandmarksBase.build
+Silent = SilentBase.build
+
+
+def SilentLandmarks(dim, nb_pts, gd=None, tan=None, cotan=None, label=None):
+    return SilentBase.build(dim, nb_pts, Landmarks, gd=gd, tan=tan, cotan=cotan, label=label)
+
 

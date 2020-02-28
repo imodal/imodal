@@ -15,21 +15,31 @@ class LinearDeformation(DeformationModule):
 
         self.__A = A
 
-    @property
-    def A(self):
-        return self.__A
+    def __str__(self):
+        outstr = "Linear deformation module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Coeff=" + self.__coeff
+        outstr += "  A=\n"
+        outstr += str(self.__A.detach().cpu().tolist())
+        return outstr
 
     @classmethod
     def build(cls, A, coeff=1., gd=None, tan=None, cotan=None, label=None):
         return cls(Landmarks(A.shape[0], 1, gd=gd, tan=tan, cotan=cotan), A, coeff, label)
 
-    @property
-    def dim_controls(self):
-        return self.__controls.shape[0]
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__A = self.__A.to(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def coeff(self):
         return self.__coeff
+
+    @property
+    def A(self):
+        return self.__A
 
     @property
     def manifold(self):

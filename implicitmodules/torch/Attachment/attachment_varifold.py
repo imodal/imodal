@@ -15,6 +15,11 @@ class VarifoldAttachmentBase(Attachment):
         super().__init__(weight=weight)
         self.__sigmas = sigmas
 
+    def __str__(self):
+        outstr = str(super().__str__()) + "\n"
+        outstr += "  Sigmas={sigmas}".format(sigmas=self.__sigmas)
+        return outstr
+
     @property
     def dim(self):
         raise NotImplementedError

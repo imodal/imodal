@@ -7,14 +7,14 @@ class TensorContainer:
     """Container class for tensors.
     Internal class used to facilitate management of manifold tensors.
     Tensors are stored as a tuple of torch.Tensor."""
-    def __init__(self, shapes):
+    def __init__(self, shapes, device, dtype):
         # TODO: have a lazy initialisation approach
         self.__tensors = tuple(torch.empty(shape, requires_grad=True) for shape in shapes)
 
         self.__shapes = shapes
 
-        self.__device = None
-        self.__dtype = None
+        self.__device = device
+        self.__dtype = dtype
 
     @property
     def device(self):
@@ -38,17 +38,19 @@ class TensorContainer:
         TensorContainer
             The cloned tensor container.
         """
-        out = TensorContainer(self.__shapes)
+        out = TensorContainer(self.__shapes, self.__device, self.__dtype)
         out.fill(self.__tensors, True)
         return out
 
     def to_device(self, device):
         """Moves each tensors onto the device **device**."""
-        [tensor.to(device=device) for tensor in self.__tensors]
+        self.__device = device
+        self.__tensors = [tensor.to(device=device).detach().requires_grad_(tensor.requires_grad) for tensor in self.__tensors]
 
     def to_dtype(self, dtype):
         """Convert each tensors into dtype **dtype**."""
-        [tensor.to(dtype=dtype) for tensor in self.__tensors]
+        self.__dtype = dtype
+        self.__tensors = [tensor.to(dtype=dtype).detach().requires_grad_(tensor.requires_grad) for tensor in self.__tensors]
 
     def unroll(self):
         """Unroll the tensor tuple into a flattened list.
@@ -93,6 +95,12 @@ class TensorContainer:
 
         self.__device = device
 
+        dtype = tensors_dtype(tensors)
+        if dtype is None:
+            raise RuntimeError("BaseManifold.__ManifoldTensorContainer.fill(): at least two input tensors are of different dtypes!")
+
+        self.__dtype = dtype
+
         if len(self.__shapes) == 1 and isinstance(tensors, torch.Tensor):
             tensors = (tensors,)
 
@@ -113,7 +121,17 @@ class TensorContainer:
         requires_grad : bool, default=False
             Set to true to record futher operations on the tensors.
         """
-        self.fill(tuple(torch.zeros(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+        self.fill(tuple(torch.zeros(shape, device=self.__device, dtype=self.__dtype) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+
+    def fill_randn(self, requires_grad=False):
+        """Fill each tensors of the manifold tensor with zeros.
+
+        Parameters
+        ----------
+        requires_grad : bool, default=False
+            Set to true to record futher operations on the tensors.
+        """
+        self.fill(tuple(torch.randn(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
 
     def requires_grad_(self, requires_grad=True):
         """Set operation recording flag.
@@ -123,7 +141,8 @@ class TensorContainer:
         requires_grad : bool, default=True
             Set to true to record futher operations on the tensors.
         """
-        [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
+        if requires_grad is not None:
+            [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
 
     def add(self, tensors):
         """Addition."""

@@ -1,14 +1,23 @@
 from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
 from implicitmodules.torch.Manifolds.Abstract import BaseManifold
+from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
 
 
 class CompoundManifold(BaseManifold):
     def __init__(self, manifolds):
-        super().__init__()
         self.__manifolds = manifolds
+        device = tensors_device(self.__manifolds)
+        dtype = tensors_dtype(self.__manifolds)
+        super().__init__(device, dtype)
 
     def to_(self, *argv, **kwargs):
-        [man.to_(*argv, **kwargs) for man in self.__manifolds]
+        [manifold.to_(*argv, **kwargs) for manifold in self.__manifolds]
+
+    def _to_device(self, device):
+        [manifold._to_device(device) for manifold in self.__manifolds]
+
+    def _to_dtype(self, dtype):
+        [manifold._to_dtype(dtype) for manifold in self.__manifolds]
 
     @property
     def device(self):
@@ -80,17 +89,29 @@ class CompoundManifold(BaseManifold):
         self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
         self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
 
-    def fill_gd(self, gd, copy=False, requires_grad=True):
+    def fill_gd(self, gd, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, gd):
+            manifold.fill_gd(elem, copy=copy, requires_grad=requires_grad)
+
         for i in range(len(self.__manifolds)):
             self.__manifolds[i].fill_gd(gd[i], copy=copy, requires_grad=requires_grad)
 
-    def fill_tan(self, tan, copy=False, requires_grad=True):
-        for i in range(len(self.__manifolds)):
-            self.__manifolds[i].fill_tan(tan[i], copy=copy, requires_grad=requires_grad)
+    def fill_tan(self, tan, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, tan):
+            manifold.fill_tan(elem, copy=copy, requires_grad=requires_grad)
 
-    def fill_cotan(self, cotan, copy=False, requires_grad=True):
-        for i in range(len(self.__manifolds)):
-            self.__manifolds[i].fill_cotan(cotan[i], copy=copy, requires_grad=requires_grad)
+    def fill_cotan(self, cotan, copy=False, requires_grad=None):
+        for manifold, elem in zip(self.__manifolds, cotan):
+            manifold.fill_cotan(elem, copy=copy, requires_grad=requires_grad)
+
+    def fill_gd_randn(self, requires_grad=True):
+        [manifold.fill_gd_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
+
+    def fill_tan_randn(self, requires_grad=True):
+        [manifold.fill_tan_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
+
+    def fill_cotan_randn(self, requires_grad=True):
+        [manifold.fill_cotan_randn(requires_grad=requires_grad) for manifold in self.__manifolds]
 
     gd = property(__get_gd, fill_gd)
     tan = property(__get_tan, fill_tan)

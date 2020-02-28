@@ -18,5 +18,5 @@ class ConstantField(BaseStructuredField):
         if k == 0:
             return self.__moments.repeat(points.shape[0], 1)
         else:
-            return torch.zeros([points.shape[0]] + [points.shape[1]]*(k+1))
+            return torch.zeros([points.shape[0]] + [points.shape[1]]*(k+1), device=self.device, dtype=points.dtype)
 

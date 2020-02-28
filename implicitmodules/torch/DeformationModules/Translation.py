@@ -18,14 +18,22 @@ class TranslationsBase(DeformationModule):
         self.__sigma = sigma
         self.__controls = torch.zeros_like(self.__manifold.gd, requires_grad=True)
 
+    def __str__(self):
+        outstr = "Local translation module\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Sigma=" + str(self.sigma) + "\n"
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts) + "\n"
+        return outstr
+
     @classmethod
     def build(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):

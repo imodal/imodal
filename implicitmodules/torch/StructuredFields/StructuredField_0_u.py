@@ -29,5 +29,6 @@ class StructuredField_0_u(KernelSupportStructuredField):
             raise NotImplementedError()
 
     def _compute_reduction_keops(self, points, k):
+        return self._compute_reduction_torch(points, k)
         raise NotImplementedError()
 

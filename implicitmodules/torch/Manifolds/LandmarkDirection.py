@@ -12,9 +12,8 @@ class LandmarksDirection(Manifold):
                                  (tan[1].shape[0] == nb_pts) and (tan[1].shape[1] == dim))
         assert (cotan is None) or ((cotan[0].shape[0] == nb_pts) and (cotan[0].shape[1] == dim) and\
                                    (cotan[1].shape[0] == nb_pts) and (cotan[1].shape[1] == dim))
-        super().__init__(((dim,), (dim,)), nb_pts, gd, tan, cotan)
+        super().__init__(((dim,), (dim,)), nb_pts, gd, tan, cotan, device=device)
 
-        self.to_(device=device)
         self.__dim = dim
 
         if transport != 'vector' and transport != 'orthogonal':
@@ -42,7 +41,6 @@ class LandmarksDirection(Manifold):
             tan_directions = torch.bmm(field(self.gd[0], k=1), self.gd[1].unsqueeze(2))
         else:
             tan_directions = -torch.bmm(field(self.gd[0], k=1).transpose(1, 2), self.gd[1].unsqueeze(2))
-
         return LandmarksDirection(self.__dim, self.nb_pts, transport=self.__transport, gd=self.gd, tan=(tan_landmarks, tan_directions), device=self.device)
 
     def cot_to_vs(self, sigma, backend=None):

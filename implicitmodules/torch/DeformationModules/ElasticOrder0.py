@@ -21,14 +21,24 @@ class ImplicitModule0Base(DeformationModule):
         self.__coeff = coeff
         self.__controls = torch.zeros_like(self.__manifold.gd, device=manifold.device)
 
+    def __str__(self):
+        outstr = "Implicit module of order 0\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Sigma=" + str(self.sigma) + "\n"
+        outstr += "  Nu=" + str(self.__nu) + "\n"
+        outstr += "  Coeff=" + str(self.__coeff) + "\n"
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts)
+        return outstr
+
     @classmethod
     def build(cls, dim, nb_pts, sigma, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):
@@ -66,7 +76,7 @@ class ImplicitModule0Base(DeformationModule):
     controls = property(__get_controls, fill_controls)
 
     def fill_controls_zero(self):
-        self.__controls = torch.zeros_like(self.__manifold.gd, requires_grad=True)
+        self.__controls = torch.zeros_like(self.__manifold.gd, device=self.device)
 
     def __call__(self, points, k=0):
         """Applies the generated vector field on given points."""

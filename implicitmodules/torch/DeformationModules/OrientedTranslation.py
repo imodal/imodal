@@ -12,21 +12,31 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 class OrientedTranslationsBase(DeformationModule):
     """Module generating sum of translations."""
     
-    def __init__(self, manifold, sigma, label):
+    def __init__(self, manifold, sigma, coeff, label):
         assert isinstance(manifold, LandmarksDirection)
         super().__init__(label)
         self.__manifold = manifold
         self.__sigma = sigma
-        self.__controls = torch.zeros(self.__manifold.nb_pts, requires_grad=True)
+        self.__coeff = coeff
+        self.__controls = torch.zeros(self.__manifold.nb_pts, device=manifold.device, dtype=manifold.dtype)
+
+    def __str__(self):
+        outstr = "Oriented translation\n"
+        if self.label:
+            outstr += "  Label=" + self.label + "\n"
+        outstr += "  Sigma=" + str(self.__sigma) + "\n"
+        outstr += "  Coeff=" + str(self.__coeff) + "\n"
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts)
+        return outstr
 
     @classmethod
-    def build(cls, dim, nb_pts, sigma, transport='vector', gd=None, tan=None, cotan=None, label=None):
+    def build(cls, dim, nb_pts, sigma, transport='vector', coeff=1., gd=None, tan=None, cotan=None, label=None):
         """Builds the Translations deformation module from tensors."""
-        return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, label)
+        return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, coeff, label)
 
-    def to_(self, device):
-        self.__manifold.to_(device)
-        self.__controls = self.__controls.to(device)
+    def to_(self, *args, **kwargs):
+        self.__manifold.to_(*args, **kwargs)
+        self.__controls = self.__controls.to(*args, **kwargs)
 
     @property
     def device(self):
@@ -44,6 +54,10 @@ class OrientedTranslationsBase(DeformationModule):
     def sigma(self):
         return self.__sigma
 
+    @property
+    def coeff(self):
+        return self.__coeff
+
     def __get_controls(self):
         return self.__controls
 
@@ -53,7 +67,7 @@ class OrientedTranslationsBase(DeformationModule):
     controls = property(__get_controls, fill_controls)
 
     def fill_controls_zero(self):
-        self.__controls = torch.zeros(self.__manifold.nb_pts, requires_grad=True)
+        self.__controls = torch.zeros(self.__manifold.nb_pts, device=self.__manifold.device, dtype=self.__manifold.dtype)
 
     def __call__(self, points, k=0):
         """Applies the generated vector field on given points."""
@@ -73,8 +87,8 @@ class OrientedTranslationsBase(DeformationModule):
 
 
 class OrientedTranslations_Torch(OrientedTranslationsBase):
-    def __init__(self, manifold, sigma, label):
-        super().__init__(manifold, sigma, label)
+    def __init__(self, manifold, sigma, coeff, label):
+        super().__init__(manifold, sigma, coeff, label)
 
     @property
     def backend(self):
@@ -84,7 +98,7 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
         K_q = K_xx(self.manifold.gd[0], self.sigma)
 
         m = torch.mm(K_q, self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1])
-        return 0.5 * torch.dot(m.flatten(), (self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1]).flatten())
+        return 0.5 * self.coeff * torch.dot(m.flatten(), (self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1]).flatten())
 
     def compute_geodesic_control(self, man):
         """Computes geodesic control from StructuredField vs."""
@@ -92,39 +106,27 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
         Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
         controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
 
-        self.controls = controls.flatten().contiguous()
+        self.controls = controls.flatten().contiguous()/self.coeff
 
 
 class OrientedTranslations_KeOps(OrientedTranslationsBase):
-    def __init__(self, manifold, sigma):
-        super().__init__(manifold, sigma)
+    def __init__(self, manifold, sigma, coeff, label):
+        super().__init__(manifold, sigma, coeff, label)
 
         self.__keops_dtype = str(manifold.gd.dtype).split(".")[1]
         self.__keops_backend = 'CPU'
         if str(self.device) != 'cpu':
             self.__keops_backend = 'GPU'
 
-        self.__keops_invsigmasq = torch.tensor([1./sigma/sigma], dtype=manifold.gd.dtype, device=manifold.device)
-
-        formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*px | py)/IntCst(2)"
-        alias_cost = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "px=Vi(" + str(self.dim)+")", "py=Vj("+str(self.dim)+")", "S=Pm(1)"]
-        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0, dtype=self.__keops_dtype)
-
-        formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*X"
-        alias_cgc = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "X=Vj("+str(self.dim) + ")", "S=Pm(1)"]
-        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype=self.__keops_dtype)
-
     @property
     def backend(self):
         return 'keops'
 
     def cost(self):
-        return (1.*self.reduction_cost(self.manifold.gd, self.manifold.gd, self.controls, self.controls, self.__keops_invsigmasq, backend=self.__keops_backend)).sum()
+        raise NotImplementedError()
 
     def compute_geodesic_control(self, man):
-        vs = self.adjoint(man)(self.manifold.gd)
-        self.fill_controls(self.solve_cgc(self.manifold.gd, self.manifold.gd, vs, self.__keops_invsigmasq, backend=self.__keops_backend, alpha=0.))
+        raise NotImplementedError()
 
-
-OrientedTranslations = create_deformation_module_with_backends(OrientedTranslations_Torch.build, OrientedTranslations_KeOps.build)
+OrientedTranslations = create_deformation_module_with_backends(OrientedTranslations_Torch.build, OrientedTranslations_Torch.build)
 
