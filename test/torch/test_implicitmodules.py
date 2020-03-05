@@ -89,13 +89,12 @@ def make_test_implicitmodule0(dim, backend):
                 self.implicit.manifold.cotan = mom
 
                 self.implicit.compute_geodesic_control(self.implicit.manifold)
-
-                return self.implicit.controls
+                return (self.implicit.controls, )
 
             self.gd.requires_grad_()
             self.mom.requires_grad_()
 
-            self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (100.*self.gd, self.mom), raise_exception=False))
+            self.assertTrue(torch.autograd.gradcheck(compute_geodesic_control, (100.*self.gd, self.mom), raise_exception=True))
 
         # TODO: Doesn't work so well with KeOps. Find why. Certainly because of bad conditionning.
         #@unittest.expectedFailure

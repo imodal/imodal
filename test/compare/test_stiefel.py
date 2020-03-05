@@ -15,7 +15,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_0 as t_Struct
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
-class TestCompareLandmarks(unittest.TestCase):
+class TestCompareStiefel(unittest.TestCase):
     def setUp(self):
         self.dim = 2
         self.nb_pts = 100
@@ -25,8 +25,8 @@ class TestCompareLandmarks(unittest.TestCase):
         self.cotan_R = np.random.rand(self.nb_pts, self.dim, self.dim)
 
         self.torch_landmarks = t_Stiefel(self.dim, self.nb_pts,
-                                         gd=(torch.tensor(self.gd).view(-1), torch.tensor(self.gd_R).view(-1)),
-                                         cotan=(torch.tensor(self.cotan).view(-1), torch.tensor(self.cotan_R).view(-1)))
+                                         gd=(torch.tensor(self.gd), torch.tensor(self.gd_R)),
+                                         cotan=(torch.tensor(self.cotan), torch.tensor(self.cotan_R)))
         self.numpy_landmarks = n_Stiefel(self.nb_pts, self.dim)
         self.numpy_landmarks.fill_cot_from_param(((self.gd, self.gd_R), (self.cotan, self.cotan_R)))
 

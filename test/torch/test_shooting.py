@@ -120,7 +120,6 @@ def make_test_shooting(dim, backend):
 
                     self.assertTrue(torch.autograd.gradcheck(shoot, (self.gd_silent, self.gd_trans, self.cotan_silent, self.cotan_trans), raise_exception=True))
 
-        @unittest.expectedFailure
         def test_gradcheck_shoot_controls(self):
             for method, it in zip(self.methods, self.methods_it):
                 with self.subTest(method=method, it=it):

@@ -104,15 +104,6 @@ def load_and_sample_greyscale(filename, threshold=0., centered=False, normalise_
     return sample_from_greyscale(image, threshold, centered, normalise_weights)
 
 
-def sample_image_from_points(points, frame_res):
-    """Sample an image from a set of points using the binning/histogram method."""
-    frame = torch.zeros(frame_res[0]*frame_res[1])
-    frame.scatter_add_(0, torch.clamp((points[0][:, 1]*frame_res[1] + points[0][:, 0]).long(),
-                                      0, frame_res[0]*frame_res[1]-1), points[1])
-
-    return frame.view(frame_res).contiguous()
-
-
 def deformed_intensities(deformed_points, intensities):
     """
     Sample an image from a tensor of deformed points.

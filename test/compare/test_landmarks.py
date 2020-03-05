@@ -22,7 +22,7 @@ class TestCompareLandmarks(unittest.TestCase):
         self.gd = np.random.rand(self.nb_pts, self.dim)
         self.cotan = np.random.rand(self.nb_pts, self.dim)
 
-        self.torch_landmarks = Landmarks(self.dim, self.nb_pts, gd=torch.tensor(self.gd).view(-1), cotan=torch.tensor(self.cotan).view(-1))
+        self.torch_landmarks = Landmarks(self.dim, self.nb_pts, gd=torch.tensor(self.gd), cotan=torch.tensor(self.cotan))
         self.numpy_landmarks = Landmark(self.nb_pts, self.dim)
         self.numpy_landmarks.fill_cot_from_param((self.gd, self.cotan))
 

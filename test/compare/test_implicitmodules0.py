@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder0 import ElasticOrder0
-from implicitmodules.torch.DeformationModules.ElasticOrder0 import ImplicitModule0_Torch
+from implicitmodules.torch.DeformationModules.ElasticOrder0 import ImplicitModule0
 
 torch.set_default_tensor_type(torch.DoubleTensor)
 
@@ -21,7 +21,7 @@ class TestCompareImplicitModules0(unittest.TestCase):
         self.p = 10.*np.random.rand(self.N, 2)
         self.controls = np.random.rand(self.N, 2)
 
-        self.implicit0_torch = ImplicitModule0_Torch.build_from_points(2, self.N, self.sigma, 0.001, gd=torch.tensor(self.p).view(-1), cotan=torch.tensor(self.q).view(-1))
+        self.implicit0_torch = ImplicitModule0(2, self.N, self.sigma, 0.001, gd=torch.tensor(self.p), cotan=torch.tensor(self.q))
 
         self.implicit0_numpy = ElasticOrder0(self.sigma, self.N, 2, 1., 0.001)
         self.implicit0_numpy.GD.fill_cot_from_param((self.q, self.p))
