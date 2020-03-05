@@ -9,7 +9,7 @@ from implicitmodules.torch.Manifolds import CompoundManifold
 
 
 def shoot(h, it, method, controls=None, intermediates=False):
-    """
+    """ Solve the hamiltonian system 
     Add documentation for this function.
     """
     if method == "torch_euler":

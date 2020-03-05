@@ -11,9 +11,10 @@ from implicitmodules.torch.Attachment import CompoundAttachment
 
 
 class GradientDescentOptimizer:
-    def __init__(self, parameters, alpha=1., gamma1=0.5, gamma2=1.5, fit_parameters=None):
+    def __init__(self, parameters, alpha=1., gamma1=0.5, gamma2=1.5, fit_parameters=None, verbose=False):
         assert fit_parameters is None or isinstance(fit_parameters, dict)
 
+        self.__verbose = verbose
         self.__parameters = parameters
         self.__gamma1 = gamma1
         self.__gamma2 = gamma2
@@ -102,13 +103,15 @@ class GradientDescentOptimizer:
         cost_x_k, d_cost = evaluate(x_k, compute_backward=True)
         self.__total_evaluation_count += 1
 
-        found_minimizer = False
         evalcount = 1
-        while not found_minimizer:
+        while not self.__minimum_found:
             x_k_p1 = dict([(param_group, list(map(lambda x, y: x - self.__fit_parameters[param_group]['alpha'] * y, x_k[param_group], d_cost[param_group]))) for param_group in x_k])
 
             cost_x_kp1 = evaluate(x_k_p1)
             self.__total_evaluation_count += 1
+
+            if self.__verbose:
+                print("Line search, step {ln_step}: cost={cost}, alpha={alpha}".format(ln_step=evalcount, cost=cost_x_kp1, alpha=self.__alpha))
 
             if cost_x_kp1 < cost_x_k and math.isfinite(cost_x_kp1):
                 found_minimizer = True
@@ -120,18 +123,19 @@ class GradientDescentOptimizer:
             # Maybe have a better termination condition?
             elif cost_x_kp1 == cost_x_k:
                 self.__minimum_found = True
-
             else:
                 evalcount += 1
                 self.__update_fit_parameters_alpha('gamma1', self.__fit_parameters)
 
+        return evalcount
+
 
 class ModelFittingGradientDescent(ModelFitting):
-    def __init__(self, model, step_length, post_iteration_callback=None):
+    def __init__(self, model, step_length, post_iteration_callback=None, verbose=False):
         super().__init__(model, post_iteration_callback)
         self.__step_length = step_length
 
-        self.__optim = GradientDescentOptimizer(model.parameters, alpha=step_length)
+        self.__optim = GradientDescentOptimizer(model.parameters, alpha=step_length, verbose=verbose)
 
     def reset(self):
         self.__optim = self.__optim.reset()

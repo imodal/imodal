@@ -13,7 +13,6 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
 class Model:
     def __init__(self, modules, attachments, fit_gd, lam, precompute_callback, other_parameters):
-        assert (fit_gd is None) or (len(fit_gd) == len(modules))
         self.__modules = modules
         self.__attachments = attachments
         self.__precompute_callback = precompute_callback
@@ -102,17 +101,12 @@ class Model:
         self.__parameters['cotan'] = self.__init_manifold.unroll_cotan()
 
         # Geometrical descriptors if specified
-        # TODO: Pythonise this ?
-        list_gd = []
-        if self.__fit_gd:
+        if self.__fit_gd and any(self.__fit_gd):
+            list_gd = []
             for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold):
                 if fit_gd:
                     list_gd.extend(init_manifold.unroll_gd())
-        # if self.__fit_gd is not None:
-        #     for i in range(len(self.__modules)):
-        #         if self.__fit_gd[i]:
-        #             list_gd.extend(self.__init_manifold[i].unroll_gd())
-        if len(list_gd) > 0:
+
             self.__parameters['gd'] = list_gd
 
         # Other parameters
@@ -126,6 +120,7 @@ class Model:
         gridpos = grid2vec(x, y)
 
         grid_silent = SilentLandmarks(2, gridpos.shape[0], gd=gridpos.requires_grad_())
+        grid_silent.manifold.fill_cotan_zeros()
         compound = CompoundModule(copy.copy(self.modules))
         compound.manifold.fill(self.init_manifold.clone())
 
@@ -214,4 +209,5 @@ class ModelPointsRegistration(Model):
             cost.backward()
 
         return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
+
 

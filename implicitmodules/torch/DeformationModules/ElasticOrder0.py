@@ -107,16 +107,14 @@ class ImplicitModule0_Torch(ImplicitModule0Base):
 
     def cost(self):
         K_q = K_xx(self.manifold.gd, self.sigma) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
-
         m = torch.mm(K_q , self.controls)
         return 0.5 * self.coeff * torch.dot(m.flatten(), self.controls.flatten())
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
-        K_q = K_xx(self.manifold.gd, self.sigma) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
-
+        K_q = K_xx(self.manifold.gd, self.sigma)# + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
         controls, _ = torch.solve(vs(self.manifold.gd), K_q)
-        self.controls = controls.reshape(self.manifold.nb_pts, self.dim)/self.coeff
+        self.__controls = controls.reshape(self.manifold.nb_pts, self.dim)/self.coeff
 
 
 class ImplicitModule0_KeOps(ImplicitModule0Base):

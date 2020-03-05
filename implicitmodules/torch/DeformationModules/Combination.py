@@ -39,7 +39,7 @@ class CompoundModule(DeformationModule, Iterable):
         return dict(zip(self.label, self.__modules))
 
     def __getitem__(self, itemid):
-        if isinstance(itemid, int):
+        if isinstance(itemid, int) or isinstance(itemid, slice):
             return self.__modules[itemid]
         else:
             return self.todict()[itemid]

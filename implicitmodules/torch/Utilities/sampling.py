@@ -8,19 +8,59 @@ from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, indices2co
 from implicitmodules.torch.Utilities.aabb import AABB
 
 
-def load_greyscale_image(filename):
-    """Load grescale image from disk as an array of normalised float values."""
+def load_greyscale_image(filename, dtype=None, device=None):
+    """Load grescale image from disk as an array of normalised float values.
+    
+    Parameters
+    ----------
+    filename : str
+        Filename of the image to load.
+    dtype : torch.dtype
+        dtype of the returned image tensor.
+    device : torch.device
+        Device on which the image tensor will be loaded.
+
+    Returns
+    -------
+    torch.Tensor
+        [width, height] shaped tensor representing the loaded image.
+    """
+
+    if dtype is None:
+        dtype = torch.get_default_dtype()
+
     image = matplotlib.image.imread(filename)
     if(image.ndim == 2):
-        return torch.tensor(1. - image, dtype=torch.get_default_dtype())
+        return torch.tensor(1. - image, dtype=dtype, device=device)
     elif(image.ndim ==3):
-        return torch.tensor(1. - image[:,:,0], dtype=torch.get_default_dtype())
+        return torch.tensor(1. - image[:,:,0], dtype=dtype, device=device)
     else:
         raise NotImplementedError
 
 
 def sample_from_greyscale(image, threshold, centered=False, normalise_weights=False, normalise_position=True):
-    """Sample points from a greyscale image. Points are defined as a (position, weight) tuple."""
+    """Sample points from a greyscale image.
+    Points are defined as a (position, weight) tuple.
+
+    Parameters
+    ----------
+    image : torch.Tensor
+        Tensor of shape [width, height] representing the image from which we will sample the points.
+    threshold : float
+        Minimum pixel value (i.e. point weight) 
+    centered : bool, default=False
+        If true, center the sampled points such that mean 
+    normalise_weights : bool, default=False
+        If true, normalise weight values, such that :math:'\alpha_i = \frac{\alpha_i}{\sum_k \alpha_k}'
+    normalise_position : bool, default=True
+        If true, normalise point position such that all points live in the unit square.
+
+    Returns
+    -------
+    torch.Tensor, torch.Tensor
+        Two tensors representing point position (of shape [N, dim]) and weight (of shape [N]), in this order, with :math:'N' the number of points.
+    """
+
     length = torch.sum(image >= threshold)
     pos = torch.zeros([length, 2])
     alpha = torch.zeros([length])
@@ -101,46 +141,4 @@ def deformed_intensities(deformed_points, intensities):
 
     return deformed_intensities
 
-
-def kernel_smoother(pos, points, kernel_matrix=K_xy, sigma=1.):
-    """Applies a kernel smoother on pos."""
-    K = kernel_matrix(pos, points[0], sigma=sigma)
-
-    return torch.mm(K, points[1].view(-1, 1)).flatten().contiguous()
-
-
-# TODO: this function is flipping images in the vertical axis, find out why
-def sample_from_smoothed_points(points, frame_res, kernel=K_xy, sigma=1.,
-                                normalize=False, aabb=None):
-    """Sample an image from a list of smoothened points."""
-    if(aabb is None):
-        aabb = AABB.build_from_points(points[0].detach())
-
-    x, y = torch.meshgrid([torch.linspace(aabb.xmin-sigma, aabb.xmax+sigma, frame_res[0]),
-                           torch.linspace(aabb.ymin-sigma, aabb.ymax+sigma, frame_res[1])])
-
-    pos = grid2vec(x, y)
-    pixels = kernel_smoother(pos, points, sigma=sigma)
-    if(normalize):
-        pixels = pixels/torch.max(pixels)
-
-    return pixels.view(frame_res[0], frame_res[1]).contiguous()
-
-
-def resample_image_to_smoothed(image, kernel=K_xy, sigma=1., normalize=False):
-    x, y = torch.meshgrid([torch.arange(0., image.shape[0], step=1.),
-                           torch.arange(0., image.shape[1], step=1.)])
-
-    pixel_pos = grid2vec(x, y)
-
-    return sample_from_smoothed_points((pixel_pos, image.view(-1)), image.shape, kernel=kernel,
-                                       sigma=sigma, normalize=normalize)
-
-
-def fill_aabb(aabb, density):
-    nb_pts_x = int(math.sqrt(density)*aabb.width)
-    nb_pts_y = int(math.sqrt(density)*aabb.height)
-
-    pts_implicit1_x, pts_implicit1_y = torch.meshgrid([torch.linspace(aabb.xmin, aabb.xmax, nb_pts_x), torch.linspace(aabb.ymin, aabb.ymax, nb_pts_y)])
-    return grid2vec(pts_implicit1_x, pts_implicit1_y)
 
