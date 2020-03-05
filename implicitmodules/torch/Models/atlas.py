@@ -117,25 +117,27 @@ class Atlas:
 
     def compute_parameters(self):
         """ Updates the parameter list sent to the optimizer. """
-        self.__parameters = []
+        self.__parameters = {}
 
         # Moments of each modules in each models
+        self.__parameters['cotan'] = []
         for model in self.__models:
             model.compute_parameters()
-            self.__parameters.extend(model.init_manifold.unroll_cotan())
+            self.__parameters['cotan'].extend(model.init_manifold.unroll_cotan())
 
         if self.__fit_gd is not None:
+            self.__parameters['gd'] = []
             for i in range(self.__n_modules):
                 if self.__fit_gd[i]:
-                    # We optimise the manifold of the first model (which wil reflect on the other models as the manifolds reference is shared).
-                    self.__parameters.extend(self.__models[0].init_manifold[i+1].unroll_gd())
+                    # We optimise the manifold of the first model (which will be reflected on the other models as the manifold reference is shared).
+                    self.__parameters['gd'].extend(self.__models[0].init_manifold[i+1].unroll_gd())
 
         # Other parameters
-        self.__parameters.extend(self.__init_other_parameters)
+        self.__parameters.update(self.__init_other_parameters)
 
         # Hyper template moments
         if self.__optimise_template:
-            self.__parameters.append(self.__cotan_ht)
+            self.__parameters['ht'].append(self.__cotan_ht)
 
     def compute_template(self, it=10, method='euler', detach=True):
         if self.__optimise_template:

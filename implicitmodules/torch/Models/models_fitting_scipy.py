@@ -1,6 +1,6 @@
-
 import time
 import gc
+from itertools import chain
 
 import numpy as np
 import torch
@@ -80,8 +80,8 @@ class ModelFittingScipy(ModelFitting):
         step_options.update(options)
 
         x_0 = self.__model_to_numpy(self.model)
-        with torch.autograd.no_grad():
-            closure(x_0)
+        #with torch.autograd.no_grad():
+        closure(x_0)
 
         if disp:
             print("Initial energy = %.3f" % last_costs['cost'])
@@ -98,15 +98,21 @@ class ModelFittingScipy(ModelFitting):
 
         return costs
 
+    def __parameters_to_list(self, parameters):
+        if isinstance(parameters, dict):
+            return list(chain(*parameters.values()))
+
+        return list(parameters)
+
     def __model_to_numpy(self, model, grad=False):
         """Converts model parameters into a single state vector."""
-        if not all(param.is_contiguous() for param in self.model.parameters):
+        if not all(param.is_contiguous() for param in self.__parameters_to_list(self.model.parameters)):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
-            tensors = [param.grad.data.flatten().cpu().numpy() for param in model.parameters]
+            tensors = [param.grad.data.flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]
         else:
-            tensors = [param.detach().flatten().cpu().numpy() for param in model.parameters]
+            tensors = [param.detach().flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]
 
         return np.ascontiguousarray(np.hstack(tensors), dtype='float64')
 
@@ -114,7 +120,7 @@ class ModelFittingScipy(ModelFitting):
         """Fill the model with the state vector x."""
         i = 0
 
-        for param in self.model.parameters:
+        for param in self.__parameters_to_list(self.model.parameters):
             offset = param.numel()
             param.data = torch.from_numpy(x[i:i+offset]).view(param.data.size()).to(dtype=param.dtype, device=param.device)
             i += offset
@@ -123,7 +129,7 @@ class ModelFittingScipy(ModelFitting):
 
     def __zero_grad(self):
         """ Frees parameters computation graphs and zero out their accumulated gradients. """
-        for param in self.model.parameters:
+        for param in self.__parameters_to_list(self.model.parameters):
             if param.grad is not None:
                 param.grad.detach_()
                 param.grad.zero_()
