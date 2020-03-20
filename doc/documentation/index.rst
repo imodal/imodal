@@ -1,16 +1,14 @@
-Manifolds
----------
+Documentation
+#############
 
-.. automodule:: Manifolds.Abstract
-   :members:
-   :undoc-members:
+The following sections contains the full framework documentation.
 
-
-Utilities
----------
-
-.. automodule:: Utilities.meshutils
-   :members:
-   :undoc-members:
-
+.. toctree::
+   deformationmodules/index
+   models/index
+   hamiltoniandynamics/index
+   manifolds/index
+   structuredfields/index
+   utilities/index
+   
 

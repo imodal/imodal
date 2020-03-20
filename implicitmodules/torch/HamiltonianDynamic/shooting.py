@@ -9,8 +9,33 @@ from implicitmodules.torch.Manifolds import CompoundManifold
 
 
 def shoot(h, it, method, controls=None, intermediates=False):
-    """ Solve the hamiltonian system 
-    Add documentation for this function.
+    """ Shoot the hamiltonian system.
+
+    Parameters
+    ----------
+    h : HamiltonianDynamic.Hamiltonian
+        The hamiltonian system that will be shot.
+    it : int
+        The number of iterations the solver will do.
+    method : str
+        Numerical scheme that will be used to integrate the system.
+
+        Supported solvers are :
+
+        * 'torch_euler' : Euler scheme
+
+        The following solvers uses torchdiffea :
+
+        * 'euler' : Euler scheme
+        * 'midpoint' : RK2 scheme
+        * 'rk4' : RK$ scheme
+
+    controls : iterable, default=None
+        Optional iterable of tensors representing the controls at each step that will be filled to the deformation module.
+
+        **controls** has to be of length **it**. Each element `i` of **controls** has to be an iterable of size **len(h.module.modules)** each element `j` representing the controls given to the module `j` of **h.module**.
+    intermediates : boolean, default=False
+        If true, outputs intermediate states of the system. Intermediate states are represented as two list 
     """
     if method == "torch_euler":
         return shoot_euler(h, it, controls=controls, intermediates=intermediates)
@@ -19,9 +44,6 @@ def shoot(h, it, method, controls=None, intermediates=False):
 
 
 def shoot_euler(h, it, controls=None, intermediates=False):
-    """
-    Add documentation for this function.
-    """
     step = 1. / it
 
     if intermediates:
@@ -64,12 +86,9 @@ def shoot_euler(h, it, controls=None, intermediates=False):
 
 
 def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False):
-    """
-    Add documentation for this function.
-    """
     # Wrapper class used by TorchDiffEq
     # Returns (\partial H \over \partial p, -\partial H \over \partial q)
-    class TorchDiffEqHamiltonianGrad(Hamiltonian, torch.nn.Module):
+    class TorchDiffEqHamiltonianGrad(Hamiltonian):
         def __init__(self, module):
             self.intermediates = False
             self.in_controls = None
@@ -116,10 +135,11 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
 
     init_manifold = h.module.manifold.clone()
     H = TorchDiffEqHamiltonianGrad.from_hamiltonian(h)
+    print("shooting", H)
     H.intermediates = intermediates
     H.in_controls = controls
 
-    x_0 = torch.cat(list(map(lambda x: x.view(-1), [*h.module.manifold.unroll_gd(), *h.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
+    x_0 = torch.cat(list(map(lambda x: x.view(-1), [*H.module.manifold.unroll_gd(), *H.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
     x_1 = odeint(H, x_0, torch.linspace(0., 1., steps), method=method)
 
     gd, mom = [], []

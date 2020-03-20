@@ -1,22 +1,37 @@
 
-===========================================
-Welcome to implicitModules's documentation!
-===========================================
+=================================
+Fast modular deformation framwork
+=================================
 
 Presentation of the implicitModule library.
+
+Insert here a simple matching example.
+
+List all key features
+
+Links
+
+Authors
 
 Table of content
 ================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+
+   introduction/implicitmodules
+   introduction/installation
 
 .. toctree::
    :maxdepth: 2
    :caption: Implicit Modules
 
    modules/index
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Documentation
+
    documentation/index
 
 ..

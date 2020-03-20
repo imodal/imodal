@@ -9,7 +9,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 
 
 class TranslationsBase(DeformationModule):
-    """Module generating sum of translations."""
+    """Deformation module generating a sum of translations."""
     
     def __init__(self, manifold, sigma, label):
         assert isinstance(manifold, Landmarks)

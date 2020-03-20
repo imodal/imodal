@@ -21,9 +21,9 @@ sys.path.append("../implicitmodules/torch/")
 
 # -- Project information -----------------------------------------------------
 
-project = 'implicitModules'
-copyright = '2019, C. G. T.'
-author = 'C. G. T.'
+project = 'ImplicitModules'
+copyright = '2020, C. G. L. T.'
+author = 'C. G. L. T.'
 
 # The short X.Y version
 version = ''
@@ -50,18 +50,18 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.viewcode',
     'sphinxcontrib.httpdomain',
-    'sphinx_gallery.gen_gallery',
+    # 'sphinx_gallery.gen_gallery',
     'sphinx.ext.napoleon',
 ]
 
-sphinx_gallery_conf = {
-     # path to your examples scripts
-     'examples_dirs': ['../script'],
-     # path where to save gallery generated examples
-     'gallery_dirs': ['./_auto_examples'],
-}
+# sphinx_gallery_conf = {
+#      # path to your examples scripts
+#      'examples_dirs': ['../script'],
+#      # path where to save gallery generated examples
+#      'gallery_dirs': ['./_auto_examples'],
+# }
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -148,7 +148,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'implicitModules.tex', 'implicitModules Documentation',
-     'C. , G., T.', 'manual'),
+     'C. , G., L., T.', 'manual'),
 ]
 
 
