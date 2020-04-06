@@ -1,6 +1,6 @@
 # Implicit modules
 
-This is working in progress.
+WIP.
 
 # Authors
 

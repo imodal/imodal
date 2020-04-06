@@ -7,6 +7,8 @@ Welcome to the modular deformation framework documentation. This librarys serves
 
 This documentation is still a work in progress! Not any features/functions/class are yet documented.
 
+The project is hosted `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
+
 Presentation of the implicitModule library.
 
 Current features are:
