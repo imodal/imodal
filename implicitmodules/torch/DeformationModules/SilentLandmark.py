@@ -52,11 +52,15 @@ class SilentBase(DeformationModule):
     def fill_controls_zero(self):
         pass
 
+    # For now, for unit test to pass, we need to set requires_grad=True.
+    # But is it realy necessary ?
     def __call__(self, points, k=0):
-        return torch.zeros_like(points, device=self.device)
+        return torch.zeros_like(points, requires_grad=True, device=self.device)
 
+    # For now, for unit test to pass, we need to set requires_grad=True.
+    # But is it realy necessary ?
     def cost(self):
-        return torch.tensor(0., device=self.device)
+        return torch.tensor(0., requires_grad=True, device=self.device)
 
     def compute_geodesic_control(self, man):
         pass
