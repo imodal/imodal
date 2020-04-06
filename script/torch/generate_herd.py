@@ -80,5 +80,17 @@ for i in range(N_bunny):
     
     herd.append((bunny, ear_tips))
 
-pickle.dump(herd, open(sys.argv[1], 'wb'))
+
+head_radius = sigma_head_radius*torch.randn(1).item()+mu_head_radius
+ear_widths = (sigma_ear_width*torch.randn(2)+mu_ear_width).tolist()
+ear_lengths = (sigma_ear_length*torch.randn(2)+mu_ear_length).tolist()
+ear_angles = (sigma_ear_angle*torch.randn(2)+torch.tensor(mu_ear_angles)).tolist()
+bunny, ear_tips = generate_bunny(head_radius, ear_widths, ear_lengths, ear_angles, 30, 20)
+
+import matplotlib.pyplot as plt
+plt.plot(bunny[:, 0], bunny[:, 1])
+plt.axis('equal')
+plt.show()
+
+#pickle.dump(herd, open(sys.argv[1], 'wb'))
 

@@ -1,13 +1,21 @@
 
-=================================
-Fast modular deformation framwork
-=================================
+=============================
+Modular Deformation Framework
+=============================
+
+Welcome to the modular deformation framework documentation. This librarys serves as the reference implementation of the modular deformation mathematical framework. It also includes implicite modules.
+
+This documentation is still a work in progress! Not any features/functions/class are yet documented.
 
 Presentation of the implicitModule library.
 
-Insert here a simple matching example.
+Current features are:
 
-List all key features
+- Matching of 2D, 3D points clouds, 3D meshes, images
+- Atlas with hypertemplate
+- Learning of any model parameters
+- Full GPU support
+- Full KeOps support for all kernel computations
 
 Links
 
@@ -27,6 +35,8 @@ Table of content
    :caption: Implicit Modules
 
    modules/index
+   _auto_tutorials/index
+   _auto_examples/index
 
 .. toctree::
    :maxdepth: 3

@@ -4,7 +4,7 @@ from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 from implicitmodules.torch.Manifolds.Abstract import BaseManifold
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_Null
-
+from implicitmodules.torch.Utilities import generate_mesh_grid, grid2vec, vec2grid
 
 class SilentBase(DeformationModule):
     """Module handling silent points."""
@@ -52,15 +52,11 @@ class SilentBase(DeformationModule):
     def fill_controls_zero(self):
         pass
 
-    # Experimental: requires_grad=True
-    # Disable if necessary
-    def __call__(self, points):
-        return torch.zeros_like(points, requires_grad=points.requires_grad, device=self.device)
+    def __call__(self, points, k=0):
+        return torch.zeros_like(points, device=self.device)
 
-    # Experimental: requires_grad=True
-    # Disable if necessary
     def cost(self):
-        return torch.tensor(0., requires_grad=True, device=self.device)
+        return torch.tensor(0., device=self.device)
 
     def compute_geodesic_control(self, man):
         pass
@@ -77,5 +73,34 @@ Silent = SilentBase.build
 
 def SilentLandmarks(dim, nb_pts, gd=None, tan=None, cotan=None, label=None):
     return SilentBase.build(dim, nb_pts, Landmarks, gd=gd, tan=tan, cotan=cotan, label=label)
+
+
+class DeformationGrid(SilentBase):
+    """
+    Helper class to manipulate deformation grids as deformation modules.
+    Built on top of silent module
+    """
+
+    def __init__(self, aabb, resolution, label=None):
+        self.__aabb = aabb
+        self.__resolution = resolution
+
+        grid = generate_mesh_grid(aabb, resolution)
+        points_grid = grid2vec(*grid)
+
+        manifold = Landmarks(aabb.dim, points_grid.shape[0], gd=points_grid)
+
+        super().__init__(manifold, label)
+
+    @property
+    def aabb(self):
+        return self.__aabb
+
+    @property
+    def resolution(self):
+        return self.__resolution
+
+    def togrid(self):
+        return vec2grid(self.manifold.gd.detach(), *self.__resolution)
 
 

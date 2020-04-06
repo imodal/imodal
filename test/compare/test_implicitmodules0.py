@@ -21,17 +21,16 @@ class TestCompareImplicitModules0(unittest.TestCase):
         self.p = 10.*np.random.rand(self.N, 2)
         self.controls = np.random.rand(self.N, 2)
 
-        self.implicit0_torch = ImplicitModule0(2, self.N, self.sigma, 0.001, gd=torch.tensor(self.p), cotan=torch.tensor(self.q))
+        self.implicit0_torch = ImplicitModule0(2, self.N, self.sigma, nu=0.1, gd=torch.tensor(self.q), cotan=torch.tensor(self.p), backend='torch')
 
-        self.implicit0_numpy = ElasticOrder0(self.sigma, self.N, 2, 1., 0.001)
+        self.implicit0_numpy = ElasticOrder0(self.sigma, self.N, 2, 1., 0.1)
         self.implicit0_numpy.GD.fill_cot_from_param((self.q, self.p))
         self.implicit0_numpy.update()
 
     def test_geodesic_controls(self):
         self.implicit0_torch.compute_geodesic_control(self.implicit0_torch.manifold)
         self.implicit0_numpy.GeodesicControls_curr(self.implicit0_numpy.GD)
-
-        np.allclose(self.implicit0_torch.controls.detach().numpy().reshape(-1, 2), self.implicit0_numpy.Cont)
+        self.assertTrue(np.allclose(self.implicit0_torch.controls.detach().numpy().reshape(-1, 2), self.implicit0_numpy.Cont))
 
     def test_cost(self):
         self.implicit0_torch.fill_controls(torch.tensor(self.controls))
@@ -41,8 +40,7 @@ class TestCompareImplicitModules0(unittest.TestCase):
         cost_torch = self.implicit0_torch.cost()
         self.implicit0_numpy.Cost_curr()
         cost_numpy = self.implicit0_numpy.cost
-
-        np.allclose(cost_torch.detach().numpy(), cost_numpy)
+        self.assertTrue(np.allclose(cost_torch.detach().numpy(), cost_numpy))
 
     def test_apply(self):
         self.implicit0_torch.fill_controls(torch.tensor(self.controls))
@@ -53,8 +51,7 @@ class TestCompareImplicitModules0(unittest.TestCase):
         points = np.random.rand(nb_pts, 2)
         speed_torch = self.implicit0_torch(torch.tensor(points))
         speed_numpy = self.implicit0_numpy.field_generator_curr()(points, 0)
-
-        np.allclose(speed_torch.detach().numpy(), speed_numpy)
+        self.assertTrue(np.allclose(speed_torch.detach().numpy(), speed_numpy))
 
 
 if __name__ == '__main__':

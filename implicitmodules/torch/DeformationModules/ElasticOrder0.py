@@ -10,7 +10,7 @@ from implicitmodules.torch.Utilities import get_compute_backend
 
 
 class ImplicitModule0Base(DeformationModule):
-    """Module generating sum of translations."""
+    """Implicit module of order 0. Effectively identical to a local translation module with the added benefit of better numerical behaviour thanks to the `nu` parameters (explain)."""
 
     def __init__(self, manifold, sigma, nu, coeff, label):
         assert isinstance(manifold, Landmarks)
@@ -33,7 +33,6 @@ class ImplicitModule0Base(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, nu, coeff, label)
 
     def to_(self, *args, **kwargs):
@@ -79,15 +78,12 @@ class ImplicitModule0Base(DeformationModule):
         self.__controls = torch.zeros_like(self.__manifold.gd, device=self.device)
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k)
 
     def cost(self):
-        """Returns the cost."""
         raise NotImplementedError
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from \delta \in H^\ast."""
         raise NotImplementedError
 
     def field_generator(self):
@@ -112,9 +108,9 @@ class ImplicitModule0_Torch(ImplicitModule0Base):
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
-        K_q = K_xx(self.manifold.gd, self.sigma)# + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
+        K_q = K_xx(self.manifold.gd, self.sigma) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
         controls, _ = torch.solve(vs(self.manifold.gd), K_q)
-        self.__controls = controls.reshape(self.manifold.nb_pts, self.dim)/self.coeff
+        self.controls = controls/self.coeff
 
 
 class ImplicitModule0_KeOps(ImplicitModule0Base):

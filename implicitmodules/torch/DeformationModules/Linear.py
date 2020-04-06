@@ -66,11 +66,9 @@ class LinearDeformation(DeformationModule):
         self.fill_controls(torch.zeros_like(self.__controls))
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k=k)
 
     def cost(self):
-        """Returns the cost."""
         return 0.5*self.__coeff*self.__controls**2
 
     def compute_geodesic_control(self, man):

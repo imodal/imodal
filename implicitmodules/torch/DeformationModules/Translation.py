@@ -9,7 +9,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 
 
 class TranslationsBase(DeformationModule):
-    """Deformation module generating a sum of translations."""
+    """ Deformation module generating a sum of translations. """
     
     def __init__(self, manifold, sigma, label):
         assert isinstance(manifold, Landmarks)
@@ -28,7 +28,6 @@ class TranslationsBase(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, label)
 
     def to_(self, *args, **kwargs):
@@ -63,7 +62,6 @@ class TranslationsBase(DeformationModule):
         self.__controls = torch.zeros_like(self.__manifold.gd, requires_grad=True)
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k)
 
     def cost(self):
@@ -94,7 +92,6 @@ class Translations_Torch(TranslationsBase):
         return 0.5 * torch.dot(m.flatten(), self.controls.flatten())
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
         K_q = K_xx(self.manifold.gd, self.sigma)
 

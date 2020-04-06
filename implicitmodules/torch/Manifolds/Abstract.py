@@ -84,6 +84,14 @@ class BaseManifold:
         """
         raise NotImplementedError()
 
+    def fill(self, manifold, copy=False, requires_grad=True):
+        """
+        TODO: write documentation
+        """
+        self.fill_gd(manifold.gd, copy=copy, requires_grad=requires_grad)
+        self.fill_tan(manifold.tan, copy=copy, requires_grad=requires_grad)
+        self.fill_cotan(manifold.cotan, copy=copy, requires_grad=requires_grad)
+
     def fill_gd(self, gd, copy=False, requires_grad=True):
         """Fill geometrical descriptors to the manifold.
 

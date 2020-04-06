@@ -50,16 +50,19 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.viewcode',
     'sphinxcontrib.httpdomain',
-    # 'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
     'sphinx.ext.napoleon',
 ]
 
-# sphinx_gallery_conf = {
-#      # path to your examples scripts
-#      'examples_dirs': ['../script'],
-#      # path where to save gallery generated examples
-#      'gallery_dirs': ['./_auto_examples'],
-# }
+from sphinx_gallery.sorting import FileNameSortKey
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    'examples_dirs': ["../examples", "../tutorials"],
+    # path where to save gallery generated examples
+    'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
+    'within_subsection_order': FileNameSortKey
+}
+
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
 

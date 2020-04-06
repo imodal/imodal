@@ -6,7 +6,8 @@ from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
 
 
 class GlobalTranslation(DeformationModule):
-    """Global translation module."""
+    """ Global translation deformation module. """
+
     def __init__(self, dim, coeff=1., label=None):
         super().__init__(label)
         self.__controls = torch.zeros(dim)
@@ -55,11 +56,9 @@ class GlobalTranslation(DeformationModule):
         self.fill_controls(torch.zeros_like(self.__controls))
 
     def __call__(self, points):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points)
 
     def cost(self):
-        """Returns the cost."""
         return 0.5 * self.__coeff * torch.dot(self.__controls, self.__controls)
 
     def compute_geodesic_control(self, man):

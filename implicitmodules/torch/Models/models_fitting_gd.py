@@ -11,7 +11,7 @@ from implicitmodules.torch.Attachment import CompoundAttachment
 
 
 class GradientDescentOptimizer:
-    def __init__(self, parameters, alpha=1., gamma1=0.5, gamma2=1.5, fit_parameters=None, verbose=False):
+    def __init__(self, parameters, alpha=1., gamma1=0.8, gamma2=5., fit_parameters=None, verbose=False):
         assert fit_parameters is None or isinstance(fit_parameters, dict)
 
         self.__verbose = verbose
@@ -111,7 +111,7 @@ class GradientDescentOptimizer:
             self.__total_evaluation_count += 1
 
             if self.__verbose:
-                print("Line search, step {ln_step}: cost={cost}, alpha={alpha}".format(ln_step=evalcount, cost=cost_x_kp1, alpha=self.__alpha))
+                print("Line search, step {ln_step}: cost={cost}, alpha={alpha}".format(ln_step=evalcount, cost=cost_x_kp1, alpha=dict([(group_param, self.fit_parameters[group_param]['alpha']) for group_param in self.fit_parameters])))
 
             if cost_x_kp1 < cost_x_k and math.isfinite(cost_x_kp1):
                 found_minimizer = True
@@ -159,7 +159,7 @@ class ModelFittingGradientDescent(ModelFitting):
             self.__optim.zero_grad()
 
             # Shooting
-            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+            cost, deformation_cost, attach_cost = self.model.evaluate(target, shoot_method, shoot_it)
             # Save for printing purpose
             last_costs['deformation_cost'] = deformation_cost
             last_costs['attach_cost'] = attach_cost

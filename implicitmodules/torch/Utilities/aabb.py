@@ -105,14 +105,14 @@ class AABB:
         return self.__dim
 
     def totuple(self):
-        """ Returns the AABB as a dim-tuple.
+        """ Returns the AABB as a 2*dim-tuple.
 
         Returns
         -------
         tuple
             The d-tuple (xmin, xmax, ymin, ymax, ...).
         """
-        return tuple(itertools.chain.from_iterable([(kmin, kmax) for kmin, kmax in zip(self.__kmin, self.__kmax)]))
+        return tuple(itertools.chain.from_iterable(self.tocouple()))
 
     def todict(self):
         """ Returns the AABB as a dictionary.
@@ -125,6 +125,17 @@ class AABB:
         d = dict((pre+'min', kmin) for pre, kmin in zip(AABB.dim_prefix, self.__kmin))
         d.update((pre+'max', kmax) for pre, kmax in zip(AABB.dim_prefix, self.__kmax))
         return d
+
+    def tocouple(self):
+        """ Returns the AABB as a dim-tuple of intervals.
+
+        Returns
+        -------
+        tuple
+            dim-tuple of (kmin, kmax) couples.
+
+        """
+        return tuple((kmin, kmax) for kmin, kmax in zip(self.__kmin, self.__kmax))
 
     @property
     def kmin(self):
@@ -182,7 +193,7 @@ class AABB:
 
     @property
     def centers(self):
-        return [0.5*(kmax+kmin) for kmax, kmin in zip(self.__kmax, self.__kmin)]
+        return tuple(0.5*(kmax+kmin) for kmax, kmin in zip(self.__kmax, self.__kmin))
 
     @property
     def length(self):
@@ -276,7 +287,7 @@ class AABB:
         """
         factors = []
         if isinstance(factor, Iterable):
-            assert(len(factor, self.__dim))
+            assert len(factor) == self.__dim
             factors = factor
         else:
             factors = [factor]*self.__dim

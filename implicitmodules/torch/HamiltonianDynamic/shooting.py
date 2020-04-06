@@ -10,6 +10,10 @@ from implicitmodules.torch.Manifolds import CompoundManifold
 
 def shoot(h, it, method, controls=None, intermediates=False):
     """ Shoot the hamiltonian system.
+    integrate ODE, associe a gd et mom initiaux la trajectoire lien article 
+    minimisation energie definit par le modele
+    obtient trajectoire minimisante
+    
 
     Parameters
     ----------
@@ -88,39 +92,39 @@ def shoot_euler(h, it, controls=None, intermediates=False):
 def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False):
     # Wrapper class used by TorchDiffEq
     # Returns (\partial H \over \partial p, -\partial H \over \partial q)
-    class TorchDiffEqHamiltonianGrad(Hamiltonian):
-        def __init__(self, module):
-            self.intermediates = False
-            self.in_controls = None
+    class TorchDiffEqHamiltonianGrad():
+        def __init__(self, h, intermediates=False, controls=None):
+            self.h = h
+            self.intermediates = intermediates
+            self.controls = controls
             self.out_controls = []
             self.it = 0
-            super().__init__(module)
 
         def __call__(self, t, x):
             with torch.enable_grad():
                 gd, mom = [], []
                 index = 0
 
-                for m in self.module:
+                for m in self.h.module:
                     for i in range(m.manifold.len_gd):
                         gd.append(x[0][index:index+m.manifold.numel_gd[i]].view(m.manifold.shape_gd[i]).requires_grad_())
                         mom.append(x[1][index:index+m.manifold.numel_gd[i]].view(m.manifold.shape_gd[i]).requires_grad_())
                         index = index + m.manifold.numel_gd[i]
 
-                self.module.manifold.fill_gd(self.module.manifold.roll_gd(gd))
-                self.module.manifold.fill_cotan(self.module.manifold.roll_cotan(mom))
+                self.h.module.manifold.fill_gd(self.h.module.manifold.roll_gd(gd))
+                self.h.module.manifold.fill_cotan(self.h.module.manifold.roll_cotan(mom))
 
                 # If controls are provided, use them, else we compute the geodesic controls.
-                if self.in_controls is not None:
-                    self.module.fill_controls(self.in_controls[self.it])
+                if self.controls is not None:
+                    self.h.module.fill_controls(self.controls[self.it])
                 else:
-                    self.geodesic_controls()
+                    self.h.geodesic_controls()
 
                 if self.intermediates:
-                    self.out_controls.append(list(map(lambda x: x.detach().clone(), self.module.controls)))
-                delta = grad(super().__call__(),
-                             [*self.module.manifold.unroll_gd(),
-                              *self.module.manifold.unroll_cotan()],
+                    self.out_controls.append(list(map(lambda x: x.detach().clone(), self.h.module.controls)))
+                delta = grad(h(),
+                             [*self.h.module.manifold.unroll_gd(),
+                              *self.h.module.manifold.unroll_cotan()],
                              create_graph=True, allow_unused=True)
 
                 gd_out = delta[:int(len(delta)/2)]
@@ -129,18 +133,16 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
                 self.it = self.it + 1
 
                 return torch.cat(list(map(lambda x: x.flatten(), [*mom_out, *list(map(lambda x: -x, gd_out))])), dim=0).view(2, -1)
+
     steps = it + 1
     if intermediates:
         intermediate_controls = []
 
     init_manifold = h.module.manifold.clone()
-    H = TorchDiffEqHamiltonianGrad.from_hamiltonian(h)
-    print("shooting", H)
-    H.intermediates = intermediates
-    H.in_controls = controls
+    gradH = TorchDiffEqHamiltonianGrad(h, intermediates, controls)
 
-    x_0 = torch.cat(list(map(lambda x: x.view(-1), [*H.module.manifold.unroll_gd(), *H.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
-    x_1 = odeint(H, x_0, torch.linspace(0., 1., steps), method=method)
+    x_0 = torch.cat(list(map(lambda x: x.view(-1), [*gradH.h.module.manifold.unroll_gd(), *gradH.h.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
+    x_1 = odeint(gradH, x_0, torch.linspace(0., 1., steps), method=method)
 
     gd, mom = [], []
     index = 0
@@ -161,8 +163,8 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
             index = 0
             for m in h.module:
                 for j in range(m.manifold.len_gd):
-                    gd.append(x_1[i, 0, index:index+m.manifold.numel_gd[j]].detach().view(-1, m.dim))
-                    mom.append(x_1[i, 1, index:index+m.manifold.numel_gd[j]].detach().view(-1, m.dim))
+                    gd.append(x_1[i, 0, index:index+m.manifold.numel_gd[j]].detach().view(m.manifold.shape_gd[j]))
+                    mom.append(x_1[i, 1, index:index+m.manifold.numel_gd[j]].detach().view(m.manifold.shape_gd[j]))
                     index = index + m.manifold.numel_gd[j]
 
             intermediate_states.append(init_manifold.clone())
@@ -170,5 +172,5 @@ def shoot_torchdiffeq(h, it, method='euler', controls=None, intermediates=False)
             intermediate_states[-1].fill_gd(intermediate_states[-1].roll_gd(gd))
             intermediate_states[-1].fill_cotan(intermediate_states[-1].roll_cotan(mom))
 
-        return intermediate_states, H.out_controls
+        return intermediate_states, gradH.out_controls
 
