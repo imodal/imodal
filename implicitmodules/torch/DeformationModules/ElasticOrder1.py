@@ -10,7 +10,7 @@ from implicitmodules.torch.StructuredFields import StructuredField_p
 
 
 class ImplicitModule1Base(DeformationModule):
-    """Module generating sum of translations."""
+    """ Implicit module of order 1. """
 
     def __init__(self, manifold, sigma, C, nu, coeff, label):
         assert isinstance(manifold, Stiefel)
@@ -37,7 +37,6 @@ class ImplicitModule1Base(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
         return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff, label)
 
     @property
@@ -96,14 +95,12 @@ class ImplicitModule1Base(DeformationModule):
         self.fill_controls(torch.zeros(self.__dim_controls, device=self.device, requires_grad=True))
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k)
 
     def cost(self):
         raise NotImplementedError()
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from vs structuredfield."""
         raise NotImplementedError()
 
     def compute_moments(self):

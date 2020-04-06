@@ -133,81 +133,79 @@ class Model:
 
             return vec2grid(grid_silent.manifold.gd.detach(), grid_resolution[0], grid_resolution[1])
 
+    def evaluate(self, targets, method, it, compute_backward=True, ext_cost=None):
+        """ Evaluate the model and output its cost.
+        
+        Parameters
+        ----------
+        targets : torch.Tensor or list of torch.Tensor
+            Targets we try to approach.
+        method : str
+            Integration method to use.
+        it : int
+            Number of iterations for the integration.
+        compute_backward : bool
+            If True, computes the gradient of the output cost tensor.
+        ext_cost : torch.Tensor, default=None
+            Scalar tensor representing an external cost we want to add to the final cost.
 
-class ModelPointsRegistration(Model):
-    """
-    TODO: add documentation
-    """
-    def __init__(self, source, modules, attachments, lam=1., fit_gd=None, precompute_callback=None, other_parameters=None):
-        assert isinstance(source, Iterable) and not isinstance(source, torch.Tensor)
-
-        if other_parameters is None:
-            other_parameters = []
-
-        # We keep a copy of the sources
-        self.__sources = copy.deepcopy(source)
-
-        # We now create the corresponding silent modules
-        model_modules = []
-        self.__weights = []
-        for source in self.__sources:
-            # Some weights provided
-            if isinstance(source, tuple) and len(source) == 2:
-                model_modules.append(SilentLandmarks(source[0].shape[1], source[0].shape[0], gd=source[0].clone().requires_grad_(), cotan=torch.zeros_like(source[0], requires_grad=True, device=source[0].device, dtype=source[0].dtype)))
-                self.__weights.append(source[1])
-
-            # No weights provided
-            elif isinstance(source, torch.Tensor):
-                model_modules.append(SilentLandmarks(source.shape[1], source.shape[0], gd=source.clone().requires_grad_(), cotan=torch.zeros_like(source, requires_grad=True, device=source.device, dtype=source.dtype)))
-                self.__weights.append(None)
-
-            else:
-                raise RuntimeError("ModelPointsRegistration.__init__(): source type {source_type} not implemented or of wrong length!".format(source_type=source.__class__.__name__))
-
-        model_modules.extend(modules)
-
-        super().__init__(model_modules, attachments, fit_gd, lam, precompute_callback, other_parameters)
-
-    def compute(self, targets, it=10, method='euler', compute_backward=True, ext_cost=None):
-        """ Does shooting. Outputs compute deformation and attach cost. """
+        Returns
+        -------
+        torch.Tensor
+            Scalar tensor representing the cost of the model.
+        """
         # Call precompute callback if available
-        # TODO: maybe do this in Model and not ModelPointsRegistration ?
         pc_cost = None
         if self.precompute_callback is not None:
             pc_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
 
-        # We first create and fill the compound module we will shoot
-        compound = CompoundModule(self.modules)
-        compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
-        compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
+        # Compute the deformed source
+        deformed_sources, deformation_cost = self.compute_deformed(method, it, deformation_cost=True)
 
-        # Compute the deformation cost (constant)
-        compound.compute_geodesic_control(compound.manifold)
-        deformation_cost = compound.cost()
-
-        # Shooting
-        shoot(Hamiltonian(compound), it, method)
-
-        # We compute the attach cost for each source/target couple
+        # Compute the attach cost for each source/target couple
         attach_costs = []
-        for source, target, silent, attachment in zip(self.__sources, targets, compound, self.attachments):
-            if isinstance(source, torch.Tensor):
-                attach_costs.append(attachment(silent.manifold.gd, target))
+        for deformed_source, target, attachment in zip(deformed_sources, targets, self.attachments):
+            if isinstance(deformed_source, torch.Tensor):
+                attach_costs.append(attachment(deformed_source, target))
             else:
-                attach_costs.append(attachment((silent.manifold.gd, source[1]), target))
+                attach_costs.append(attachment((deformed_source, source[1]), target))
 
+        # Compute attach cost and final cost
         attach_cost = self.lam*sum(attach_costs)
         cost = deformation_cost + attach_cost
 
+        # If the precompute callback outputed a cost, add it
         if pc_cost is not None:
             cost = cost + pc_cost
 
+        # If an external cost is defined, add it
         if ext_cost is not None:
             cost = cost + ext_cost
 
+        # If we need to compute the backward of the cost, do it.
         if compute_backward and cost.requires_grad:
             cost.backward()
 
         return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
+
+    """Compute the deformed source.
+
+    Parameters
+    ----------
+    method : str
+        Integration method to use for the shooting.
+    it : int
+        Number of iterations the integration method will do.
+    def_cost : bool
+        If True, also output the deformation cost.
+
+    Returns
+    -------
+    list
+        List of deformed sources.
+    """
+    def compute_deformed(self, method, it, def_cost=False):
+        raise NotImplementedError()
+
 
 

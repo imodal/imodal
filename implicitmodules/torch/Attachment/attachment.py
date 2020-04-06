@@ -13,18 +13,40 @@ class Attachment:
     def __str__(self):
         return "{classname} (weight={weight})".format(classname=self.__class__.__name__, weight=self.weight)
 
+    """
+    Weight given to this attachment term. Useful when dealing with compound attachment.
+    """
     @property
     def weight(self):
         return self.__weight
 
+    """
+    Computes the attachment term between two objects.
+
+    Parameters
+    ----------
+    source :
+        The source term.
+    target :
+        The target term.
+
+    Returns
+    -------
+    torch.Tensor
+        Value quantifying the attachment between the source and the target.
+    """
     def __call__(self, source, target):
         return self.__weight*self.loss(source, target)
 
+    """
+
+    """
     def loss(self, source, target):
         raise NotImplementedError
 
 
 class CompoundAttachment(Attachment):
+    """Compound attachment measure. Can be used to combine different measures together"""
     def __init__(self, attachments, weight=1.):
         assert isinstance(attachments, Iterable)
 
@@ -64,16 +86,17 @@ class L2NormAttachment(Attachment):
         return torch.dist(source, target)
 
 
-class GeomlossAttachment(Attachment):
-    def __init__(self, weight=1., **kwargs):
-        super().__init__(weight)
-        self.__geomloss = geomloss.SamplesLoss(**kwargs)
+# class GeomlossAttachment(Attachment):
+#     def __init__(self, weight=1., **kwargs):
+#         super().__init__(weight)
+#         self.__geomloss = geomloss.SamplesLoss(**kwargs)
 
-    def loss(self, source, target):
-        return self.__geomloss(source[1], source[0], target[1], target[0])
+#     def loss(self, source, target):
+#         return self.__geomloss(source[1], source[0], target[1], target[0])
 
 
 class EuclideanPointwiseDistanceAttachment(Attachment):
+    """Euclidean pointwise distance between two measures."""
     def __init__(self, weight=1.):
         super().__init__(weight)
 

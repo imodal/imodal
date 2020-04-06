@@ -12,24 +12,24 @@ class Atlas:
     """
     TODO: add documentation
     """
-    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_coeff=1., precompute_callback=None, model_precompute_callback=None, other_parameters=None, compute_mode='sequential'):
+    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_coeff=1., precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
 
-        if compute_mode != 'sequential' and compute_mode != 'parallel' and compute_mode != 'heterogeneous':
-            raise RuntimeError("Atlas.__init__(): compute_mode {compute_mode} not recognised!".format(compute_mode=compute_mode))
+        if evaluate_mode != 'sequential' and evaluate_mode != 'parallel' and compute_mode != 'heterogeneous':
+            raise RuntimeError("Atlas.__init__(): evaluate_mode {evaluate_mode} not recognised!".format(evaluate_mode=evaluate_mode))
 
-        if compute_mode == 'sequential':
-            self.__compute_func = self.__compute_sequential
-        elif compute_mode == 'parallel':
-            self.__compute_func = self.__compute_parallel
+        if evaluate_mode == 'sequential':
+            self.__evaluate_func = self.__evaluate_sequential
+        elif evaluate_mode == 'parallel':
+            self.__evaluate_func = self.__evaluate_parallel
         else:
-            raise RuntimeError("Atlas: {compute_mode} not recognised!".format(compute_mode=compute_mode))
+            raise RuntimeError("Atlas: {evaluate_mode} not recognised!".format(evaluate_mode=evaluate_mode))
 
         if optimise_template and ht_sigma is None:
             raise RuntimeError("Atlas.__init__(): optimise_template has been set to True but ht_sigma has not been specified!")
 
-        self.__compute_mode = compute_mode
+        self.__evaluate_mode = evaluate_mode
 
         self.__population_count = population_count
         self.__template = template
@@ -139,7 +139,7 @@ class Atlas:
         if self.__optimise_template:
             self.__parameters['ht'].append(self.__cotan_ht)
 
-    def compute_template(self, it=10, method='euler', detach=True):
+    def compute_template(self, method, it, detach=True):
         if self.__optimise_template:
             translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
 
@@ -156,10 +156,10 @@ class Atlas:
         else:
             return self.__template, torch.tensor(0.)
 
-    def compute(self, targets, it=10, method='euler'):
-        return self.__compute_func(targets, it, method)
+    def evaluate(self, targets, method, it):
+        return self.__evaluate_func(targets, method, it)
 
-    def __compute_sequential(self, targets, it, method):
+    def __evaluate_sequential(self, targets, method, it):
         costs = []
         deformation_costs = []
         attach_costs = []
@@ -178,7 +178,7 @@ class Atlas:
             if self.__models[i].precompute_callback is not None:
                 self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
 
-            cost, deformation_cost, attach_cost = self.__models[i].compute([targets[i]], it=it, method=method, ext_cost=cost_template)
+            cost, deformation_cost, attach_cost = self.__models[i].evaluate([targets[i]], it=it, method=method, ext_cost=cost_template)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
@@ -190,7 +190,7 @@ class Atlas:
 
         return cost, deformation_cost, attach_cost
 
-    def __compute_parallel(self, atlas, it, method):
+    def __evaluate_parallel(self, targets, method, it):
         pass
 
 

@@ -10,8 +10,8 @@ from implicitmodules.torch.StructuredFields import StructuredField_0
 
 
 class OrientedTranslationsBase(DeformationModule):
-    """Module generating sum of translations."""
-    
+    """Module generating sum of oriented translations."""
+
     def __init__(self, manifold, sigma, coeff, label):
         assert isinstance(manifold, LandmarksDirection)
         super().__init__(label)
@@ -31,7 +31,6 @@ class OrientedTranslationsBase(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, transport='vector', coeff=1., gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
         return cls(LandmarksDirection(dim, nb_pts, transport, gd=gd, tan=tan, cotan=cotan), sigma, coeff, label)
 
     def to_(self, *args, **kwargs):
@@ -70,7 +69,6 @@ class OrientedTranslationsBase(DeformationModule):
         self.__controls = torch.zeros(self.__manifold.nb_pts, device=self.__manifold.device, dtype=self.__manifold.dtype)
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k)
 
     def cost(self):
@@ -101,7 +99,6 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
         return 0.5 * self.coeff * torch.dot(m.flatten(), (self.controls.unsqueeze(1).repeat(1, self.dim)*self.manifold.gd[1]).flatten())
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from StructuredField vs."""
         vs = self.adjoint(man)
         Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
         controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)

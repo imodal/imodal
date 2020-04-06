@@ -6,8 +6,17 @@ from implicitmodules.torch.StructuredFields import SumStructuredField
 
 
 class CompoundModule(DeformationModule, Iterable):
-    """Combination of modules."""
+    """ Combination of deformation modules. """
 
+    """ Compound module constructor.
+
+    Parameters
+    ----------
+    modules : Iterable
+        Iterable of deformation modules we want to build the compound module from.
+    label :
+        Optional identifier
+    """
     def __init__(self, modules, label=None):
         assert isinstance(modules, Iterable)
         super().__init__(label)

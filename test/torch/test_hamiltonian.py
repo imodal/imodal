@@ -29,9 +29,9 @@ def make_test_hamiltonian(dim):
         def test_good_init(self):
             self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)
 
-        def test_apply_mom(self):
-            self.assertIsInstance(self.h.apply_mom(), torch.Tensor)
-            self.assertEqual(self.h.apply_mom().shape, torch.Size([]))
+        def test__apply_mom(self):
+            self.assertIsInstance(self.h._apply_mom(), torch.Tensor)
+            self.assertEqual(self.h._apply_mom().shape, torch.Size([]))
 
         def test_call(self):
             self.assertIsInstance(self.h(), torch.Tensor)
@@ -64,7 +64,7 @@ def make_test_hamiltonian(dim):
                 self.h.module.manifold.fill_cotan([mom])
                 self.h.module.fill_controls([controls])
 
-                return self.h.apply_mom()
+                return self.h._apply_mom()
 
             self.gd.requires_grad_()
             self.mom.requires_grad_()
@@ -127,9 +127,9 @@ def make_test_hamiltoniancompound(dim, backend):
         def test_good_init(self):
             self.assertIsInstance(self.h.module, im.DeformationModules.Abstract.DeformationModule)
 
-        def test_apply_mom(self):
-            self.assertIsInstance(self.h.apply_mom(), torch.Tensor)
-            self.assertEqual(self.h.apply_mom().shape, torch.Size([]))
+        def test__apply_mom(self):
+            self.assertIsInstance(self.h._apply_mom(), torch.Tensor)
+            self.assertEqual(self.h._apply_mom().shape, torch.Size([]))
 
         def test_call(self):
             self.assertIsInstance(self.h(), torch.Tensor)
@@ -162,13 +162,13 @@ def make_test_hamiltoniancompound(dim, backend):
 
             self.assertTrue(torch.autograd.gradcheck(call, (self.gd_trans, self.gd_silent, self.mom_trans, self.mom_silent, self.controls_trans, self.controls_silent), raise_exception=False))
 
-        def test_gradcheck_apply_mom(self):
-            def apply_mom(gd_trans, gd_silent, mom_trans, mom_silent, controls_trans, controls_silent):
+        def test_gradcheck__apply_mom(self):
+            def _apply_mom(gd_trans, gd_silent, mom_trans, mom_silent, controls_trans, controls_silent):
                 self.h.module.manifold.fill_gd([gd_trans, gd_silent])
                 self.h.module.manifold.fill_cotan([mom_trans, mom_silent])
                 self.h.module.fill_controls([controls_trans, controls_silent])
 
-                return self.h.apply_mom()
+                return self.h._apply_mom()
 
             self.gd_trans.requires_grad_()
             self.gd_silent.requires_grad_()
@@ -177,7 +177,7 @@ def make_test_hamiltoniancompound(dim, backend):
             self.controls_trans.requires_grad_()
             self.controls_silent.requires_grad_()
 
-            self.assertTrue(torch.autograd.gradcheck(apply_mom, (self.gd_trans, self.gd_silent, self.mom_trans, self.mom_silent, self.controls_trans, self.controls_silent), raise_exception=False))
+            self.assertTrue(torch.autograd.gradcheck(_apply_mom, (self.gd_trans, self.gd_silent, self.mom_trans, self.mom_silent, self.controls_trans, self.controls_silent), raise_exception=False))
 
         def test_gradcheck_geodesic_controls(self):
             def geodesic_controls(gd_trans, gd_silent, mom_trans, mom_silent):

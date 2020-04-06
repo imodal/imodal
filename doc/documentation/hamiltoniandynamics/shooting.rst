@@ -1,0 +1,6 @@
+==========
+ Shooting
+==========
+
+.. autofunction:: HamiltonianDynamic.shoot
+		   

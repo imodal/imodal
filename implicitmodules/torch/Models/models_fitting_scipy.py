@@ -41,8 +41,8 @@ class ModelFittingScipy(ModelFitting):
             self.__numpy_to_model(x)
             self.__zero_grad()
 
-            # Evaluate the model.
-            cost, deformation_cost, attach_cost = self.model.compute(target, it=shoot_it, method=shoot_method)
+            # Evaluate the model
+            cost, deformation_cost, attach_cost = self.model.evaluate(target, shoot_method, shoot_it)
 
             d_cost = self.__model_to_numpy(self.model, grad=True)
 
@@ -80,7 +80,6 @@ class ModelFittingScipy(ModelFitting):
         step_options.update(options)
 
         x_0 = self.__model_to_numpy(self.model)
-        #with torch.autograd.no_grad():
         closure(x_0)
 
         if disp:

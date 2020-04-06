@@ -9,7 +9,7 @@ from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.StructuredFields import StructuredField_0
 
 class LocalConstrainedTranslationsBase(DeformationModule):
-    """Module generating sum of translations."""
+    """Module generating sum of constrained translations."""
     
     def __init__(self, manifold, sigma, descstr, f_support, f_vectors, coeff, label):
         assert isinstance(manifold, Landmarks)
@@ -34,7 +34,6 @@ class LocalConstrainedTranslationsBase(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, descstr, f_support, f_vectors, coeff=1., gd=None, tan=None, cotan=None, label=None):
-        """Builds the Translations deformation module from tensors."""
         return cls(Landmarks(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, descstr, f_support, f_vectors, coeff, label)
 
     def to_(self, *args, **kwargs):
@@ -78,7 +77,6 @@ class LocalConstrainedTranslationsBase(DeformationModule):
         self.__controls = torch.zeros(1, requires_grad=True)
 
     def __call__(self, points, k=0):
-        """Applies the generated vector field on given points."""
         return self.field_generator()(points, k)
 
     def cost(self):
@@ -147,6 +145,28 @@ LocalConstrainedTranslations = create_deformation_module_with_backends(LocalCons
 
 
 def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
+    """ Generates a local scaling deformation module.
+
+    Local scaling is approximated by a local constrained translation deformation
+    module with 3 vectors around the scaling center, pointing inwards. 
+    
+    Parameters
+    ----------
+    dim : int
+        Dimension of the ambiant space the deformation module will live on.
+    sigma : float
+        Kernel size of the underlying vector space
+    coeff : float
+        Coefficient of the deformation module
+    gd : torch.Tensor
+        Geometrical descriptor of the deformation module i.e. the scale centers
+    tan : torch.Tensor
+        Tangent tensor
+    cotan : torch.Tensor
+        Cotangent tensor
+    label :
+        Optional identifier
+    """
     def f_vectors(gd):
         return torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
@@ -157,6 +177,31 @@ def LocalScaling(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None
 
 
 def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=None, backend=None):
+    """ Generates a local rotation deformation module.
+
+    Local roation is approximated by a local constrained translation deformation
+    module with 3 vectors around the scaling center, pointing tangantially.
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the ambiant space the deformation module will live on.
+    sigma : float
+        Kernel size of the underlying vector space
+    coeff : float
+        Coefficient of the deformation module
+    gd : torch.Tensor
+        Geometrical descriptor of the deformation module i.e. the rotation centers
+    tan : torch.Tensor
+        Tangent tensor
+    cotan : torch.Tensor
+        Cotangent tensor
+    label :
+        Optional identifier
+    backend : str
+        Computation backend the deformation module will 
+    """
+
     def f_vectors(gd):
         return torch.tensor([[-math.sin(2.*math.pi/3.*i), math.cos(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
