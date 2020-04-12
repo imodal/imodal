@@ -1,4 +1,4 @@
-Oriented Local translation deformation module
+Oriented Local translation Deformation Module
 ---------------------------------------------
 
 Oriented Local translation deformation module

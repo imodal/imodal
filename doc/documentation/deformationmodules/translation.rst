@@ -1,7 +1,5 @@
-Local translation deformation module
+Local Translation Deformation Module
 ------------------------------------
-
-Local translation deformation module
 
 .. autoclass:: DeformationModules.Translation.TranslationsBase
 	       :members:

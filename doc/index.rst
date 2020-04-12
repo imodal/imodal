@@ -3,9 +3,9 @@
 Modular Deformation Framework
 =============================
 
-Welcome to the modular deformation framework documentation. This librarys serves as the reference implementation of the modular deformation mathematical framework. It also includes implicite modules.
+Welcome to the modular deformation framework documentation. This library serves as the reference implementation of the modular deformation mathematical framework. This also includes implicite modules.
 
-This documentation is still a work in progress! Not any features/functions/class are yet documented.
+This documentation is still a work in progress! Not every features/functions/class are yet documented.
 
 The project is hosted `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
 
@@ -22,6 +22,8 @@ Current features are:
 Links
 
 Authors
+
+List of related publications.
 
 Table of content
 ================

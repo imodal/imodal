@@ -72,7 +72,7 @@ def plot_rod(positions, moments, C):
     plt.axis('equal')
 
     ax = plt.subplot(1, 2, 2)
-    dm.Utilities.plot_C_arrow(ax, positions, C, color='black', scale=0.3, mutation_scale=8.)
+    dm.Utilities.plot_C_arrows(ax, positions, C, color='black', scale=0.3, mutation_scale=8.)
     plt.axis('equal')
 
     plt.show()

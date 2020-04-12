@@ -1,5 +1,6 @@
 import math
 
+import trimesh
 import torch
 from scipy.spatial import ConvexHull
 

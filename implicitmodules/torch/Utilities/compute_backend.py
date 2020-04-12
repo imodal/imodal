@@ -4,6 +4,13 @@ __compute_backends = ['keops', 'torch']
 
 
 def set_compute_backend(backend):
+    """ Set the current default kernel computation backend.
+
+    Parameters
+    ----------
+    backend : str
+       Kernel computation backend to use. Either `torch` or `keops`.
+    """
     if backend != 'torch' and backend != 'keops':
         raise RuntimeError("Backend", backend, " not supported!")
 
@@ -12,6 +19,8 @@ def set_compute_backend(backend):
 
 
 def get_compute_backend():
+    """ Returns current kernel computation backend.
+    """
     return __compute_backend
 
 

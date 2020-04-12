@@ -27,7 +27,7 @@ import implicitmodules.torch as dm
 
 nb_points_source = 50
 radius = 1.
-source = radius*dm.Utilities.generate_unit_sphere(nb_points_source)[:-1]
+source = radius*dm.Utilities.generate_unit_circle(nb_points_source)[:-1]
 
 nb_points_square_side = 4
 target = dm.Utilities.generate_unit_square(nb_points_square_side)
@@ -73,8 +73,7 @@ model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.A
 
 fitter = dm.Models.ModelFittingScipy(model)
 
-with torch.autograd.detect_anomaly():
-    fitter.fit([target.clone()], 15, log_interval=1)
+fitter.fit([target.clone()], 15, log_interval=1)
 
 
 ###############################################################################

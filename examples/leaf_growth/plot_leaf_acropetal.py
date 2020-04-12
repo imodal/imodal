@@ -97,7 +97,7 @@ C[:, 1, 0] = K * ((1 - b) * z**2 + b * z)
 C[:, 0, 0] = 0.8 * C[:, 1, 0]
 
 ax = plt.subplot()
-dm.Utilities.plot_C_ellipse(ax, points_growth, C, color='green', scale=0.2)
+dm.Utilities.plot_C_ellipses(ax, points_growth, C, color='green', scale=0.2)
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
 plt.axis('equal')
 plt.show()

@@ -1,4 +1,4 @@
-Global translation
+Global Translation
 ------------------
 
 .. autoclass:: DeformationModules.GlobalTranslation.GlobalTranslation

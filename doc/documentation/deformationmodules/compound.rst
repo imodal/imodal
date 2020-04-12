@@ -1,4 +1,4 @@
-Compound deformation module
+Compound Deformation Module
 ---------------------------
 
 .. autoclass:: DeformationModules.Combination.CompoundModule

@@ -12,7 +12,7 @@ class Atlas:
     """
     TODO: add documentation
     """
-    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_coeff=1., precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
+    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_nu=0., ht_coeff=1., ht_method='euler', ht_it=10, precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
 
@@ -20,9 +20,9 @@ class Atlas:
             raise RuntimeError("Atlas.__init__(): evaluate_mode {evaluate_mode} not recognised!".format(evaluate_mode=evaluate_mode))
 
         if evaluate_mode == 'sequential':
-            self.__evaluate_func = self.__evaluate_sequential
+            self.__compute_deformed_func = self.__compute_deformed_sequential
         elif evaluate_mode == 'parallel':
-            self.__evaluate_func = self.__evaluate_parallel
+            self.__compute_deformed_func = self.__compute_deformed_parallel
         else:
             raise RuntimeError("Atlas: {evaluate_mode} not recognised!".format(evaluate_mode=evaluate_mode))
 
@@ -38,7 +38,10 @@ class Atlas:
         self.__fit_gd = fit_gd
         self.__n_modules = len(modules)
         self.__ht_sigma = ht_sigma
+        self.__ht_nu = ht_nu
         self.__ht_coeff = ht_coeff
+        self.__ht_method = ht_method
+        self.__ht_it = ht_it
         self.__optimise_template = optimise_template
         self.__lam = lam
 
@@ -137,17 +140,17 @@ class Atlas:
 
         # Hyper template moments
         if self.__optimise_template:
-            self.__parameters['ht'].append(self.__cotan_ht)
+            self.__parameters['ht'] = [self.__cotan_ht]
 
-    def compute_template(self, method, it, detach=True):
+    def compute_template(self, detach=True):
         if self.__optimise_template:
-            translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, 0., gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
+            translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, self.__ht_nu, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
+            translations_ht.to_(device=self.__template.device)
 
             translations_ht.compute_geodesic_control(translations_ht.manifold)
             cost = translations_ht.cost()
-            translations_ht.to_(device=self.__template.device)
 
-            shoot(Hamiltonian([translations_ht]), it, method)
+            shoot(Hamiltonian([translations_ht]), self.__ht_it, self.__ht_method)
 
             if detach:
                 return translations_ht.manifold.gd.detach(), cost.detach()
@@ -157,28 +160,19 @@ class Atlas:
             return self.__template, torch.tensor(0.)
 
     def evaluate(self, targets, method, it):
-        return self.__evaluate_func(targets, method, it)
-
-    def __evaluate_sequential(self, targets, method, it):
         costs = []
         deformation_costs = []
         attach_costs = []
-
-        for i in range(self.__population_count):
+        for model, target in zip(self.__models, targets):
             cost_template = None
             if self.__optimise_template:
-                # translations_ht = ImplicitModule0(self.__template.shape[1], self.__template.shape[0], self.__ht_sigma, 0., coeff=self.__ht_coeff, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht, backend='torch')
-                # shoot(Hamiltonian([translations_ht]), 10, 'euler')
-                # self.__models[i]._Model__init_manifold[0].gd = translations_ht.manifold.gd
-                # cost_template = translations_ht.cost()
-
                 deformed_template, cost_template = self.compute_template(detach=False)
-                self.__models[i]._Model__init_manifold[0].gd = deformed_template
+                model._Model__init_manifold[0].gd = deformed_template
 
-            if self.__models[i].precompute_callback is not None:
-                self.__models[i].precompute_callback(self.__models[i].init_manifold, self.__models[i].modules, self.__models[i].parameters)
+            if model.precompute_callback is not None:
+                model.precompute_callback(model.init_manifold, model.modules, model.parameters)
 
-            cost, deformation_cost, attach_cost = self.__models[i].evaluate([targets[i]], it=it, method=method, ext_cost=cost_template)
+            cost, deformation_cost, attach_cost = model.evaluate([target], it=it, method=method, ext_cost=cost_template)
 
             costs.append(cost)
             deformation_costs.append(deformation_cost)
@@ -190,7 +184,24 @@ class Atlas:
 
         return cost, deformation_cost, attach_cost
 
-    def __evaluate_parallel(self, targets, method, it):
+    def compute_deformed(self, method, it):
+        return self.__compute_deformed_func(method, it)
+
+    def __compute_deformed_sequential(self, method, it):
+        deformed = []
+        for model in self.__models:
+            if self.__optimise_template:
+                deformed_template, _ = self.compute_template(False)
+                model._Model__init_manifold[0].gd = deformed_template
+
+            if model.precompute_callback is not None:
+                model.precompute_callback(model.init_manifold, model.modules, model.parameters)
+
+            deformed.append(model.compute_deformed(method, it)[0])
+
+        return deformed
+
+    def __compute_deformed_parallel(self, method, it):
         pass
 
 

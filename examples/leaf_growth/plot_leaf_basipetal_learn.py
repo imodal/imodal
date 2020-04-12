@@ -177,7 +177,7 @@ plt.show()
 learned_C = growth.C.detach()
 
 ax = plt.subplot()
-dm.Utilities.plot_C_arrow(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.1, mutation_scale=8.)
+dm.Utilities.plot_C_arrows(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.1, mutation_scale=8.)
 plt.axis(aabb_source.squared().totuple())
 plt.show()
 

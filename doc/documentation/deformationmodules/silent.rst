@@ -1,7 +1,5 @@
-Silent module
+Silent Module
 -------------
-
-Silent module
 
 .. autoclass:: DeformationModules.SilentLandmark.SilentBase
 	       :members:

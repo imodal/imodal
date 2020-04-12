@@ -2,8 +2,7 @@ import math
 from collections import Iterable
 
 import torch
-from torchviz import make_dot
-from .meshutils import close_shape, point_side
+
 
 # TODO: pythonize this
 def grid2vec(*args):
@@ -25,23 +24,6 @@ def rot2d(theta):
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
 
 
-def is_inside_shape(shape, points):
-    """Returns True if the point is inside the convex shape (a tensor of CW points)."""
-    closed = close_shape(shape)
-    mask = torch.ones(points.shape[0], dtype=torch.uint8)
-    for i in range(points.shape[0]):
-        for j in range(shape.shape[0]):
-            if point_side(closed[j], closed[j] - closed[j+1], points[i]) == 1:
-                mask[i] = 0
-                break
-
-    return mask
-
-
-def make_grad_graph(tensor, filename):
-    make_dot(tensor).render(filename)
-
-
 def flatten_tensor_list(l, out_list=None):
     """Simple recursive list flattening function that stops at torch.Tensor (without unwrapping)."""
     if out_list is None:
@@ -60,7 +42,23 @@ def flatten_tensor_list(l, out_list=None):
 
 # TODO: Maybe generalise this to more than torch.Tensor? (duck typing)
 def shared_tensors_property(tensors, prop):
-    """ Check if all tensors share the same property given by prop(tensor). Ignores None tensors and None property values. Returns the shared property or None if the property is not shared. """
+    """ Check if all tensors share the same property.
+    
+    given by prop(tensor). Ignores None tensors and None property values. Returns the shared property or None if the property is not shared. 
+
+    Parameters
+    ----------
+    tensors : Iterable
+        Iterable of tensors we want to check the common property from.
+    prop : callable
+        Callable function which outputs the parameter we want to compare of the input tensor.
+
+    Returns
+    -------
+    object
+        Common property shared by all tensors. Returns none if properties are different among the tensors.
+
+    """
     assert isinstance(tensors, Iterable)
 
     # If tensors is not a collection but a tensor, returns its property.
@@ -83,11 +81,33 @@ def shared_tensors_property(tensors, prop):
 
 
 def tensors_device(tensors):
-    """ Returns the common device on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are on different devices."""
+    """ Returns the common device on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are on different devices.
+
+    Parameters
+    ----------
+    tensors : Iterable
+        Iterable of tensors.
+
+    Returns
+    -------
+    torch.device
+        The common device of the iterable of tensors. None if tensors lives on different devices.
+    """
     return shared_tensors_property(tensors, lambda tensor: tensor.device)
 
 
 def tensors_dtype(tensors):
-    """ Returns the common dtypes on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are of different dtypes."""
+    """ Returns the common dtypes on which tensors (an iterable of torch.Tensor) lives. Return None if tensors are of different dtypes.
+
+    Parameters
+    ----------
+    tensors : Iterable
+        Iterable of tensors.
+
+    Returns
+    -------
+    torch.dtype
+        The common dtype of the iterable of tensors. None if tensors lives on different devices.
+    """
     return shared_tensors_property(tensors, lambda tensor: tensor.dtype)
 

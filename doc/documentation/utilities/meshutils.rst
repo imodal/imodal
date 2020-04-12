@@ -1,4 +1,4 @@
-Mesh utilities
+Mesh Utilities
 --------------
 
 .. automodule:: Utilities.meshutils

@@ -1,4 +1,4 @@
-Linear deformation
+Linear Deformation
 ------------------
 
 .. autoclass:: DeformationModules.Linear.LinearDeformation

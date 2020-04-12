@@ -1,4 +1,4 @@
-Documentation
+API reference
 #############
 
 The following sections contains the full framework documentation.
@@ -7,6 +7,7 @@ The following sections contains the full framework documentation.
    deformationmodules/index
    models/index
    attachment/index
+   models/index
    hamiltoniandynamics/index
    manifolds/index
    structuredfields/index

@@ -1,4 +1,4 @@
-Deformation grid
+Deformation Grid
 ----------------
 
 .. autoclass:: DeformationModules.SilentLandmark.DeformationGrid
