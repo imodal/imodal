@@ -13,9 +13,9 @@ torch.set_default_tensor_type(torch.DoubleTensor)
 
 def make_test_shooting(dim, backend):
     class TestShooting(unittest.TestCase):
-        # The different ODE solving methods we want to use and test
-        methods = ['torch_euler', 'euler', 'midpoint', 'rk4']
-        methods_it = [2, 2, 2, 2]
+        # The different ODE solving solvers we want to use and test
+        solvers = ['torch_euler', 'euler', 'midpoint', 'rk4']
+        solvers_it = [2, 2, 2, 2]
 
         def setUp(self):
             self.sigma = 0.5
@@ -45,13 +45,22 @@ def make_test_shooting(dim, backend):
             return im.HamiltonianDynamic.Hamiltonian([self.silent, self.trans])        
 
         def test_shooting(self):
-            for method, it in zip(self.methods, self.methods_it):
-                with self.subTest(method=method, it=it):
-                    states, controls = im.HamiltonianDynamic.shoot(self._build_h(), it, method, intermediates=True)
+            for solver, it in zip(self.solvers, self.solvers_it):
+                with self.subTest(solver=solver, it=it):
+                    intermediates = {}
+                    im.HamiltonianDynamic.shoot(self._build_h(), solver, it, intermediates=intermediates)
+
+                    states = intermediates['states']
+                    controls = intermediates['controls']
 
                     self.assertEqual(len(states), it + 1)
 
-                    states2, controls2 = im.HamiltonianDynamic.shoot(self._build_h(), it, method, controls=controls, intermediates=True)
+                    intermediates = {}
+                    im.HamiltonianDynamic.shoot(self._build_h(), solver, it, controls=controls, intermediates=intermediates)
+
+                    states2 = intermediates['states']
+                    controls2 = intermediates['controls']
+
                     for control, control2 in zip(controls, controls2):
                         self.assertFalse(control[0].requires_grad)
                         self.assertFalse(control[1].requires_grad)
@@ -75,9 +84,12 @@ def make_test_shooting(dim, backend):
                         self.assertTrue(torch.allclose(state.cotan[1], state2.cotan[1]))
 
         def test_shooting_zero(self):
-            for method, it in zip(self.methods, self.methods_it):
-                with self.subTest(method=method, it=it):
-                    states, controls = im.HamiltonianDynamic.shoot(self._build_h(fill_cotan=False), it, method, intermediates=True)
+            for solver, it in zip(self.solvers, self.solvers_it):
+                with self.subTest(solver=solver, it=it):
+                    intermediates = {}
+                    im.HamiltonianDynamic.shoot(self._build_h(fill_cotan=False), solver, it, intermediates=intermediates)
+                    states = intermediates['states']
+                    controls = intermediates['controls']
 
                     for state in states:
                         self.assertTrue(torch.allclose(state.gd[0], self.gd_silent))
@@ -89,11 +101,18 @@ def make_test_shooting(dim, backend):
                         self.assertTrue(torch.allclose(control[0], torch.zeros_like(control[0])))
                         self.assertTrue(torch.allclose(control[1], torch.zeros_like(control[1])))
 
-        # Compares torch_euler and euler methods.
+        # Compares torch_euler and euler solvers.
         def test_shooting_euler(self):
             it = 2
-            states, controls = im.HamiltonianDynamic.shoot(self._build_h(), it, 'torch_euler', intermediates=True)
-            states2, controls2 = im.HamiltonianDynamic.shoot(self._build_h(), it, 'euler', intermediates=True)
+            intermediates = {}
+            im.HamiltonianDynamic.shoot(self._build_h(), 'torch_euler', it, intermediates=intermediates)
+            states = intermediates['states']
+            controls = intermediates['controls']
+
+            intermediates = {}
+            im.HamiltonianDynamic.shoot(self._build_h(), 'euler', it, intermediates=intermediates)
+            states2 = intermediates['states']
+            controls2 = intermediates['controls']
 
             for state, state2 in zip(states, states2):
                 self.assertTrue(torch.allclose(state.gd[0], state2.gd[0]))
@@ -107,14 +126,14 @@ def make_test_shooting(dim, backend):
 
 
         def test_gradcheck_shoot(self):
-            for method, it in zip(self.methods, self.methods_it):
-                with self.subTest(method=method, it=it):
+            for solver, it in zip(self.solvers, self.solvers_it):
+                with self.subTest(solver=solver, it=it):
                     def shoot(gd_silent, gd_trans, cotan_silent, cotan_trans):
                         h = self._build_h()
                         h.module.manifold.fill_gd([gd_silent, gd_trans])
                         h.module.manifold.fill_cotan([cotan_silent, cotan_trans])
 
-                        im.HamiltonianDynamic.shoot(h, it, method)
+                        im.HamiltonianDynamic.shoot(h, solver, it)
 
                         return h.module.manifold.gd[0], h.module.manifold.gd[1], h.module.manifold.cotan[0], h.module.manifold.cotan[1]
 
@@ -122,8 +141,8 @@ def make_test_shooting(dim, backend):
 
         @unittest.expectedFailure
         def test_gradcheck_shoot_controls(self):
-            for method, it in zip(self.methods, self.methods_it):
-                with self.subTest(method=method, it=it):
+            for solver, it in zip(self.solvers, self.solvers_it):
+                with self.subTest(solver=solver, it=it):
                     def shoot(gd_silent, gd_trans, cotan_silent, cotan_trans):
                         h = self._build_h()
                         h.module.manifold.fill_gd([gd_silent.detach().requires_grad_(),
@@ -131,13 +150,13 @@ def make_test_shooting(dim, backend):
                         h.module.manifold.fill_cotan([cotan_silent.detach().requires_grad_(),
                                                       cotan_trans.detach().requires_grad_()])
 
-                        _, controls = im.HamiltonianDynamic.shoot(h, it, method, intermediates=True)
+                        _, controls = im.HamiltonianDynamic.shoot(h, solver, it, intermediates=True)
 
                         h = self._build_h()
                         h.module.manifold.fill_gd([gd_silent, gd_trans])
                         h.module.manifold.fill_cotan([cotan_silent, cotan_trans])
 
-                        im.HamiltonianDynamic.shoot(h, it, method, controls=controls)
+                        im.HamiltonianDynamic.shoot(h, it, solver, controls=controls)
 
                         return h.module.manifold.gd[0], h.module.manifold.gd[1], h.module.manifold.cotan[0], h.module.manifold.cotan[1]
 

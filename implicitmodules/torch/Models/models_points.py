@@ -46,36 +46,41 @@ class ModelPointsRegistration(Model):
 
         super().__init__(model_modules, attachments, fit_gd, lam, precompute_callback, other_parameters)
 
-    def compute_deformed(self, method, it, deformation_cost=False, intermediates=False):
-        # We first create and fill the compound module we will shoot
+    def _compute_attachment_cost(self, deformed, target):
+        # Compute the attach cost for each source/target couple
+        attach_costs = []
+        for deformed_source, target, attachment in zip(deformed, target, self.attachments):
+            if isinstance(deformed_source, torch.Tensor):
+                attach_costs.append(attachment(deformed_source, target))
+            else:
+                attach_costs.append(attachment((deformed_source, source[1]), target))
+
+        return sum(attach_costs)
+
+    def compute_deformed(self, solver, it, costs=None, intermediates=None):
+        assert isinstance(costs, dict) or costs is None
+        assert isinstance(intermediates, dict) or intermediates is None
+
+        # Create and fill the compound module
         compound = CompoundModule(self.modules)
         compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
         compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
-        # Compute the deformation cost (constant) if needed
-        if deformation_cost:
+
+        # Compute the deformation cost if needed
+        if costs is not None:
             compound.compute_geodesic_control(compound.manifold)
-            cost = compound.cost()
+            costs['deformation'] = compound.cost()
 
-        if intermediates:
-            intermediate_states, intermediate_controls = shoot(Hamiltonian(compound), it, method, intermediates=True)
+        # Shoot the dynamical system
+        shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 
-            if deformation_cost:
-                return intermediate_states, intermediate_controls, cost
+        # Retrieve and return deformed sources
+        deformed_sources = []
+        for source, silent in zip(self.__sources, compound):
+            if isinstance(source, torch.Tensor):
+                deformed_sources.append(silent.manifold.gd)
             else:
-                return intermediate_states, intermediate_controls
+                deformed_sources.append((silent.manifold.gd, source[1]))
 
-        else:
-            shoot(Hamiltonian(compound), it, method)
-
-            deformed_sources = []
-            for source, silent in zip(self.__sources, compound):
-                if isinstance(source, torch.Tensor):
-                    deformed_sources.append(silent.manifold.gd)
-                else:
-                    deformed_sources.append((silent.manifold.gd, source[1]))
-
-            if deformation_cost:
-                return deformed_sources, cost
-            else:
-                return deformed_sources
+        return deformed_sources
 

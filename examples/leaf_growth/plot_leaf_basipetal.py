@@ -141,19 +141,19 @@ model = dm.Models.ModelPointsRegistration([shape_source],
 # Fitting.
 #
 
-shoot_method = 'euler'
+shoot_solver = 'euler'
 shoot_it = 10
 
 fitter = dm.Models.ModelFittingScipy(model)
 costs = fitter.fit([shape_target], 100, log_interval=10,
-                   options={'shoot_method': shoot_method, 'shoot_it': shoot_it})
+                   options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
 # Plot results. Matching is very good.
 #
 
-intermediate_states, _ = model.compute_deformed(shoot_method, shoot_it, intermediates=True)
+intermediate_states, _ = model.compute_deformed(shoot_solver, shoot_it, intermediates=True)
 
 deformed_source = intermediate_states[-1][0].gd
 deformed_small = intermediate_states[-1][2].gd
@@ -194,7 +194,11 @@ plt.show()
 modules = dm.DeformationModules.CompoundModule(copy.copy(model.modules))
 modules.manifold.fill(model.init_manifold.clone(), copy=True)
 
-intermediate_states, intermediate_controls = dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), shoot_it, shoot_method, intermediates=True)
+intermediates = {}
+dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), shoot_solver, shoot_it, intermediates=intermediates)
+
+intermediate_states = intermediates['states']
+intermediate_controls = intermediates['controls']
 
 ss_controls = [control[2] for control in intermediate_controls]
 growth_controls = [control[3] for control in intermediate_controls]
@@ -214,7 +218,7 @@ small_scale = copy.copy(modules[2])
 # We construct the controls list we will give will shooting
 controls = [[torch.tensor([]), torch.tensor([]), control] for control in ss_controls]
 
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, small_scale]), shoot_it, shoot_method, controls=controls)
+dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, small_scale]), shoot_solver, shoot_it, controls=controls)
 
 ss_deformed_source = silent.manifold.gd.detach()
 ss_deformed_grid = deformation_grid.togrid()
@@ -234,7 +238,7 @@ growth = copy.copy(modules[3])
 # We construct the controls list we will give will shooting
 controls = [[torch.tensor([]), torch.tensor([]), control] for control in growth_controls]
 
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, growth]), shoot_it, shoot_method, controls=controls)
+dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, growth]), shoot_solver, shoot_it, controls=controls)
 
 growth_deformed_source = silent.manifold.gd.detach()
 growth_deformed_grid = deformation_grid.togrid()

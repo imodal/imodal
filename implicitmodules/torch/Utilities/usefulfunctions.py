@@ -1,6 +1,6 @@
 import math
 from collections import Iterable
-
+from torchviz import make_dot
 import torch
 
 
@@ -110,4 +110,17 @@ def tensors_dtype(tensors):
         The common dtype of the iterable of tensors. None if tensors lives on different devices.
     """
     return shared_tensors_property(tensors, lambda tensor: tensor.dtype)
+
+
+def append_in_dict_of_list(base, d):
+    for key in d.keys():
+        if key not in base:
+            base[key] = [d[key]]
+        else:
+            base[key].append(d[key])
+
+def make_grad_graph(tensor, filename, params=None):
+    make_dot(tensor, params=params).render(filename)
+
+
 

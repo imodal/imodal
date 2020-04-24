@@ -1,6 +1,7 @@
 import time
 import gc
 from itertools import chain
+import math
 
 import numpy as np
 import torch
@@ -8,6 +9,7 @@ import scipy.optimize
 
 from .models_fitting import ModelFitting
 from implicitmodules.torch.Attachment import CompoundAttachment
+from implicitmodules.torch.Utilities import append_in_dict_of_list
 
 class ModelFittingScipy(ModelFitting):
     def __init__(self, model, post_iteration_callback=None):
@@ -16,17 +18,16 @@ class ModelFittingScipy(ModelFitting):
     def reset(self):
         pass
 
-    def fit(self, target, max_iter, options={}, log_interval=1, disp=True, display_time=True):
-        last_costs = {}
-        costs = []
-
-        shoot_method = 'euler'
+    def fit(self, target, max_iter, options={}, log_interval=1, disp=True, costs=None):
+        assert isinstance(costs, dict) or costs is None
+        shoot_solver = 'euler'
         shoot_it = 10
         bounds = None
+        last_costs = []
 
-        if 'shoot_method' in options:
-            shoot_method = options['shoot_method']
-            del options['shoot_method']
+        if 'shoot_solver' in options:
+            shoot_solver = options['shoot_solver']
+            del options['shoot_solver']
 
         if 'shoot_it' in options:
             shoot_it = options['shoot_it']
@@ -36,25 +37,23 @@ class ModelFittingScipy(ModelFitting):
             bounds = options['bounds']
             del options['bounds']
 
-        # Function that will be optimized, returns the cost for a given state of the model.
+        # Function that will be optimized, returns the cost and its derivative for a given state of the model.
         def closure(x):
             self.__numpy_to_model(x)
             self.__zero_grad()
 
             # Evaluate the model
-            cost, deformation_cost, attach_cost = self.model.evaluate(target, shoot_method, shoot_it)
+            costs = self.model.evaluate(target, shoot_solver, shoot_it)
 
             d_cost = self.__model_to_numpy(self.model, grad=True)
 
             # Manualy fire garbage collection
             gc.collect()
 
-            # Save for printing purpose.
-            last_costs['deformation_cost'] = deformation_cost
-            last_costs['attach_cost'] = attach_cost
-            last_costs['cost'] = cost
+            # Save the costs
+            last_costs.append(costs)
 
-            return (cost, d_cost)
+            return (costs['total'], d_cost)
 
         self.__it = 1
 
@@ -63,15 +62,18 @@ class ModelFittingScipy(ModelFitting):
 
             if (self.__it % log_interval == 0 or self.__it == 1) and log_interval != -1 and disp:
                 print("="*80)
-                if display_time:
-                    print("Time: {time}".format(time=time.perf_counter() - start_time))
+                print("Time: {time}".format(time=time.perf_counter() - start_time))
 
-                print("Iteration: {it} \nTotal energy = {cost} \nAttach cost = {attach} \nDeformation cost = {deformation}".format(it=self.__it, cost=last_costs['cost'], attach=last_costs['attach_cost'], deformation=last_costs['deformation_cost']))
+                print("Iteration: {it}".format(it=self.__it))
+                self._print_costs(last_costs[-1])
 
             if self.post_iteration_callback:
                 self.post_iteration_callback(self.model)
 
-            costs.append((last_costs['deformation_cost'], last_costs['attach_cost'], last_costs['cost']))
+            
+            if costs is not None:
+                append_in_dict_of_list(costs, last_costs[-1])
+
             last_costs.clear()
 
             self.__it = self.__it + 1
@@ -82,8 +84,13 @@ class ModelFittingScipy(ModelFitting):
         x_0 = self.__model_to_numpy(self.model)
         closure(x_0)
 
+        if costs is not None:
+            append_in_dict_of_list(costs, last_costs[-1])
+
         if disp:
-            print("Initial energy = %.3f" % last_costs['cost'])
+            print("Initial energy = %.3f" % last_costs[-1]['total'])
+
+        last_costs = []
 
         start_time = time.perf_counter()
         res = scipy.optimize.minimize(closure, x_0, method='L-BFGS-B', jac=True, options=step_options, callback=callback, bounds=bounds)
@@ -127,7 +134,7 @@ class ModelFittingScipy(ModelFitting):
         assert i == len(x)
 
     def __zero_grad(self):
-        """ Frees parameters computation graphs and zero out their accumulated gradients. """
+        """ Free parameters computation graphs and zero out their accumulated gradients. """
         for param in self.__parameters_to_list(self.model.parameters):
             if param.grad is not None:
                 param.grad.detach_()

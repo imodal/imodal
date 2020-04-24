@@ -28,15 +28,6 @@ nb_points_line = 50
 line = torch.stack([torch.linspace(-1., 1., nb_points_line),
                     torch.zeros(nb_points_line)], axis=1)
 
-# nb_points_translation = 10
-# translation_points = torch.stack(
-#     [torch.linspace(-1., 1., nb_points_translation),
-#      -0.5*torch.ones(nb_points_translation)], axis=1)
-
-# mom_translation = torch.stack(
-#     [torch.sin(0.5*math.pi*translation_points[:, 0]),
-#      torch.cos(0.5*math.pi*translation_points[:, 0])], axis=1)
-
 nb_points_translation = 2
 translation_points = torch.tensor([[-0.9, -0.1], [0.9, 0.1]])
 mom_translation = torch.tensor([[0., -0.5], [0., 0.5]])
@@ -67,14 +58,18 @@ translation = dm.DeformationModules.Translations(
 ###############################################################################
 # Shooting
 
+solver = 'rk4'
 it = 5
 
-intermediate_states, intermediate_controls = dm.HamiltonianDynamic.shoot(
+intermediates = {}
+dm.HamiltonianDynamic.shoot(
     dm.HamiltonianDynamic.Hamiltonian([silent, translation]),
-    it, 'rk4', intermediates=True)
+    solver, it, intermediates=intermediates)
 
 ###############################################################################
 # Plotting the result
+
+intermediate_states = intermediates['states']
 
 aabb = dm.Utilities.AABB(-1.1, 1.1, 1., 1.)
 plt.rcParams['figure.figsize'] = (4, it*4)

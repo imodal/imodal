@@ -17,3 +17,9 @@ class ModelFitting:
     def fit(self, target, max_iter, options={}):
         raise NotImplementedError
 
+    def _print_costs(self, costs):
+        print("Costs")
+        for key in costs.keys():
+            print("{cost}={value}".format(cost=key, value=costs[key]))
+
+

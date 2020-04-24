@@ -27,7 +27,7 @@ import implicitmodules.torch as dm
 # First our deformation routine.
 # 
 
-def deform_rod(positions, moments, sigma, C, method, it):
+def deform_rod(positions, moments, sigma, C, solver, it):
     rot = torch.stack([dm.Utilities.rot2d(0.)]*positions.shape[0], axis=0)
 
     rod = dm.DeformationModules.ImplicitModule1(2, positions.shape[0], sigma, C, 0.01, gd=(positions, rot), cotan=(moments, torch.zeros_like(rot)))
@@ -36,7 +36,7 @@ def deform_rod(positions, moments, sigma, C, method, it):
         dm.Utilities.AABB(-5., 5., -5., 5.),
         [32, 32])
 
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([rod, deformation_grid]), it, method)
+    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([rod, deformation_grid]), solver, it)
 
     return rod.manifold.gd[0].detach(), deformation_grid.togrid()
 
@@ -166,9 +166,6 @@ pos, mom, C = generate_rod(size, n,
                             lambda x: -0.05*x[1]**5*step(x[0])],
                            [lambda x: torch.zeros(1), lambda x: x[0]])
 
-print("Surface before compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(pos).area))
-
 plot_rod(pos, mom, C)
 
 
@@ -177,9 +174,6 @@ plot_rod(pos, mom, C)
 #
 
 deformed, grid = deform_rod(pos, mom, sigma, C, 'rk4', 10)
-
-print("Surface after compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(deformed).area))
 
 ax = plt.subplot()
 plt.plot(deformed[:, 0].numpy(), deformed[:, 1].numpy(), '.')

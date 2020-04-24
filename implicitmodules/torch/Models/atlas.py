@@ -3,16 +3,17 @@ import copy
 import matplotlib.pyplot as plt
 import torch
 
-from implicitmodules.torch.Models import Model, ModelPointsRegistration
+from implicitmodules.torch.Models import BaseModel, ModelPointsRegistration
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import ImplicitModule0
+from implicitmodules.torch.Utilities import append_in_dict_of_list, make_grad_graph
 
 
-class Atlas:
+class Atlas(BaseModel):
     """
     TODO: add documentation
     """
-    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_nu=0., ht_coeff=1., ht_method='euler', ht_it=10, precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
+    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_nu=0., ht_coeff=1., ht_solver='euler', ht_it=10, precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
 
@@ -40,7 +41,7 @@ class Atlas:
         self.__ht_sigma = ht_sigma
         self.__ht_nu = ht_nu
         self.__ht_coeff = ht_coeff
-        self.__ht_method = ht_method
+        self.__ht_solver = ht_solver
         self.__ht_it = ht_it
         self.__optimise_template = optimise_template
         self.__lam = lam
@@ -61,7 +62,7 @@ class Atlas:
         if self.__optimise_template:
             self.__cotan_ht = torch.zeros_like(template, requires_grad=True, device=self.__template.device, dtype=self.__template.dtype)
 
-        self.compute_parameters()
+        self._compute_parameters()
 
     def __str__(self):
         outstr = "Atlas\n"
@@ -118,14 +119,14 @@ class Atlas:
     def lam(self):
         return self.__lam
 
-    def compute_parameters(self):
+    def _compute_parameters(self):
         """ Updates the parameter list sent to the optimizer. """
         self.__parameters = {}
 
         # Moments of each modules in each models
         self.__parameters['cotan'] = []
         for model in self.__models:
-            model.compute_parameters()
+            model._compute_parameters()
             self.__parameters['cotan'].extend(model.init_manifold.unroll_cotan())
 
         if self.__fit_gd is not None:
@@ -142,66 +143,56 @@ class Atlas:
         if self.__optimise_template:
             self.__parameters['ht'] = [self.__cotan_ht]
 
-    def compute_template(self, detach=True):
-        if self.__optimise_template:
-            translations_ht = ImplicitModule0(2, self.__template.shape[0], self.__ht_sigma, self.__ht_nu, gd=self.__template.clone().requires_grad_(), cotan=self.__cotan_ht.clone().requires_grad_())
-            translations_ht.to_(device=self.__template.device)
+    def compute_template(self, detach=True, costs=None):
+        if not self.__optimise_template:
+            return self.__template
 
+        translations_ht = ImplicitModule0(self.__template.shape[1], self.__template.shape[0], self.__ht_sigma, self.__ht_nu, coeff=self.__ht_coeff, gd=self.__template.requires_grad_(), cotan=self.__cotan_ht)
+
+        if costs is not None:
             translations_ht.compute_geodesic_control(translations_ht.manifold)
-            cost = translations_ht.cost()
+            costs['ht'] = translations_ht.cost()
 
-            shoot(Hamiltonian([translations_ht]), self.__ht_it, self.__ht_method)
+        shoot(Hamiltonian([translations_ht]), self.__ht_solver, self.__ht_it)
 
-            if detach:
-                return translations_ht.manifold.gd.detach(), cost.detach()
-            else:
-                return translations_ht.manifold.gd, cost
-        else:
-            return self.__template, torch.tensor(0.)
+        deformed_template = translations_ht.manifold.gd
 
-    def evaluate(self, targets, method, it):
-        costs = []
-        deformation_costs = []
-        attach_costs = []
-        for model, target in zip(self.__models, targets):
-            cost_template = None
+        if detach:
+            deformed_template = deformed_template.detach()
+
+        return deformed_template
+
+    def evaluate(self, targets, solver, it):
+        costs = {}
+        for model, target in zip(self.models, targets):
+            cost = {}
             if self.__optimise_template:
-                deformed_template, cost_template = self.compute_template(detach=False)
-                model._Model__init_manifold[0].gd = deformed_template
+                template = self.compute_template(detach=False, costs=cost)
+                model.init_manifold[0].gd = template
 
-            if model.precompute_callback is not None:
-                model.precompute_callback(model.init_manifold, model.modules, model.parameters)
+            append_in_dict_of_list(costs, model.evaluate([target], solver, it, costs=cost))
 
-            cost, deformation_cost, attach_cost = model.evaluate([target], it=it, method=method, ext_cost=cost_template)
+        return dict([(key, sum(costs[key])) for key in costs])
 
-            costs.append(cost)
-            deformation_costs.append(deformation_cost)
-            attach_costs.append(attach_cost)
+    def compute_deformed(self, solver, it, intermediates=None):
+        assert isinstance(intermediates, dict) or intermediates is None
 
-        deformation_cost = sum(deformation_costs)
-        attach_cost = sum(attach_costs)
-        cost = sum(costs)
+        if intermediates is not None:
+            raise NotImplementedError()
 
-        return cost, deformation_cost, attach_cost
+        return self.__compute_deformed_func(solver, it, intermediates)
 
-    def compute_deformed(self, method, it):
-        return self.__compute_deformed_func(method, it)
-
-    def __compute_deformed_sequential(self, method, it):
+    def __compute_deformed_sequential(self, solver, it, intermediates):
         deformed = []
         for model in self.__models:
             if self.__optimise_template:
-                deformed_template, _ = self.compute_template(False)
+                deformed_template = self.compute_template(False)
                 model._Model__init_manifold[0].gd = deformed_template
 
-            if model.precompute_callback is not None:
-                model.precompute_callback(model.init_manifold, model.modules, model.parameters)
-
-            deformed.append(model.compute_deformed(method, it)[0])
-
+            deformed.append(model.compute_deformed(solver, it)[0])
         return deformed
 
-    def __compute_deformed_parallel(self, method, it):
-        pass
+    def __compute_deformed_parallel(self, method, it, costs, intermediates):
+        raise NotImplementedError()
 
 

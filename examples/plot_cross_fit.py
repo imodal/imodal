@@ -65,11 +65,24 @@ model = dm.Models.ModelImageRegistration(source_image, [rotation], dm.Attachment
 # We fit the model.
 #
 
-shoot_method='rk4'
+shoot_solver='rk4'
 shoot_it = 10
 
+costs = {}
 fitter = dm.Models.ModelFittingScipy(model)
-costs = fitter.fit([target_image], 100, log_interval=10, options={'shoot_method': shoot_method, 'shoot_it': shoot_it})
+fitter.fit(target_image, 100, log_interval=10, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it}, costs=costs)
+
+
+###############################################################################
+# Plot total cost evolution
+#
+
+plt.title("Total cost evolution")
+plt.xlabel("Iteration")
+plt.ylabel("Cost")
+plt.grid(True)
+plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
+plt.show()
 
 
 ###############################################################################
@@ -77,7 +90,7 @@ costs = fitter.fit([target_image], 100, log_interval=10, options={'shoot_method'
 #
 
 with torch.autograd.no_grad():
-    deformed_image = model.compute_deformed(shoot_method, shoot_it)[0]
+    deformed_image = model.compute_deformed(shoot_solver, shoot_it)
 
 fitted_center = model.init_manifold[1].gd.detach()
 

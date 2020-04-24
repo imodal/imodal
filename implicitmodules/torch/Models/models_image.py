@@ -27,30 +27,13 @@ class ModelImageRegistration(Model):
         
         super().__init__(model_modules, [attachment], fit_gd, lam, precompute_callback, other_parameters)
 
-    # def compute(self, target, it=10, method='euler', compute_backward=True, ext_cost=None):
-    #     pc_cost = None
-    #     if self.precompute_callback is not None:
-    #         pc_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
+    def _compute_attachment_cost(self, deformed, target):
+        return self.attachments[0](deformed, target)
 
+    def compute_deformed(self, solver, it, costs=None, intermediates=None):
+        assert isinstance(costs, dict) or costs is None
+        assert isinstance(intermediates, list) or intermediates is None
 
-    #     # Compute attach cost
-    #     deformation_cost = compound.cost()
-    #     attach_cost = self.lam * self.attachments(self.__deformed_image, target)
-
-    #     cost = deformation_cost + attach_cost
-
-    #     if pc_cost is not None:
-    #         cost = cost + pc_cost
-
-    #     if ext_cost is not None:
-    #         cost = cost + ext_cost
-
-    #     if compute_backward and cost.requires_grad:
-    #         cost.backward()
-
-    #     return cost.detach().item(), deformation_cost.detach().item(), attach_cost.detach().item()
-
-    def compute_deformed(self, method, it, deformation_cost=False, intermediates=False):
         if intermediates:
             raise NotImplementedError()
 
@@ -60,7 +43,7 @@ class ModelImageRegistration(Model):
         compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold[1:]])
 
         # Forward shooting
-        shoot(Hamiltonian(compound), it, method)
+        shoot(Hamiltonian(compound), solver, it)
 
         # Prepare for reverse shooting
         compound.manifold.negate_cotan()
@@ -70,12 +53,12 @@ class ModelImageRegistration(Model):
         compound = CompoundModule([silent, *compound.modules])
 
         # Then, backward shooting in order to get the final deformed image
-        shoot(Hamiltonian(compound), it, method)
+        shoot(Hamiltonian(compound), solver, it)
 
         deformed_image = deformed_intensities(compound[0].manifold.gd, self.__weights.view(self.__image_resolution))
 
-        if deformation_cost:
-            return [deformed_image], compound.cost()
-        else:
-            return [deformed_image]
+        if costs is not None:
+            costs['deformation'] = compound.cost()
+
+        return deformed_image
 

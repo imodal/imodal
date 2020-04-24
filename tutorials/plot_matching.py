@@ -72,8 +72,24 @@ model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.A
 #
 
 fitter = dm.Models.ModelFittingScipy(model)
+costs = {}
 
-fitter.fit([target.clone()], 15, log_interval=1)
+fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
+
+# Optimization can be stopped and resumed
+fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
+
+
+###############################################################################
+# Plot total cost evolution
+#
+
+plt.title("Total cost evolution")
+plt.xlabel("Iteration")
+plt.ylabel("Cost")
+plt.grid(True)
+plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
+plt.show()
 
 
 ###############################################################################
@@ -82,7 +98,7 @@ fitter.fit([target.clone()], 15, log_interval=1)
 modules = dm.DeformationModules.CompoundModule(model.modules)
 modules.manifold.fill(model.init_manifold)
 
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), 10, 'euler')
+dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), 'euler', 10)
 
 deformed = modules[0].manifold.gd.detach()
 

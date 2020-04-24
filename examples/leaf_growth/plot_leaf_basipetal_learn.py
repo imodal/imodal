@@ -127,19 +127,22 @@ model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
 # Fitting.
 #
 
-shoot_method = 'euler'
+shoot_solver = 'euler'
 shoot_it = 10
 
 fitter = dm.Models.ModelFittingScipy(model)
 costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
-                   options={'shoot_method': shoot_method, 'shoot_it': shoot_it})
+                   options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
 # Plot matching results. 
 #
 
-intermediate_states, _ = model.compute_deformed(shoot_method, shoot_it, intermediates=True)
+intermediates = {}
+model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
+
+intermediate_states = intermediates['states']
 
 deformed_source = intermediate_states[-1][0].gd
 deformed_growth = intermediate_states[-1][3].gd[0]

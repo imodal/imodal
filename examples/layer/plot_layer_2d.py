@@ -146,7 +146,7 @@ layer_growth = dm.DeformationModules.SilentLandmarks(2, points_layer_growth.shap
 
 start = time.perf_counter()
 with torch.autograd.no_grad():
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 10, 'midpoint')
+    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 'midpoint', 10)
 print("Elapsed time={elapsed}".format(elapsed=time.perf_counter()-start))
 
 ###############################################################################
