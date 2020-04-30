@@ -71,13 +71,18 @@ model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.A
 # Fitting
 #
 
-fitter = dm.Models.ModelFittingScipy(model)
+# fitter = dm.Models.ModelFittingScipy(model)
+# costs = {}
+
+# fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
+
+# # Optimization can be stopped and resumed
+# fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
+
+
 costs = {}
-
-fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
-
-# Optimization can be stopped and resumed
-fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
+fitter = dm.Models.Fitter(model)
+fitter.fit([target.clone()], 3000, costs=costs)
 
 
 ###############################################################################

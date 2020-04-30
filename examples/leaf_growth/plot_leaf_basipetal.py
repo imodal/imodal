@@ -153,7 +153,9 @@ costs = fitter.fit([shape_target], 100, log_interval=10,
 # Plot results. Matching is very good.
 #
 
-intermediate_states, _ = model.compute_deformed(shoot_solver, shoot_it, intermediates=True)
+intermediates = {}
+model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
+intermediate_states = intermediates['states']
 
 deformed_source = intermediate_states[-1][0].gd
 deformed_small = intermediate_states[-1][2].gd
