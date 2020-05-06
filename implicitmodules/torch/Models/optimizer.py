@@ -1,7 +1,6 @@
 class BaseOptimizer:
-    def __init__(self, model, kwargs):
+    def __init__(self, model):
         self.__model = model
-        self.__kwargs = kwargs
 
     @property
     def model(self):
@@ -14,7 +13,7 @@ class BaseOptimizer:
     def reset(self):
         raise NotImplementedError()
 
-    def optimize(self, target, model, max_iter, post_iteration_callback, costs, shoot_solver, shoot_it, **options):
+    def optimize(self, target, model, max_iter, post_iteration_callback, costs, shoot_solver, shoot_it, options={}):
         raise NotImplementedError()
 
 
@@ -22,9 +21,9 @@ __optimizers = {}
 __default_optimizer = 'scipy_l-bfgs-b'
 
 
-def create_optimizer(method, model, **kwargs):
+def create_optimizer(method, model):
     assert is_valid_optimizer(method)
-    return __optimizers[method](model, **kwargs)
+    return __optimizers[method](model)
 
 
 def set_default_optimizer(method):

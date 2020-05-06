@@ -81,7 +81,7 @@ global_translation = dm.DeformationModules.GlobalTranslation(2)
 #
 
 sigmas_varifold = [0.5, 2., 5., 0.1]
-atlas = dm.Models.Atlas(template.clone(), [global_translation, left_scale, right_scale], [dm.Attachment.VarifoldAttachment(2, sigmas_varifold)], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.5, ht_it=10, ht_coeff=1., ht_nu=0.5, fit_gd=[False, True, True])
+atlas = dm.Models.Atlas(template.clone(), [global_translation, left_scale, right_scale], [dm.Attachment.VarifoldAttachment(2, sigmas_varifold)], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.5, ht_it=10, ht_coeff=10., ht_nu=0.5, fit_gd=[False, True, True])
 
 
 ###############################################################################
@@ -91,8 +91,10 @@ atlas = dm.Models.Atlas(template.clone(), [global_translation, left_scale, right
 shoot_solver = 'euler'
 shoot_it = 10
 
-fitter = dm.Models.ModelFittingScipy(atlas)
-fitter.fit(peanuts, 250, log_interval=1, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+costs = {}
+fitter = dm.Models.Fitter(atlas)
+fitter.fit(peanuts, 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'disp': True})
+
 
 
 ###############################################################################

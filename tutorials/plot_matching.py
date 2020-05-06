@@ -63,26 +63,17 @@ translation = dm.DeformationModules.Translations(2, nb_points_source, sigma_tran
 ###############################################################################
 # Creating the model
 
-sigma_varifold = 0.5
-model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.Attachment.VarifoldAttachment(2, [sigma_varifold])], lam=100.)
+sigma_varifold = [0.1, 0.5, 1.]
+model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.Attachment.VarifoldAttachment(2, sigma_varifold)], lam=100.)
 
 
 ###############################################################################
 # Fitting
 #
 
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = {}
-
-# fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
-
-# # Optimization can be stopped and resumed
-# fitter.fit([target.clone()], 10, log_interval=1, costs=costs)
-
-
 costs = {}
 fitter = dm.Models.Fitter(model)
-fitter.fit([target.clone()], 3000, costs=costs)
+fitter.fit([target.clone()], 10, costs=costs, options={'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################

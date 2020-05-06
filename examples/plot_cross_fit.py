@@ -69,8 +69,9 @@ shoot_solver='rk4'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.ModelFittingScipy(model)
-fitter.fit(target_image, 100, log_interval=10, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it}, costs=costs)
+fitter = dm.Models.Fitter(model, optimizer='gd')
+fitter.fit(target_image.clone(), 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+
 
 
 ###############################################################################

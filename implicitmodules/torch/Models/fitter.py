@@ -8,7 +8,7 @@ from implicitmodules.torch.Utilities import append_in_dict_of_list
 
 
 class Fitter:
-    def __init__(self, model, optimizer=None, post_iteration_callback=None, **kwargs):
+    def __init__(self, model, optimizer=None, post_iteration_callback=None):
         assert isinstance(model, BaseModel)
         assert isinstance(optimizer, BaseOptimizer) or isinstance(optimizer, str) or optimizer is None
 
@@ -16,7 +16,7 @@ class Fitter:
             optimizer = get_default_optimizer()
 
         if isinstance(optimizer, str):
-            optimizer = create_optimizer(optimizer, model, **kwargs)
+            optimizer = create_optimizer(optimizer, model)
 
         self.__optimizer = optimizer
         self.__post_iteration_callback = post_iteration_callback
@@ -33,6 +33,7 @@ class Fitter:
 
         shoot_solver = 'euler'
         shoot_it = 10
+        tol = None
 
         if 'shoot_solver' in options:
             shoot_solver = options['shoot_solver']
@@ -41,6 +42,10 @@ class Fitter:
         if 'shoot_it' in options:
             shoot_it = options['shoot_it']
             del options['shoot_it']
+
+        if 'tol' in options:
+            tol = options['tol']
+            del options['tol']
 
         # Initial cost
         if costs is not None or disp:
@@ -51,6 +56,7 @@ class Fitter:
                 append_in_dict_of_list(costs, cost_0)
 
             if disp:
+                print("Starting optimization with method {method}".format(method=self.__optimizer.method_name))
                 print("Initial cost={cost}".format(cost=cost_0))
 
         def _post_iteration_callback(model, last_costs):
@@ -68,7 +74,7 @@ class Fitter:
                 append_in_dict_of_list(costs, last_costs)
 
         start_time = time.perf_counter()
-        res = self.__optimizer.optimize(target, max_iter, _post_iteration_callback, costs, shoot_solver, shoot_it, options=options)
+        res = self.__optimizer.optimize(target, max_iter, _post_iteration_callback, costs, shoot_solver, shoot_it, tol, options=options)
 
         if disp:
             print("="*80)

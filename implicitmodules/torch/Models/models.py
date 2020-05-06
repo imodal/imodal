@@ -1,6 +1,6 @@
 import copy
 import time
-from collections import Iterable
+from collections import Iterable, OrderedDict
 
 import torch
 
@@ -82,22 +82,20 @@ class Model(BaseModel):
         return self.__attachments
 
     def _compute_parameters(self):
-        """
-        Fill the parameter dictionary that will be given to the optimizer. 
-        """
-        self.__parameters = {}
+        # Fill the parameter dictionary that will be given to the optimizer.
+
+        self.__parameters = OrderedDict()
 
         # Initial moments
-        self.__parameters['cotan'] = self.__init_manifold.unroll_cotan()
+        self.__parameters['cotan'] = {'params': self.__init_manifold.unroll_cotan()}
 
         # Geometrical descriptors if specified
         if self.__fit_gd and any(self.__fit_gd):
-            list_gd = []
+            self.__parameters['gd'] = {'params': []}
+
             for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold):
                 if fit_gd:
-                    list_gd.extend(init_manifold.unroll_gd())
-
-            self.__parameters['gd'] = list_gd
+                    self.__parameters['gd']['params'].extend(init_manifold.unroll_gd())
 
         # Other parameters
         self.__parameters.update(self.__init_other_parameters)
