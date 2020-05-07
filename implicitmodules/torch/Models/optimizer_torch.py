@@ -9,12 +9,13 @@ from implicitmodules.torch.Models.optimizer_gd import GradientDescentOptimizer
 
 
 class OptimizerTorch(BaseOptimizer):
-    def __init__(self, torch_optimizer, model):
+    def __init__(self, torch_optimizer, model, single_parameter_group):
         self.__torch_optimizer = torch_optimizer
 
         # Creation of the Torch optimizer is deffered (optimization parameters are given
         # when optimize() is called)
         self.__optimizer = None
+        self.__single_parameter_group = single_parameter_group
 
         super().__init__(model)
 
@@ -34,7 +35,10 @@ class OptimizerTorch(BaseOptimizer):
 
         # If the optimizer has not been created before, create it now
         if self.__optimizer is None:
-            self.__optimizer = self.__torch_optimizer(list(self.model.parameters.values()), **options)
+            if self.__single_parameter_group:
+                self.__optimizer = self.__torch_optimizer(self.__flatten_parameters(self.model.parameters), **options)
+            else:
+                self.__optimizer = self.__torch_optimizer(list(self.model.parameters.values()), **options)
 
         self.__eval_count = 0
         self.__last_costs = None
@@ -47,16 +51,11 @@ class OptimizerTorch(BaseOptimizer):
             self.__eval_count = self.__eval_count + 1
             return costs['total']
 
-        cont = True
-        termination_state = 0
-        it = 0
         last_total = float('inf')
         for i in range(max_iter):
             self.__optimizer.step(closure=_evaluate)
 
             post_iteration_callback(self.model, self.__last_costs)
-
-            it = it + 1
 
             if math.isnan(self.__last_costs['total']):
                 return {'success': False, 'final': float('nan'), 'message': "Evaluated function gave NaN.", 'neval': self.__eval_count}
@@ -68,15 +67,18 @@ class OptimizerTorch(BaseOptimizer):
 
         return {'success': False, 'final': self.__last_costs['total'], 'message': "Total number of iterations reached.", 'neval': self.__eval_count}
 
+    def __flatten_parameters(self, parameters):
+        return [{'params': list(chain(*(parameter['params'] for parameter in parameters.values())))}]
 
-def __create_torch_optimizer(torch_optimizer):
+
+def __create_torch_optimizer(torch_optimizer, single_parameter_group):
     def _create(model):
-        return OptimizerTorch(torch_optimizer, model)
+        return OptimizerTorch(torch_optimizer, model, single_parameter_group)
 
     return _create
 
-register_optimizer("torch_sgd", __create_torch_optimizer(torch.optim.SGD))
-register_optimizer("torch_lbfgs", __create_torch_optimizer(torch.optim.LBFGS))
+register_optimizer("torch_sgd", __create_torch_optimizer(torch.optim.SGD, False))
+register_optimizer("torch_lbfgs", __create_torch_optimizer(torch.optim.LBFGS, True))
 
-register_optimizer("gd", __create_torch_optimizer(GradientDescentOptimizer))
+register_optimizer("gd", __create_torch_optimizer(GradientDescentOptimizer, False))
 
