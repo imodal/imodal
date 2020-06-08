@@ -144,7 +144,7 @@ class Atlas(BaseModel):
         if self.__optimise_template:
             self.__parameters['ht'] = {'params': [self.__cotan_ht]}
 
-    def compute_template(self, detach=True, costs=None):
+    def compute_template(self, detach=True, costs=None, intermediates=None):
         if not self.__optimise_template:
             return self.__template
 
@@ -154,7 +154,7 @@ class Atlas(BaseModel):
             translations_ht.compute_geodesic_control(translations_ht.manifold)
             costs['ht'] = translations_ht.cost()
 
-        shoot(Hamiltonian([translations_ht]), self.__ht_solver, self.__ht_it)
+        shoot(Hamiltonian([translations_ht]), self.__ht_solver, self.__ht_it, intermediates=None)
 
         deformed_template = translations_ht.manifold.gd
 
@@ -178,22 +178,35 @@ class Atlas(BaseModel):
     def compute_deformed(self, solver, it, intermediates=None):
         assert isinstance(intermediates, dict) or intermediates is None
 
-        if intermediates is not None:
-            raise NotImplementedError()
-
         return self.__compute_deformed_func(solver, it, intermediates)
 
     def __compute_deformed_sequential(self, solver, it, intermediates):
         deformed = []
+        if intermediates is not None:
+            # Check if a list for each intermediate items exists
+            # Maybe there is a better way to do this
+            if not('states' in intermediates.keys() and isinstance(intermediates['states'], list)):
+                intermediates['states'] = []
+
+            if not('controls' in intermediates.keys() and isinstance(intermediates['controls'], list)):
+                intermediates['controls'] = []
+
         for model in self.__models:
             if self.__optimise_template:
                 deformed_template = self.compute_template(False)
                 model._Model__init_manifold[0].gd = deformed_template
 
-            deformed.append(model.compute_deformed(solver, it)[0])
+            deformed_intermediates = None
+            if intermediates is not None:
+                deformed_intermediates = {}
+
+            deformed.append(model.compute_deformed(solver, it, intermediates=deformed_intermediates)[0])
+
+            if intermediates is not None:
+                append_in_dict_of_list(intermediates, deformed_intermediates)
+
         return deformed
 
     def __compute_deformed_parallel(self, method, it, costs, intermediates):
         raise NotImplementedError()
-
 

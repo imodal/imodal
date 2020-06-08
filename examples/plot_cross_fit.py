@@ -69,9 +69,8 @@ shoot_solver='rk4'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='gd')
+fitter = dm.Models.Fitter(model)
 fitter.fit(target_image.clone(), 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
 
 
 ###############################################################################

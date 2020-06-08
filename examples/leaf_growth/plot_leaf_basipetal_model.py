@@ -127,7 +127,7 @@ def pol_order_2(pos, a, b, c, d, e, f):
 # Callback called when evaluating the model.
 # Serves as glue for our model of deformation constants.
 def callback_compute_c(init_manifold, modules, parameters):
-    abc = parameters['abc'][0]
+    abc = parameters['abc']['params'][0]
     a = abc[0].unsqueeze(1)
     b = abc[1].unsqueeze(1)
     c = abc[2].unsqueeze(1)
@@ -147,7 +147,7 @@ model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
             [global_translation, growth],
             [dm.Attachment.VarifoldAttachment(2, [10., 50.]),
             dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)],
-            lam=100., other_parameters=[('abc', [abc])],
+            lam=100., other_parameters={'abc': {'params': [abc]}},
             precompute_callback=callback_compute_c)
 
 
@@ -158,9 +158,14 @@ model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
 shoot_solver = 'euler'
 shoot_it = 10
 
-fitter = dm.Models.ModelFittingScipy(model)
-costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
-                   options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+costs = {}
+fitter = dm.Models.Fitter(model)
+fitter.fit([shape_target, dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+
+
+# fitter = dm.Models.ModelFittingScipy(model)
+# costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
+#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################

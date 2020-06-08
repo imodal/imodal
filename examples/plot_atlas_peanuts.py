@@ -33,10 +33,11 @@ import implicitmodules.torch as dm
 # Load the dataset, extract the template peanut and the target peanuts.
 #
 
+torch.set_default_dtype(torch.float32)
 
 data = pickle.load(open("../data/peanuts.pickle", 'rb'))
 
-peanuts_count = 4
+peanuts_count = 8
 #template = torch.tensor(data[0][0][:-1], dtype=torch.get_default_dtype())
 peanuts = [torch.tensor(peanut[:-1], dtype=torch.get_default_dtype()) for peanut in data[0][1:peanuts_count+1]]
 
@@ -80,8 +81,8 @@ global_translation = dm.DeformationModules.GlobalTranslation(2)
 # their positions.
 #
 
-sigmas_varifold = [0.5, 2., 5., 0.1]
-atlas = dm.Models.Atlas(template.clone(), [global_translation, left_scale, right_scale], [dm.Attachment.VarifoldAttachment(2, sigmas_varifold)], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.5, ht_it=10, ht_coeff=10., ht_nu=0.5, fit_gd=[False, True, True])
+sigmas_varifold = [0.5, 2., 5., 0.1, 15.]
+atlas = dm.Models.Atlas(template.clone(), [global_translation, left_scale, right_scale], [dm.Attachment.VarifoldAttachment(2, sigmas_varifold)], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.5, ht_it=10, ht_coeff=.5, ht_nu=0.5, fit_gd=[False, True, True])
 
 
 ###############################################################################
@@ -92,9 +93,9 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(atlas)
-fitter.fit(peanuts, 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'disp': True})
+fitter = dm.Models.Fitter(atlas, optimizer='torch_lbfgs')
 
+fitter.fit(peanuts, 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -121,8 +122,9 @@ plt.show()
 # Display the atlas.
 #
 
+intermediates = {}
 with torch.autograd.no_grad():
-    deformed_templates = atlas.compute_deformed(shoot_solver, shoot_it)
+    deformed_templates = atlas.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
 
 row_count = math.ceil(math.sqrt(len(peanuts)))
 
@@ -135,4 +137,24 @@ for i, deformed, peanut in zip(range(len(peanuts)), deformed_templates, peanuts)
 plt.show()
 
 
+###############################################################################
+# Display shooting steps for each pair.
+#
+
+it_per_snapshot = 1
+snapshots = int(shoot_it/it_per_snapshot)
+
+for i, deformed_states, peanut in zip(range(len(peanuts)), intermediates['states'], peanuts):
+    for j in range(snapshots):
+        plt.subplot(peanuts_count, snapshots+1, i*(snapshots+1) + j + 1)
+        plt.plot(deformed_states[j*it_per_snapshot].gd[0][:, 0].numpy(), deformed_states[j*it_per_snapshot].gd[0][:, 1].numpy())
+        plt.plot(peanut[:, 0], peanut[:, 1], lw=0.5)
+        plt.axis('equal')
+
+    plt.subplot(peanuts_count, snapshots+1, i*(snapshots+1)+snapshots+1)
+    plt.plot(deformed_states[-1].gd[0][:, 0].numpy(), deformed_states[-1].gd[0][:, 1].numpy())
+    plt.plot(peanut[:, 0], peanut[:, 1], lw=0.5)
+    plt.axis('equal')
+
+plt.show()
 

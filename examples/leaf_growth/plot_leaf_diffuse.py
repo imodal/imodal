@@ -139,9 +139,9 @@ model = dm.Models.ModelPointsRegistration([shape_source],
 shoot_solver = 'euler'
 shoot_it = 10
 
-fitter = dm.Models.ModelFittingScipy(model)
-costs = fitter.fit([shape_target], 100, log_interval=10,
-                   options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+costs = {}
+fitter = dm.Models.Fitter(model)
+fitter.fit([shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################

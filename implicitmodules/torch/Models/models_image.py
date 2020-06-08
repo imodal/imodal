@@ -55,10 +55,11 @@ class ModelImageRegistration(Model):
         # Then, backward shooting in order to get the final deformed image
         shoot(Hamiltonian(compound), solver, it)
 
-        deformed_image = deformed_intensities(compound[0].manifold.gd, self.__weights.view(self.__image_resolution))
-
         if costs is not None:
             costs['deformation'] = compound.cost()
+
+
+        deformed_image = deformed_intensities(compound[0].manifold.gd, self.__weights.view(self.__image_resolution))
 
         return deformed_image
 
