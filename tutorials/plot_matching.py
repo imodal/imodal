@@ -63,17 +63,22 @@ translation = dm.DeformationModules.Translations(2, nb_points_source, sigma_tran
 ###############################################################################
 # Creating the model
 
+source_deformable = dm.Models.DeformablePoints(source)
+target_deformable = dm.Models.DeformablePoints(target)
+
 sigma_varifold = [0.1, 0.5, 1.]
-model = dm.Models.ModelPointsRegistration([source.clone()], [translation], [dm.Attachment.VarifoldAttachment(2, sigma_varifold)], lam=100.)
+model = dm.Models.RegistrationModel(source_deformable, translation, [dm.Attachment.VarifoldAttachment(2, sigma_varifold)], lam=100.)
 
 
 ###############################################################################
-# Fitting
+# Fitting. Optimizer can be manually selected (if none is provided, a default optimizer will be choosen). Here, we select Pytorch's LBFGS algorithm with strong Wolfe termination conditions. We also show how optimization can also be easily stopped and resumed.
 #
 
+shoot_solver = 'euler'
+shoot_it = 10
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([target.clone()], 10, costs=costs, options={'line_search_fn': 'strong_wolfe'})
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit(target_deformable, 3, costs=costs, options={'line_search_fn': 'strong_wolfe', 'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
@@ -91,12 +96,8 @@ plt.show()
 ###############################################################################
 # Computing deformed source
 
-modules = dm.DeformationModules.CompoundModule(model.modules)
-modules.manifold.fill(model.init_manifold)
-
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), 'euler', 10)
-
-deformed = modules[0].manifold.gd.detach()
+with torch.autograd.no_grad():
+    deformed = model.compute_deformed(shoot_solver, shoot_it)[0]
 
 
 ###############################################################################

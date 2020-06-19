@@ -19,7 +19,7 @@ class SilentBase(DeformationModule):
         if self.label:
             outstr += "  Label=" + self.label + "\n"
         outstr += "  Manifold type=" + self.__manifold.__class__.__name__
-        outstr += "  Nb pts=" + self.__manifold.nb_pts
+        outstr += "  Nb pts=" + str(self.__manifold.nb_pts)
         return outstr
 
     @classmethod
