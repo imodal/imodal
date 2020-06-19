@@ -5,8 +5,8 @@ from collections import Iterable, OrderedDict
 import torch
 
 from implicitmodules.torch.DeformationModules import CompoundModule, SilentLandmarks
-from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
-from implicitmodules.torch.Manifolds import Landmarks
+from implicitmodules.torch.Manifolds import Landmarks, CompoundManifold
+from implicitmodules.torch.DeformationModules import CompoundModule
 from implicitmodules.torch.Utilities.sampling import sample_from_greyscale, deformed_intensities
 from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, vec2grid
 
@@ -22,8 +22,20 @@ class BaseModel:
         raise NotImplementedError()
 
 
-class Model(BaseModel):
-    def __init__(self, modules, attachments, fit_gd, lam, precompute_callback, other_parameters):
+class RegistrationModel(BaseModel):
+    def __init__(self, deformables, modules, attachments, fit_gd=None, lam=1., precompute_callback=None, other_parameters=None):
+        if not isinstance(deformables, Iterable):
+            deformables = [deformables]
+
+        if not isinstance(modules, Iterable):
+            modules = [modules]
+
+        if not isinstance(attachments, Iterable):
+            attachments = [attachments]
+
+        assert len(deformables) == len(attachments)
+
+        self.__deformables = deformables
         self.__modules = modules
         self.__attachments = attachments
         self.__precompute_callback = precompute_callback
@@ -35,11 +47,16 @@ class Model(BaseModel):
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
 
-        self.__init_manifold = CompoundModule(self.__modules).manifold.clone(requires_grad=True)
+        deformable_landmarks = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
+        modules_manifolds = CompoundModule(self.__modules).manifold.clone()
+
+        self.__init_manifold = CompoundManifold([*deformable_landmarks, *modules_manifolds]).clone(requires_grad=True)        
         self.__init_other_parameters = other_parameters
 
         # Update the parameter dict
         self._compute_parameters()
+
+        super().__init__()
 
     @property
     def modules(self):
@@ -120,6 +137,11 @@ class Model(BaseModel):
         if costs is None:
             costs = {}
 
+        if not isinstance(target, Iterable):
+            target = [target]
+
+        assert len(target) == len(self.__deformables)
+
         # Call precompute callback if available
         precompute_cost = None
         if self.precompute_callback is not None:
@@ -128,8 +150,8 @@ class Model(BaseModel):
         if costs is not None and precompute_cost is not None:
             costs['precompute'] = precompute_cost
 
-        deformed = self.compute_deformed(solver, it, costs=costs)
-        costs['attach'] = self.lam*self._compute_attachment_cost(deformed, target)
+        deformed_sources = self.compute_deformed(solver, it, costs=costs)
+        costs['attach'] = self.lam*self._compute_attachment_cost(deformed_sources, target)
 
         total_cost = sum(costs.values())
 
@@ -140,8 +162,8 @@ class Model(BaseModel):
         costs['total'] = total_cost
         return dict([(key, costs[key].item()) for key in costs])
 
-    def _compute_attachment_cost(self, deformed, deformation_costs=None):
-        raise NotImplementedError
+    def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
+        return sum([attachment(deformed_source, *target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         """ Compute the deformed source.
@@ -160,7 +182,14 @@ class Model(BaseModel):
         list
             List of deformed sources.
         """
-        raise NotImplementedError()
 
+        deformed = []
+        for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
+            deformable.silent_module.manifold.fill(deformable_manifold)
+            compound = CompoundModule(self.__modules)
+            compound.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
+            compound.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
+            deformed.append(deformable.compute_deformed(compound, solver, it, costs, intermediates))
 
+        return deformed
 
