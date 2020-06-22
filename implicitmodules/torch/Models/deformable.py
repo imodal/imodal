@@ -1,13 +1,15 @@
+import copy
+
 import torch
 
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import grid2vec, vec2grid
+from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities
+
 
 class Deformable:
     def __init__(self, manifold, module_label=None):
-        print(manifold)
         self.__silent_module = SilentBase(manifold, module_label)
 
     @property
@@ -54,39 +56,41 @@ class DeformablePoints(Deformable):
         return compound[0].manifold.gd
 
 
-class DeformablePolylines(DeformablePoints):
-    def __init__(self, points, connections):
-        self.__connections = connections
-        super().__init__(points)
+# class DeformablePolylines(DeformablePoints):
+#     def __init__(self, points, connections):
+#         self.__connections = connections
+#         super().__init__(points)
 
-    @classmethod
-    def load_from_file(cls, filename):
-        pass
+#     @classmethod
+#     def load_from_file(cls, filename):
+#         pass
 
-    @property
-    def geometry(self):
-        return (self.silent_module.manifold.gd.detach(), self.__connections)
+#     @property
+#     def geometry(self):
+#         return (self.silent_module.manifold.gd.detach(), self.__connections)
 
 
-class DeformableMesh(DeformablePoints):
-    def __init__(self, points, triangles):
-        self.__triangles = triangles
-        super().__init__(points)
+# class DeformableMesh(DeformablePoints):
+#     def __init__(self, points, triangles):
+#         self.__triangles = triangles
+#         super().__init__(points)
 
-    @classmethod
-    def load_from_file(cls, filename):
-        pass
+#     @classmethod
+#     def load_from_file(cls, filename):
+#         pass
 
-    @property
-    def geometry(self):
-        return self.silent_module.manifold.gd.detach(), self.__triangles
+#     @property
+#     def geometry(self):
+#         return self.silent_module.manifold.gd.detach(), self.__triangles
 
 
 class DeformableImage(Deformable):
     def __init__(self, bitmap):
         self.__shape = bitmap.shape
-        grid = torch.meshgrid([torch.linspace(0., self.__shape[0], self.__shape[0]), torch.linspace(0., self.__shape[1], self.__shape[1])])
-        points = grid2vec(grid)
+        grid = torch.meshgrid([torch.linspace(0.5, self.__shape[0] - 0.5, self.__shape[0]), torch.linspace(0.5, self.__shape[1] - 0.5, self.__shape[1])])
+        points = grid2vec(*grid)
+        self.__bitmap = bitmap
+        super().__init__(Landmarks(points.shape[1], points.shape[0], gd=points))
 
     @classmethod
     def load_from_file(cls, filename):
@@ -94,13 +98,13 @@ class DeformableImage(Deformable):
 
     @property
     def geometry(self):
-        return self.to_bitmap()
+        return (self.to_bitmap(),)
 
     def to_points(self):
-        pass
+        return self.silent_module.manifold.gd
 
     def to_bitmap(self):
-        pass
+        return self.__bitmap
 
     @property
     def shape(self):
@@ -114,26 +118,34 @@ class DeformableImage(Deformable):
             raise NotImplementedError()
 
         # First, forward step shooting only the deformation modules
+        # compound = copy.deepcopy(CompoundModule(modules))
         compound = CompoundModule(modules)
+        print(compound[0].manifold.cotan[:10])
         # compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold[1:]])
         # compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold[1:]])
 
         # Forward shooting
 
-        if costs is not None:
-            costs['deformation'] = compound.cost()
-
         shoot(Hamiltonian(compound), solver, it)
-
+        print("--------------------------------")
+        print(compound[0].manifold.cotan[:10])
+        print("--------------------------------")
         # Prepare for reverse shooting
+        # compound = copy.deepcopy(CompoundModule(modules))
+        compound = CompoundModule(modules)
         compound.manifold.negate_cotan()
         # silent = self.silent_module()
         # silent.manifold.fill_gd(self.init_manifold[0].gd)
         # silent.manifold.fill_cotan(self.init_manifold[0].cotan)
         compound = CompoundModule([self.silent_module, *compound.modules])
+        print(compound[1].manifold.cotan[:10])
 
         # Then, backward shooting in order to get the final deformed image
         shoot(Hamiltonian(compound), solver, it)
 
-        return deformed_intensities(compound[0].manifold.gd, self.__weights.view(self.__image_resolution))
+        if costs is not None:
+            costs['deformation'] = compound.cost()
+        print("QQQQQQQQQQQQQQQQQQQ")
+
+        return deformed_intensities(compound[0].manifold.cotan, self.__bitmap)
 
