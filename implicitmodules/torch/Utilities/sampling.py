@@ -80,8 +80,8 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
             if(image[image.shape[0] - i - 1, j] < threshold):
                 continue
 
-            pos[count, 0] = i
-            pos[count, 1] = j
+            pos[count, 0] = i + 0.5
+            pos[count, 1] = j - 0.5
             alpha[count] = image[image.shape[0] - i - 1, j]
 
             count = count + 1

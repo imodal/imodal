@@ -78,7 +78,7 @@ shoot_solver='euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = dm.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
 fitter.fit(target_image.clone(), 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 

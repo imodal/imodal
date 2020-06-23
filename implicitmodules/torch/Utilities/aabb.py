@@ -230,6 +230,22 @@ class AABB:
         """
         return self.fill_random(int(torch.prod(torch.tensor(self.shape))*density), dtype=dtype, device=device)
 
+    def fill_count(self, counts, dtype=None, device=None):
+        """ Fill the AABB uniformly with a set amount of points per dimension.
+
+        Returns
+        -------
+        torch.Tensor
+            [:math:'N', dim] shaped tensor with :math:'N' the number of points inside the AABB.
+        """
+        assert isinstance(counts, int) or (isinstance(counts, Iterable) and len(counts) == self.__dim)
+
+        if isinstance(counts, int):
+            spacing = [counts]*self.__dim
+
+        grids = torch.meshgrid([torch.linspace(kmin + 0.5, kmax - 0.5, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
+        return grid2vec(*grids)
+
     def fill_uniform_spacing(self, spacing, dtype=None, device=None):
         """ Fill the AABB uniformly.
         Uses a spacing parameters which represent the length between each points on each axis.
