@@ -15,10 +15,6 @@ def vec2grid(vec, *args):
     return tuple((vec.t()[i].view(args).contiguous()).contiguous() for i in range(len(args)))
 
 
-def indices2coords(indices, shape, pixel_size=torch.tensor([1., 1.])):
-    return torch.cat([(pixel_size[0] * indices[:, 0]).view(-1, 1), (pixel_size[1] * (shape[1] - indices[:, 1] - 1)).view(-1, 1)], 1)
-
-
 def rot2d(theta):
     """ Returns a 2D rotation matrix. """
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])

@@ -4,11 +4,11 @@ import matplotlib.image
 import torch
 
 from implicitmodules.torch.Kernels import K_xy
-from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, indices2coords
+from implicitmodules.torch.Utilities.usefulfunctions import grid2vec
 from implicitmodules.torch.Utilities.aabb import AABB
 
 
-def load_greyscale_image(filename, dtype=None, device=None):
+def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
     """Load grescale image from disk as an array of normalised float values.
     
     Parameters
@@ -26,14 +26,20 @@ def load_greyscale_image(filename, dtype=None, device=None):
         [width, height] shaped tensor representing the loaded image.
     """
 
-    if dtype is None:
-        dtype = torch.get_default_dtype()
+    if origin != 'upper' and origin != 'lower':
+        raise RuntimeError("Origin type {origin} not implemented!".format(origin=origin))
+
+    def set_origin(bitmap, origin):
+        if origin == 'upper':
+            return bitmap
+        else:
+            return bitmap.flip(0)
 
     image = matplotlib.image.imread(filename)
     if(image.ndim == 2):
-        return torch.tensor(1. - image, dtype=dtype, device=device)
+        return set_origin(torch.tensor(1. - image, dtype=dtype, device=device), origin)
     elif(image.ndim ==3):
-        return torch.tensor(1. - image[:,:,0], dtype=dtype, device=device)
+        return set_origin(torch.tensor(1. - image[:,:,0], dtype=dtype, device=device), origin)
     else:
         raise NotImplementedError
 
@@ -61,7 +67,9 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
         Two tensors representing point position (of shape [N, dim]) and weight (of shape [N]), in this order, with :math:'N' the number of points.
     """
 
+    # Compute number of output points
     length = torch.sum(image >= threshold)
+
     pos = torch.zeros([length, 2])
     alpha = torch.zeros([length])
 
@@ -77,16 +85,14 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
     # TODO: write a better (i.e. non looping) way of doing this
     for j in range(0, image.shape[1]):
         for i in range(0, image.shape[0]):
-            if(image[image.shape[0] - i - 1, j] < threshold):
+            if(image[j, i] < threshold):
                 continue
 
             pos[count, 0] = i + 0.5
             pos[count, 1] = j - 0.5
-            alpha[count] = image[image.shape[0] - i - 1, j]
+            alpha[count] = image[j, i]
 
             count = count + 1
-
-    pos = indices2coords(pos, image.shape, pixel_size=torch.tensor([height_weight, width_weight]))
 
     if(centered):
         pos = pos - torch.mean(pos, dim=0)

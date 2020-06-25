@@ -70,6 +70,6 @@ class ModelImageRegistration(Model):
         if costs is not None:
             costs['deformation'] = compound.cost()
 
-        # TODO remove this horrible t().flip(0) hack
-        return deformed_intensities(silent.manifold.gd, self.__weights.view(self.__image_resolution)).t().flip(0)
+        return deformed_intensities(silent.manifold.gd, self.__weights.view(self.__image_resolution))
+
 
