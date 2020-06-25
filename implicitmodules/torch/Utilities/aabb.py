@@ -261,7 +261,8 @@ class AABB:
     def fill_uniform_density(self, density, dtype=None, device=None):
         """ Fill the AABB uniformly.
         Used a *density* parameter with represent the number of points in a unit dim-cell of the AABB.
-        Return
+        Returns
+        -------
         torch.Tensor
             [:math:'N', dim] shaped tensor with :math:'N' the number of points inside the AABB.
         """

@@ -82,17 +82,17 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
 
     count = 0
 
-    # TODO: write a better (i.e. non looping) way of doing this
-    for j in range(0, image.shape[1]):
-        for i in range(0, image.shape[0]):
-            if(image[j, i] < threshold):
-                continue
+    pixels = AABB(0., image.shape[0], 0, image.shape[1]).fill_count(image.shape)
 
-            pos[count, 0] = i + 0.5
-            pos[count, 1] = j - 0.5
-            alpha[count] = image[j, i]
+    for pixel in pixels:
+        pixel_value = image[math.floor(pixel[0]), math.floor(pixel[1])]
+        if pixel_value < threshold:
+            continue
 
-            count = count + 1
+        pos[count] = pixel
+        alpha[count] = pixel_value
+
+        count = count + 1
 
     if(centered):
         pos = pos - torch.mean(pos, dim=0)
