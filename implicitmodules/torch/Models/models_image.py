@@ -32,17 +32,17 @@ class ModelImageRegistration(Model):
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         assert isinstance(costs, dict) or costs is None
-        assert isinstance(intermediates, list) or intermediates is None
+        assert isinstance(intermediates, dict) or intermediates is None
 
-        if intermediates:
-            raise NotImplementedError()
+        # if intermediates:
+        #     raise NotImplementedError()
 
         compound = CompoundModule(self.modules)
         compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
         compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
 
         # # Forward shooting
-        shoot(Hamiltonian(compound), solver, it)
+        shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 
         # Prepare for reverse shooting
         compound.manifold.negate_cotan()
@@ -70,6 +70,6 @@ class ModelImageRegistration(Model):
         if costs is not None:
             costs['deformation'] = compound.cost()
 
-        return deformed_intensities(silent.manifold.gd, self.__weights.view(self.__image_resolution))
+        return deformed_intensities(silent.manifold.gd - 0.5, self.__weights.view(self.__image_resolution))
 
 
