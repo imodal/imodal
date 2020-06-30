@@ -78,7 +78,7 @@ shoot_solver = 'euler'
 shoot_it = 10
 costs = {}
 fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit(target_deformable, 3, costs=costs, options={'line_search_fn': 'strong_wolfe', 'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter.fit(target_deformable, 10, costs=costs, options={'line_search_fn': 'strong_wolfe', 'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################

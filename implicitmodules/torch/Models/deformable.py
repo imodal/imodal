@@ -5,7 +5,7 @@ import torch
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities, AABB
+from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities, AABB, load_greyscale_image
 
 
 class Deformable:
@@ -32,6 +32,14 @@ class DeformablePoints(Deformable):
     def load_from_file(cls, filename):
         pass
 
+    @classmethod
+    def load_from_pickle(cls, filename):
+        pass
+
+    @classmethod
+    def load_from_csv(cls, filename):
+        pass
+
     @property
     def geometry(self):
         return (self.silent_module.manifold.gd,)
@@ -40,10 +48,7 @@ class DeformablePoints(Deformable):
         assert isinstance(costs, dict) or costs is None
         assert isinstance(intermediates, dict) or intermediates is None
 
-        # Create and fill the compound module
         compound = CompoundModule([self.silent_module, *modules])
-        # compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold])
-        # compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold])
 
         # Compute the deformation cost if needed
         if costs is not None:
@@ -92,8 +97,8 @@ class DeformableImage(Deformable):
         super().__init__(Landmarks(pixel_points.shape[1], pixel_points.shape[0], gd=pixel_points))
 
     @classmethod
-    def load_from_file(cls, filename):
-        pass
+    def load_from_file(cls, filename, origin='lower', device=None):
+        return cls(load_greyscale_image(filename, origin=origin, device=device))
 
     @property
     def geometry(self):
@@ -116,13 +121,10 @@ class DeformableImage(Deformable):
         if intermediates:
             raise NotImplementedError()
 
-        # First, forward step shooting only the deformation modules
+        # Forward shooting
         compound_modules = [self.silent_module, *modules]
         compound = CompoundModule(compound_modules)
-        # compound.manifold.fill_gd([manifold.gd for manifold in self.init_manifold[1:]])
-        # compound.manifold.fill_cotan([manifold.cotan for manifold in self.init_manifold[1:]])
 
-        # Forward shooting
         shoot(Hamiltonian(compound), solver, it)
 
         # Prepare for reverse shooting
@@ -130,22 +132,14 @@ class DeformableImage(Deformable):
 
         pixel_grid = AABB(0., self.__shape[0], 0., self.__shape[1]).fill_count(self.__shape)
         silent_pixel_grid = SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid.requires_grad_())
-        # silent = self.silent_module()
-        # silent.manifold.fill_gd(self.init_manifold[0].gd)
-        # silent.manifold.fill_cotan(self.init_manifold[0].cotan)
+
+        # Reverse shooting with the newly constructed pixel grid module
         compound = CompoundModule([silent_pixel_grid, *compound.modules])
 
-        # Then, backward shooting in order to get the final deformed image
         shoot(Hamiltonian(compound), solver, it)
 
         if costs is not None:
             costs['deformation'] = compound.cost()
 
-        deformed = deformed_intensities(silent_pixel_grid.manifold.gd, self.__bitmap)
-
-        # import matplotlib.pyplot as plt
-        # plt.imshow(deformed.detach().numpy(), origin='lower')
-        # plt.show()
-
-        return deformed
+        return deformed_intensities(silent_pixel_grid.manifold.gd - 0.5, self.__bitmap)
 

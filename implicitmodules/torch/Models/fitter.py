@@ -89,5 +89,5 @@ class Fitter:
         print("Costs")
         for key in costs.keys():
             print("{cost}={value}".format(cost=key, value=costs[key]))
-
+        print("Total cost={total}".format(total=sum(costs.values())))
 

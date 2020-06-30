@@ -61,7 +61,7 @@ class OptimizerScipy(BaseOptimizer):
             gc.collect()
 
             self.__last_costs = costs
-            return (costs['total'], d_costs)
+            return (sum(costs.values()), d_costs)
 
         return _evaluate
 
@@ -76,7 +76,7 @@ class OptimizerScipy(BaseOptimizer):
             gc.collect()
 
             self.__last_costs = costs
-            return costs['total']
+            return sum(costs.values())
 
         return _evaluate
 

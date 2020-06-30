@@ -49,7 +49,7 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-center = torch.tensor([[10., 10]])
+center = torch.tensor([[10., 10.]])
 
 rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().requires_grad_())
 

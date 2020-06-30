@@ -5,7 +5,7 @@ from itertools import chain
 import torch
 
 from implicitmodules.torch.Models import BaseOptimizer, register_optimizer
-from implicitmodules.torch.Models.optimizer_gd import GradientDescentOptimizer
+from implicitmodules.torch.Models.optimizer_gd import OptimizerGradientDescent
 
 
 class OptimizerTorch(BaseOptimizer):
@@ -49,23 +49,25 @@ class OptimizerTorch(BaseOptimizer):
 
             self.__last_costs = costs
             self.__eval_count = self.__eval_count + 1
-            return costs['total']
+            return sum(costs.values())
 
-        last_total = float('inf')
+        last_total_cost = float('inf')
         for i in range(max_iter):
             self.__optimizer.step(closure=_evaluate)
 
             post_iteration_callback(self.model, self.__last_costs)
 
-            if math.isnan(self.__last_costs['total']):
-                return {'success': False, 'final': float('nan'), 'message': "Evaluated function gave NaN.", 'neval': self.__eval_count}
+            total_cost = sum(self.__last_costs.values())
 
-            if (last_total - self.__last_costs['total'])/max(self.__last_costs['total'], last_total, 1) <= tol:
-                return {'success': True, 'final': self.__last_costs['total'], 'message': "Convergence achieved.", 'neval': self.__eval_count}
+            if math.isnan(total_cost):
+                return {'success': False, 'final': float('nan'), 'message': "Evaluated function gave NaN.", 'neval': total_cost}
 
-            last_total = self.__last_costs['total']
+            if (last_total_cost - total_cost)/max(total_cost, last_total_cost, 1) <= tol:
+                return {'success': True, 'final': total_cost, 'message': "Convergence achieved.", 'neval': self.__eval_count}
 
-        return {'success': False, 'final': self.__last_costs['total'], 'message': "Total number of iterations reached.", 'neval': self.__eval_count}
+            last_total_cost = total_cost
+
+        return {'success': False, 'final': total_cost, 'message': "Total number of iterations reached.", 'neval': self.__eval_count}
 
     def __flatten_parameters(self, parameters):
         return [{'params': list(chain(*(parameter['params'] for parameter in parameters.values())))}]
@@ -80,5 +82,5 @@ def __create_torch_optimizer(torch_optimizer, single_parameter_group):
 register_optimizer("torch_sgd", __create_torch_optimizer(torch.optim.SGD, False))
 register_optimizer("torch_lbfgs", __create_torch_optimizer(torch.optim.LBFGS, True))
 
-register_optimizer("gd", __create_torch_optimizer(GradientDescentOptimizer, False))
+register_optimizer("gd", __create_torch_optimizer(OptimizerGradientDescent, False))
 
