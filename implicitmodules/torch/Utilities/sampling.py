@@ -110,13 +110,14 @@ def load_and_sample_greyscale(filename, threshold=0., centered=False, normalise_
     return sample_from_greyscale(image, threshold, centered, normalise_weights)
 
 
-def deformed_intensities(deformed_points, intensities):
+def deformed_intensities(deformed_points, intensities, extent):
     """
     Sample an image from a tensor of deformed points.
     Taken and adapted from https://gitlab.icm-institute.org/aramislab/deformetrica/blob/master/numpy/core/observations/deformable_objects/image.py
     """
 
-    u, v = deformed_points[:, 0], deformed_points[:, 1]
+    scale_u, scale_v = intensities.shape[0]/extent.xmax, intensities.shape[1]/extent.ymax
+    u, v = scale_u*deformed_points[:, 0], scale_v*deformed_points[:, 1]
 
     u1 = torch.floor(u).long()
     v1 = torch.floor(v).long()

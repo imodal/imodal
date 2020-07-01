@@ -90,19 +90,21 @@ class DeformablePoints(Deformable):
 
 
 class DeformableImage(Deformable):
-    def __init__(self, bitmap, frame=None):
-        assert isinstance(frame, AABB) or frame is None
+    def __init__(self, bitmap, extent=None):
+        assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
 
         self.__shape = bitmap.shape
-        if frame is None:
-            frame = AABB(0., self.__shape[0], 0., self.__shape[1])
+        if extent is None:
+            extent = AABB(0, 1., 0., 1.)
+        elif isinstance(extent, str) and extent == 'match':
+            extent = AABB(0., self.__shape[0], 0., self.__shape[1])
 
-        self.__frame = frame
+        self.__extent = extent
 
-        pixel_points = self.__frame.fill_count(self.__shape)
+        pixel_points = self.__extent.fill_count(self.__shape)
 
         self.__bitmap = bitmap
-        super().__init__(Landmarks(pixel_points.shape[1], pixel_points.shape[0], gd=pixel_points))
+        super().__init__(Landmarks(2, pixel_points.shape[0], gd=pixel_points))
 
     @classmethod
     def load_from_file(cls, filename, origin='lower', device=None):
@@ -112,22 +114,24 @@ class DeformableImage(Deformable):
     def geometry(self):
         return (self.to_bitmap(),)
 
+    @property
+    def shape(self):
+        return self.__shape
+
+    @property
+    def extent(self):
+        return self.__extent
+
     def to_points(self):
         return self.silent_module.manifold.gd
 
     def to_bitmap(self):
         return self.__bitmap
 
-    @property
-    def shape(self):
-        return self.__shape
-
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
         assert isinstance(costs, dict) or costs is None
         assert isinstance(intermediates, dict) or intermediates is None
 
-        if intermediates:
-            raise NotImplementedError()
 
         # Forward shooting
         compound_modules = [self.silent_module, *modules]
@@ -138,7 +142,8 @@ class DeformableImage(Deformable):
         # Prepare for reverse shooting
         compound.manifold.negate_cotan()
 
-        pixel_grid = AABB(0., self.__shape[0], 0., self.__shape[1]).fill_count(self.__shape)
+        pixel_grid = self.__extent.fill_count(self.__shape)
+        # pixel_grid = AABB(0., self.__shape[0], 0, self.__shape[1]).fill_count(self.__shape)
         silent_pixel_grid = SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid.requires_grad_())
 
         # Reverse shooting with the newly constructed pixel grid module
@@ -149,5 +154,5 @@ class DeformableImage(Deformable):
         if costs is not None:
             costs['deformation'] = compound.cost()
 
-        return deformed_intensities(silent_pixel_grid.manifold.gd - 0.5, self.__bitmap)
+        return deformed_intensities(silent_pixel_grid.manifold.gd, self.__bitmap, self.__extent)
 

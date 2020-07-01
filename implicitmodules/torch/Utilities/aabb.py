@@ -243,7 +243,7 @@ class AABB:
         if isinstance(counts, int):
             spacing = [counts]*self.__dim
 
-        grids = torch.meshgrid([torch.linspace(kmin + 0.5, kmax - 0.5, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
+        grids = torch.meshgrid([torch.linspace(kmin, kmax, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
         return grid2vec(*grids)
 
     def fill_uniform_spacing(self, spacing, dtype=None, device=None):
