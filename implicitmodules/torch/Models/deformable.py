@@ -90,9 +90,17 @@ class DeformablePoints(Deformable):
 
 
 class DeformableImage(Deformable):
-    def __init__(self, bitmap):
+    def __init__(self, bitmap, frame=None):
+        assert isinstance(frame, AABB) or frame is None
+
         self.__shape = bitmap.shape
-        pixel_points = AABB(0., self.__shape[0], 0., self.__shape[1]).fill_count(self.__shape)
+        if frame is None:
+            frame = AABB(0., self.__shape[0], 0., self.__shape[1])
+
+        self.__frame = frame
+
+        pixel_points = self.__frame.fill_count(self.__shape)
+
         self.__bitmap = bitmap
         super().__init__(Landmarks(pixel_points.shape[1], pixel_points.shape[0], gd=pixel_points))
 
@@ -116,7 +124,7 @@ class DeformableImage(Deformable):
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
         assert isinstance(costs, dict) or costs is None
-        assert isinstance(intermediates, list) or intermediates is None
+        assert isinstance(intermediates, dict) or intermediates is None
 
         if intermediates:
             raise NotImplementedError()
@@ -125,7 +133,7 @@ class DeformableImage(Deformable):
         compound_modules = [self.silent_module, *modules]
         compound = CompoundModule(compound_modules)
 
-        shoot(Hamiltonian(compound), solver, it)
+        shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 
         # Prepare for reverse shooting
         compound.manifold.negate_cotan()
