@@ -59,8 +59,8 @@ rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().require
 # rotation center.
 #
 
-source_deformable = dm.Models.DeformableImage(source_image)
-target_deformable = dm.Models.DeformableImage(target_image)
+source_deformable = dm.Models.DeformableImage(source_image, extent='match')
+target_deformable = dm.Models.DeformableImage(target_image, extent='match')
 
 model = dm.Models.RegistrationModel(source_deformable, [rotation], dm.Attachment.EuclideanPointwiseDistanceAttachment(), fit_gd=[True], lam=100.)
 
@@ -73,28 +73,30 @@ shoot_solver='rk4'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
-fitter.fit(target_deformable, 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter = dm.Models.Fitter(model)
+fitter.fit(target_deformable, 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
 # Plot total cost evolution
 #
 
-plt.title("Total cost evolution")
-plt.xlabel("Iteration")
-plt.ylabel("Cost")
-plt.grid(True)
-plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
-plt.show()
+# total_costs = [sum(cost.values()) for cost in costs]
+
+# plt.title("Total cost evolution")
+# plt.xlabel("Iteration")
+# plt.ylabel("Cost")
+# plt.grid(True)
+# plt.plot(range(len(total_costs)), total_costs, color='black', lw=0.7)
+# plt.show()
 
 
 ###############################################################################
-# We compute the deformed source and plot it.
+# we compute the deformed source and plot it.
 #
 
 with torch.autograd.no_grad():
-    deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0]
+    deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0][0]
 
 fitted_center = model.init_manifold[1].gd.detach()
 

@@ -35,8 +35,8 @@ plt.imshow(target_image, origin='lower')
 
 plt.show()
 
-source_deformable = dm.Models.DeformableImage(source_image)
-target_deformable = dm.Models.DeformableImage(target_image)
+source_deformable = dm.Models.DeformableImage(source_image, extent='match')
+target_deformable = dm.Models.DeformableImage(target_image, extent='match')
 
 
 ###############################################################################
@@ -60,7 +60,7 @@ large_scale_translations = dm.DeformationModules.ImplicitModule0(2, large_scale_
 # Plot translations points
 #
 
-plt.imshow(source_image, origin='lower')
+plt.imshow(source_image, origin='lower', extent=source_deformable.extent)
 plt.plot(small_scale_points[:, 0].numpy(), small_scale_points[:, 1].numpy(), '.')
 plt.plot(large_scale_points[:, 0].numpy(), large_scale_points[:, 1].numpy(), '.')
 plt.show()
@@ -90,7 +90,7 @@ fitter.fit(target_deformable, 500, costs=costs, options={'shoot_solver': shoot_s
 #
 
 with torch.autograd.no_grad():
-    deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0]
+    deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0][0]
 
 fitted_center = model.init_manifold[1].gd.detach()
 

@@ -85,19 +85,19 @@ fitter.fit(target_deformable, 10, costs=costs, options={'line_search_fn': 'stron
 # Plot total cost evolution
 #
 
-plt.title("Total cost evolution")
-plt.xlabel("Iteration")
-plt.ylabel("Cost")
-plt.grid(True)
-plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
-plt.show()
+# plt.title("Total cost evolution")
+# plt.xlabel("Iteration")
+# plt.ylabel("Cost")
+# plt.grid(True)
+# plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
+# plt.show()
 
 
 ###############################################################################
 # Computing deformed source
 
 with torch.autograd.no_grad():
-    deformed = model.compute_deformed(shoot_solver, shoot_it)[0]
+    deformed = model.compute_deformed(shoot_solver, shoot_it)[0][0]
 
 
 ###############################################################################

@@ -34,7 +34,7 @@ class RegistrationModel(BaseModel):
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
 
-        deformable_landmarks = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
+        deformable_landmarks = [deformable.module.manifold.clone() for deformable in self.__deformables]
         modules_manifolds = CompoundModule(self.__modules).manifold.clone()
 
         self.__init_manifold = CompoundManifold([*deformable_landmarks, *modules_manifolds]).clone(requires_grad=True)        
@@ -150,7 +150,8 @@ class RegistrationModel(BaseModel):
         return dict([(key, costs[key].item()) for key in costs])
 
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
-        return sum([attachment(deformed_source, *target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
+
+        return sum([attachment(*deformed_source, *target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         """ Compute the deformed source.
@@ -172,7 +173,7 @@ class RegistrationModel(BaseModel):
 
         deformed = []
         for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
-            deformable.silent_module.manifold.fill(deformable_manifold)
+            deformable.module.manifold.fill(deformable_manifold)
             compound = CompoundModule(self.__modules)
             compound.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
             compound.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
