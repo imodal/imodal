@@ -9,16 +9,12 @@ from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensi
 
 
 class DeformableBase:
-    def __init__(self, module):
-        self.__module = module
+    def __init__(self):
+        pass
 
     @property
     def geometry(self):
         raise NotImplementedError()
-
-    @property
-    def module(self):
-        return self.__module
 
     @property
     def _has_backward(self):
@@ -36,7 +32,11 @@ class DeformableBase:
 
 class Deformable(DeformableBase):
     def __init__(self, manifold, module_label=None):
-        super().__init__(SilentBase(manifold, module_label))
+        self.__silent_module = SilentBase(manifold, module_label)
+
+    @property
+    def silent_module(self):
+        return self.__silent_module
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
         raise NotImplementedError()
@@ -60,7 +60,7 @@ class DeformablePoints(Deformable):
 
     @property
     def geometry(self):
-        return (self.module.manifold.gd,)
+        return (self.silent_module.manifold.gd,)
 
     @property
     def _has_backward(self):
@@ -191,43 +191,61 @@ class DeformableImage(Deformable):
     def _to_deformed(self, gd):
         return (deformed_intensities(gd, self.__bitmap, self.__extent), )
 
-
+# Do we realy need a DeformableCompound class? A simple compute_deformed() function could be enough.
 class DeformableCompound(DeformableBase):
     def __init__(self, deformables):
         self.__deformables = deformables
 
         super().__init__()
 
+    @property
+    def deformables(self):
+        return self.__deformables
+
+    def __getitem__(self, key):
+        return self.__deformables[key]
+
+    def __len__(self):
+        return len(self.__deformables)
+
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
         assert isinstance(costs, dict) or costs is None
         assert isinstance(intermediates, dict) or intermediates is None
 
-        silent_modules = [module.module for module in self.__deformables]
-        compound = CompoundModule([*silent_modules, modules])
+        # Regroup silent modules of each deformable and build a compound module
+        silent_modules = [module.silent_module for module in self.__deformables]
+        compound = CompoundModule([*silent_modules, *modules])
 
+        # Forward shooting
         shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 
-        backward_silent_modules = [deformable._backward_module() for deformable in self.__deformables if deformable._has_backward]
+        # Regroup silent modules of each deformable thats need to shoot backward
+        backward_silent_modules = [deformable.silent_module for deformable in self.__deformables if deformable._has_backward]
 
         if backward_silent_modules is not None:
-            backward_modules = [deformable.module for deformable in self.__deformables if deformable._has_backward]
+            # Backward shooting is needed
 
-            backward_compound = CompoundModule([*backward_silent_modules, *backward_modules, *modules])
+            # Build/assemble the modules that will be shot backward
+            backward_modules = [deformable._backward_module() for deformable in self.__deformables if deformable._has_backward]
+            compound = CompoundModule([*backward_silent_modules, *backward_modules, *modules])
 
-            backward_compound.manifold.negate_cotan()
+            # Reverse the moments for backward shooting
+            compound.manifold.negate_cotan()
 
+            # Backward shooting
             shoot(Hamiltonian(compound), solver, it)
 
         # For now, we need to compute the deformation cost after each shooting (and not before any shooting) for computation tree reasons
         if costs is not None:
-            costs['deformation'] = backward_compound.cost()
+            costs['deformation'] = compound.cost()
 
-        # Ugly way to compute the list of deformed objects
+        # Ugly way to compute the list of deformed objects. Not intended to stay!
         deformed = []
         for deformable in self.__deformables:
             if deformable._has_backward:
-                deformable.append(deformable._to_deformable(backward_silent_modules.pop(0)))
+                deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
             else:
-                deformable.append(deformable._to_deformable(deformable.module.manifold.gd))
+                deformed.append(deformable._to_deformed(deformable.silent_module.manifold.gd))
 
         return deformed
+
