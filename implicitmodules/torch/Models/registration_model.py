@@ -182,12 +182,3 @@ class RegistrationModel(BaseModel):
 
         return self.__deformables.compute_deformed(compound, solver, it, costs, intermediates)
 
-        # deformed = []
-        # for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
-        #     deformable.module.manifold.fill(deformable_manifold)
-        #     compound = CompoundModule(self.__modules)
-        #     compound.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
-        #     compound.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
-        #     deformed.append(deformable.compute_deformed(compound, solver, it, costs, intermediates))
-
-        # return deformed

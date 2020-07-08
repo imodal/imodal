@@ -199,7 +199,7 @@ class AABB:
     def length(self):
         assert self.__dim == 1
         return self.width
-    
+
     @property
     def area(self):
         assert self.__dim == 2

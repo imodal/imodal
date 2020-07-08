@@ -4,7 +4,7 @@ import matplotlib.image
 import torch
 
 from implicitmodules.torch.Kernels import K_xy
-from implicitmodules.torch.Utilities.usefulfunctions import grid2vec
+from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, points2pixels
 from implicitmodules.torch.Utilities.aabb import AABB
 
 
@@ -29,7 +29,7 @@ def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
     if origin != 'upper' and origin != 'lower':
         raise RuntimeError("Origin type {origin} not implemented!".format(origin=origin))
 
-    def set_origin(bitmap, origin):
+    def _set_origin(bitmap, origin):
         if origin == 'upper':
             return bitmap
         else:
@@ -37,9 +37,9 @@ def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
 
     image = matplotlib.image.imread(filename)
     if(image.ndim == 2):
-        return set_origin(torch.tensor(1. - image, dtype=dtype, device=device), origin)
+        return _set_origin(torch.tensor(1. - image, dtype=dtype, device=device), origin)
     elif(image.ndim ==3):
-        return set_origin(torch.tensor(1. - image[:,:,0], dtype=dtype, device=device), origin)
+        return _set_origin(torch.tensor(1. - image[:,:,0], dtype=dtype, device=device), origin)
     else:
         raise NotImplementedError
 
@@ -116,11 +116,9 @@ def deformed_intensities(deformed_points, intensities, extent):
     Taken and adapted from https://gitlab.icm-institute.org/aramislab/deformetrica/blob/master/numpy/core/observations/deformable_objects/image.py
     """
 
-    scale_u, scale_v = intensities.shape[0]/extent.xmax, intensities.shape[1]/extent.ymax
-    u, v = scale_u*deformed_points[:, 0], scale_v*deformed_points[:, 1]
-
-    u1 = torch.floor(u).long()
-    v1 = torch.floor(v).long()
+    uv = points2pixels(deformed_points, intensities.shape, extent)
+    u, v = uv[:, 0], uv[:, 1]
+    u1, v1 = torch.floor(uv[:, 0]).long(), torch.floor(uv[:, 1]).long()
 
     u1 = torch.clamp(u1, 0, int(intensities.shape[0]) - 1)
     v1 = torch.clamp(v1, 0, int(intensities.shape[1]) - 1)
@@ -132,11 +130,8 @@ def deformed_intensities(deformed_points, intensities, extent):
     gu = (u1 + 1).type(torch.get_default_dtype()) - u
     gv = (v1 + 1).type(torch.get_default_dtype()) - v
 
-    deformed_intensities = (intensities[u1, v1] * gu * gv +
-                            intensities[u1, v2] * gu * fv +
-                            intensities[u2, v1] * fu * gv +
-                            intensities[u2, v2] * fu * fv).view(intensities.shape)
-
-    return deformed_intensities
-
+    return (intensities[u1, v1] * gu * gv +
+            intensities[u1, v2] * gu * fv +
+            intensities[u2, v1] * fu * gv +
+            intensities[u2, v2] * fu * fv).view(intensities.shape)
 

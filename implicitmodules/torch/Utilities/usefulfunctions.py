@@ -3,6 +3,8 @@ from collections import Iterable
 from torchviz import make_dot
 import torch
 
+# from implicitmodules.torch.Utilities import AABB
+
 
 # TODO: pythonize this
 def grid2vec(*args):
@@ -18,6 +20,31 @@ def vec2grid(vec, *args):
 def rot2d(theta):
     """ Returns a 2D rotation matrix. """
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
+
+
+def points2pixels(points, frame_shape, frame_extent=None, toindices=False):
+    # if frame_extent is None:
+    #     frame_extent = AABB(0., frame_shape[1], 0., frame_shape[0])
+
+    scale_u, scale_v = frame_shape[1]/frame_extent.width, frame_shape[0]/frame_extent.height
+    u1, v1 = scale_u*(points[:, 0] - frame_extent.xmin), scale_v*(points[:, 1] - frame_extent.ymin)
+
+    if toindices:
+        u1 = torch.floor(u1).long()
+        v1 = torch.floor(v1).long()
+
+    return torch.stack([v1, u1], dim=1)
+
+
+def pixels2points(pixels, frame_shape, frame_extent=None):
+    # if frame_extent is None:
+    #     frame_extent = AABB(0., frame_shape[1], 0., frame_shape[0])
+
+    scale_x, scale_y = frame_extent.width/frame_shape[1], frame_extent.height/frame_shape[0]
+
+    x, y = scale_x*pixels[:, 1] + frame_extent.xmin, scale_y*pixels[:, 0] + frame_extent.ymin
+
+    return torch.stack([x, y], dim=1)
 
 
 def flatten_tensor_list(l, out_list=None):

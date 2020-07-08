@@ -1,11 +1,14 @@
 import copy
+from pathlib import Path
 
 import torch
+from numpy import loadtxt
+import pickle
 
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities, AABB, load_greyscale_image
+from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities, AABB, load_greyscale_image, points2pixels, pixels2points
 
 
 class DeformableBase:
@@ -48,15 +51,18 @@ class DeformablePoints(Deformable):
 
     @classmethod
     def load_from_file(cls, filename):
-        pass
+        path = Path(filename)
 
     @classmethod
     def load_from_pickle(cls, filename):
         pass
+        # with f as open(filename, 'rb'):
+        #     points = pickle.load(f)
 
     @classmethod
-    def load_from_csv(cls, filename):
-        pass
+    def load_from_csv(cls, filename, **kwargs):
+        points = loadtxt(filename, **kwargs)
+        return cls(torch.tensor(points))
 
     @property
     def geometry(self):
@@ -122,11 +128,11 @@ class DeformableImage(Deformable):
         if extent is None:
             extent = AABB(0, 1., 0., 1.)
         elif isinstance(extent, str) and extent == 'match':
-            extent = AABB(0., self.__shape[0], 0., self.__shape[1])
+            extent = AABB(0., self.__shape[1], 0., self.__shape[0])
 
         self.__extent = extent
 
-        pixel_points = self.__extent.fill_count(self.__shape)
+        pixel_points = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
 
         self.__bitmap = bitmap
         super().__init__(Landmarks(2, pixel_points.shape[0], gd=pixel_points))
@@ -137,7 +143,7 @@ class DeformableImage(Deformable):
 
     @property
     def geometry(self):
-        return (self.to_bitmap(),)
+        return (self.bitmap,)
 
     @property
     def shape(self):
@@ -147,10 +153,12 @@ class DeformableImage(Deformable):
     def extent(self):
         return self.__extent
 
-    def to_points(self):
-        return self.module.manifold.gd
+    @property
+    def points(self):
+        return self.silent_module.manifold.gd
 
-    def to_bitmap(self):
+    @property
+    def bitmap(self):
         return self.__bitmap
 
     @property
@@ -158,7 +166,7 @@ class DeformableImage(Deformable):
         return True
 
     def _backward_module(self):
-        pixel_grid = self.__extent.fill_count(self.__shape)
+        pixel_grid = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
         return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid.requires_grad_())
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
@@ -167,17 +175,15 @@ class DeformableImage(Deformable):
 
         # Forward shooting
         compound_modules = [self.module, *modules]
-        compound = CompoundModule(compound_modules)
+        compound = CompoundModule(compound_modules)        
 
         shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 
         # Prepare for reverse shooting
         compound.manifold.negate_cotan()
 
-        # pixel_grid = self.__extent.fill_count(self.__shape)
-        # silent_pixel_grid = SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid.requires_grad_())
         silent_pixel_grid = self._backward_module()
-        
+
         # Reverse shooting with the newly constructed pixel grid module
         compound = CompoundModule([silent_pixel_grid, *compound.modules])
 

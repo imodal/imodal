@@ -27,8 +27,8 @@ import implicitmodules.torch as dm
 # We load the data and plot them.
 #
 
-source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png")
-target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png")
+source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png", origin='lower')
 
 dots = torch.tensor([[0., 0.5],
                      [0.5, 0.],
@@ -115,9 +115,6 @@ with torch.autograd.no_grad():
 
     deformed_image = deformed[0][0]
     deformed_dots = deformed[1][0]
-
-print(deformed_image)
-print(deformed_dots)
 
 fitted_center = model.init_manifold[2].gd.detach()
 
