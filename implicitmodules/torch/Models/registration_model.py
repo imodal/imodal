@@ -6,7 +6,7 @@ import torch
 
 from implicitmodules.torch.DeformationModules import CompoundModule
 from implicitmodules.torch.Manifolds import CompoundManifold
-from implicitmodules.torch.Models import BaseModel, DeformableCompound
+from implicitmodules.torch.Models import BaseModel, deformables_compute_deformed
 
 
 class RegistrationModel(BaseModel):
@@ -14,8 +14,6 @@ class RegistrationModel(BaseModel):
         if not isinstance(deformables, Iterable):
             deformables = [deformables]
 
-        deformables = DeformableCompound(deformables)
-            
         if not isinstance(modules, Iterable):
             modules = [modules]
 
@@ -87,6 +85,10 @@ class RegistrationModel(BaseModel):
     def attachments(self):
         return self.__attachments
 
+    @property
+    def deformables(self):
+        return self.__deformables
+
     def _compute_parameters(self):
         # Fill the parameter dictionary that will be given to the optimizer.
 
@@ -152,8 +154,7 @@ class RegistrationModel(BaseModel):
         return dict([(key, costs[key].item()) for key in costs])
 
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
-
-        return sum([attachment(*deformed_source, *target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
+        return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         """ Compute the deformed source.
@@ -173,12 +174,12 @@ class RegistrationModel(BaseModel):
             List of deformed sources.
         """
 
-        compound = CompoundModule(self.__modules)
-        compound.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
-        compound.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
+        compound_module = CompoundModule(self.__modules)
+        compound_module.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
+        compound_module.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
 
-        for deformable, deformable_manifold in zip(self.__deformables.deformables, self.__init_manifold):
+        for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
             deformable.silent_module.manifold.fill(deformable_manifold)
 
-        return self.__deformables.compute_deformed(compound, solver, it, costs, intermediates)
+        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, costs=costs, intermediates=intermediates)
 

@@ -30,23 +30,26 @@ import implicitmodules.torch as dm
 source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
 target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png", origin='lower')
 
+extent_length = 1.
+extent = dm.Utilities.AABB(0., extent_length, 0., extent_length)
+
 dots = torch.tensor([[0., 0.5],
                      [0.5, 0.],
                      [0., -0.5],
                      [-0.5, 0.]])
 
-source_dots = 20.*dots + torch.tensor([15.5, 15.5])
+source_dots = 0.8*extent_length*dots + extent_length*torch.tensor([0.5, 0.5])
 
-target_dots = 20.*dm.Utilities.linear_transform(dots, dm.Utilities.rot2d(math.pi/4)) + torch.tensor([15.5, 15.5])
+target_dots = 0.8*extent_length*dm.Utilities.linear_transform(dots, dm.Utilities.rot2d(math.pi/4)) + extent_length*torch.tensor([0.5, 0.5])
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
-plt.imshow(source_image, origin='lower')
+plt.imshow(source_image, origin='lower', extent=extent.totuple())
 plt.plot(source_dots.numpy()[:, 0], source_dots.numpy()[:, 1], '.')
 
 plt.subplot(1, 2, 2)
 plt.title("Target image")
-plt.imshow(target_image, origin='lower')
+plt.imshow(target_image, origin='lower', extent=extent.totuple())
 plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
 
 plt.show()
@@ -60,9 +63,9 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-center = torch.tensor([[10., 14.]])
+center = torch.tensor([[0.4, 0.5]])
 
-rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().requires_grad_())
+rotation = dm.DeformationModules.LocalRotation(2, 1.2, gd=center.clone().requires_grad_())
 
 
 ###############################################################################
@@ -70,13 +73,15 @@ rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().require
 # rotation center.
 #
 
-source_deformable = dm.Models.DeformableImage(source_image, extent='match')
-target_deformable = dm.Models.DeformableImage(target_image, extent='match')
+source_deformable = dm.Models.DeformableImage(source_image, output='points',
+                                              extent=None)
+target_deformable = dm.Models.DeformableImage(target_image, output='points', 
+                                              extent=None)
 
 source_dots_deformable = dm.Models.DeformablePoints(source_dots)
 target_dots_deformable = dm.Models.DeformablePoints(target_dots)
 
-model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [dm.Attachment.EuclideanPointwiseDistanceAttachment()]*2, fit_gd=[True], lam=100.)
+model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [dm.Attachment.GeomlossAttachment(blur=0.01, scaling=0.9), dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=100.)
 
 
 ###############################################################################
@@ -111,6 +116,7 @@ plt.show()
 #
 
 with torch.autograd.no_grad():
+    model.deformables[0].output = 'bitmap'
     deformed = model.compute_deformed(shoot_solver, shoot_it)
 
     deformed_image = deformed[0][0]
@@ -122,19 +128,19 @@ print("Fitted rotatation center: {center}".format(center=fitted_center.detach().
 
 plt.subplot(1, 3, 1)
 plt.title("Source image")
-plt.imshow(source_image.numpy())
+plt.imshow(source_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(source_dots.numpy()[:, 0], source_dots.numpy()[:, 1], '.')
 plt.plot(center.numpy()[0, 0], center.numpy()[0, 1], 'X')
 
 plt.subplot(1, 3, 2)
 plt.title("Fitted image")
-plt.imshow(deformed_image.numpy())
+plt.imshow(deformed_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(fitted_center.numpy()[0, 0], fitted_center.numpy()[0, 1], 'X')
 plt.plot(deformed_dots.numpy()[:, 0], deformed_dots.numpy()[:, 1], '.')
 
 plt.subplot(1, 3, 3)
 plt.title("target image")
-plt.imshow(target_image.numpy())
+plt.imshow(target_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
 
 plt.show()

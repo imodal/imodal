@@ -86,13 +86,17 @@ class L2NormAttachment(Attachment):
         return torch.dist(source, target)
 
 
-# class GeomlossAttachment(Attachment):
-#     def __init__(self, weight=1., **kwargs):
-#         super().__init__(weight)
-#         self.__geomloss = geomloss.SamplesLoss(**kwargs)
+class GeomlossAttachment(Attachment):
+    def __init__(self, weight=1., **kwargs):
+        super().__init__(weight)
+        self.__geomloss = geomloss.SamplesLoss(**kwargs)
 
-#     def loss(self, source, target):
-#         return self.__geomloss(source[1], source[0], target[1], target[0])
+    def loss(self, source, target):
+        x = source[0]
+        alpha = source[1]
+        y = target[0]
+        beta = target[1]
+        return self.__geomloss(alpha, x, beta, y)
 
 
 class EuclideanPointwiseDistanceAttachment(Attachment):
@@ -101,5 +105,7 @@ class EuclideanPointwiseDistanceAttachment(Attachment):
         super().__init__(weight)
 
     def loss(self, source, target):
-        return torch.sum(torch.norm(source-target, dim=1))
+        x = source[0]
+        y = target[0]
+        return torch.sum(torch.norm(x-y, dim=1))
 
