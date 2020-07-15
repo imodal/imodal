@@ -58,6 +58,9 @@ class OptimizerScipy(BaseOptimizer):
 
             d_costs = self.__model_to_numpy(self.model, True)
 
+            if np.any(np.isnan(d_costs)):
+                raise ValueError("OptimizerScipy.__evaluate_grad(): evaluated costs gradients contain NaN values!")
+
             gc.collect()
 
             self.__last_costs = costs

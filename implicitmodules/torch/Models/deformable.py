@@ -123,7 +123,7 @@ class DeformableImage(Deformable):
         if extent is None:
             extent = AABB(0, 1., 0., 1.)
         elif isinstance(extent, str) and extent == 'match':
-            extent = AABB(0., self.__shape[1], 0., self.__shape[0])
+            extent = AABB(0., self.__shape[1]-1, 0., self.__shape[0]-1)
 
         self.__extent = extent
 

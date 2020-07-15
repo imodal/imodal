@@ -22,11 +22,8 @@ def rot2d(theta):
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
 
 
-def points2pixels(points, frame_shape, frame_extent=None, toindices=False):
-    # if frame_extent is None:
-    #     frame_extent = AABB(0., frame_shape[1], 0., frame_shape[0])
-
-    scale_u, scale_v = frame_shape[1]/frame_extent.width, frame_shape[0]/frame_extent.height
+def points2pixels(points, frame_shape, frame_extent, toindices=False):
+    scale_u, scale_v = (frame_shape[1]-1)/frame_extent.width, (frame_shape[0]-1)/frame_extent.height
     u1, v1 = scale_u*(points[:, 0] - frame_extent.xmin), scale_v*(points[:, 1] - frame_extent.ymin)
 
     if toindices:
@@ -36,11 +33,8 @@ def points2pixels(points, frame_shape, frame_extent=None, toindices=False):
     return torch.stack([v1, u1], dim=1)
 
 
-def pixels2points(pixels, frame_shape, frame_extent=None):
-    # if frame_extent is None:
-    #     frame_extent = AABB(0., frame_shape[1], 0., frame_shape[0])
-
-    scale_x, scale_y = frame_extent.width/frame_shape[1], frame_extent.height/frame_shape[0]
+def pixels2points(pixels, frame_shape, frame_extent):
+    scale_x, scale_y = frame_extent.width/(frame_shape[1]-1), frame_extent.height/(frame_shape[0]-1)
 
     x, y = scale_x*pixels[:, 1] + frame_extent.xmin, scale_y*pixels[:, 0] + frame_extent.ymin
 
@@ -144,6 +138,4 @@ def append_in_dict_of_list(base, d):
 
 def make_grad_graph(tensor, filename, params=None):
     make_dot(tensor, params=params).render(filename)
-
-
 
