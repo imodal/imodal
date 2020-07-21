@@ -83,7 +83,7 @@ class Fitter:
             print("Model evaluation count={neval}".format(neval=res['neval']))
             if 'neval_grad' in res:
                 print("Model gradient evaluation count={neval_grad}".format(neval_grad=res['neval_grad']))
-            print("Time elapsed =", time.perf_counter() - start_time)        
+            print("Time elapsed =", time.perf_counter() - start_time)
 
     def __print_costs(self, costs):
         print("Costs")

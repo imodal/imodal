@@ -1,8 +1,4 @@
-import copy
-import time
 from collections import Iterable, OrderedDict
-
-import torch
 
 from implicitmodules.torch.DeformationModules import CompoundModule
 from implicitmodules.torch.Manifolds import CompoundManifold
@@ -34,10 +30,10 @@ class RegistrationModel(BaseModel):
 
         [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
 
-        deformable_landmarks = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
+        deformable_manifolds = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
         modules_manifolds = CompoundModule(self.__modules).manifold.clone()
 
-        self.__init_manifold = CompoundManifold([*deformable_landmarks, *modules_manifolds]).clone(requires_grad=True)        
+        self.__init_manifold = CompoundManifold([*deformable_manifolds, *modules_manifolds]).clone(requires_grad=True)
         self.__init_other_parameters = other_parameters
 
         # Update the parameter dict
@@ -92,6 +88,10 @@ class RegistrationModel(BaseModel):
     def _compute_parameters(self):
         # Fill the parameter dictionary that will be given to the optimizer.
 
+        # For Python version before 3.6, order of dictionary is not garanteed.
+        # For Python version 3.6, order is garanteed in the CPython implementation but not standardised in the language
+        # For Python beyon version 3.6, order is garanteed by the language specifications
+        # Since order for the parameter list is important and to ensure it is preserved with any Python version, we use an OrderedDict
         self.__parameters = OrderedDict()
 
         # Initial moments
@@ -109,7 +109,7 @@ class RegistrationModel(BaseModel):
         # Other parameters
         self.__parameters.update(self.__init_other_parameters)
 
-    def evaluate(self, target, solver, it, costs=None):
+    def evaluate(self, target, solver, it, costs=None, backpropagation=True):
         """ Evaluate the model and output its cost.
 
         Parameters
@@ -143,18 +143,20 @@ class RegistrationModel(BaseModel):
             costs['precompute'] = precompute_cost
 
         deformed_sources = self.compute_deformed(solver, it, costs=costs)
-        costs['attach'] = self.lam*self._compute_attachment_cost(deformed_sources, target)
+        costs['attach'] = self.__lam * self._compute_attachment_cost(deformed_sources, target)
 
         total_cost = sum(costs.values())
 
-        if total_cost.requires_grad:
+        if total_cost.requires_grad and backpropagation:
+            # Compute backward and return costs as a dictionary of floats
             total_cost.backward()
-
-        # Return costs as a dictionary of floats
-        return dict([(key, costs[key].item()) for key in costs])
+            return dict([(key, costs[key].item()) for key in costs])
+        else:
+            return costs
 
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
-        return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
+        # return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
+        return sum([attachment(*deformed_source, target) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         """ Compute the deformed source.

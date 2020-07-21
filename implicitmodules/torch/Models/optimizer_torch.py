@@ -1,4 +1,3 @@
-import gc
 import math
 from itertools import chain
 
@@ -42,6 +41,7 @@ class OptimizerTorch(BaseOptimizer):
 
         self.__eval_count = 0
         self.__last_costs = None
+
         def _evaluate():
             self.__optimizer.zero_grad()
 
@@ -79,8 +79,10 @@ def __create_torch_optimizer(torch_optimizer, single_parameter_group):
 
     return _create
 
+
 register_optimizer("torch_sgd", __create_torch_optimizer(torch.optim.SGD, False))
 register_optimizer("torch_lbfgs", __create_torch_optimizer(torch.optim.LBFGS, True))
+
 
 register_optimizer("gd", __create_torch_optimizer(OptimizerGradientDescent, False))
 

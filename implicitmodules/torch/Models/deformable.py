@@ -1,14 +1,12 @@
-import copy
 from pathlib import Path
 
 import torch
 from numpy import loadtxt
-import pickle
 
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import grid2vec, vec2grid, deformed_intensities, AABB, load_greyscale_image, points2pixels, pixels2points
+from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
 
 
 class Deformable:
@@ -37,20 +35,17 @@ class Deformable:
         raise NotImplementedError()
 
 
-
 class DeformablePoints(Deformable):
     def __init__(self, points):
         super().__init__(Landmarks(points.shape[1], points.shape[0], gd=points))
 
     @classmethod
     def load_from_file(cls, filename):
-        path = Path(filename)
+        pass
 
     @classmethod
     def load_from_pickle(cls, filename):
         pass
-        # with f as open(filename, 'rb'):
-        #     points = pickle.load(f)
 
     @classmethod
     def load_from_csv(cls, filename, **kwargs):
@@ -141,7 +136,7 @@ class DeformableImage(Deformable):
         if self.__output == 'bitmap':
             return (self.bitmap,)
         elif self.__output == 'points':
-            return (self.silent_module.manifold.gd, self.__bitmap.flatten())
+            return (self.silent_module.manifold.gd, self.__bitmap.flatten()/torch.sum(self.__bitmap))
         else:
             raise ValueError()
 
@@ -207,7 +202,7 @@ class DeformableImage(Deformable):
             return (deformed_intensities(gd, self.__bitmap, self.__extent), )
         elif self.__output == 'points':
             deformed_bitmap = deformed_intensities(gd, self.__bitmap, self.__extent)
-            return (gd, deformed_bitmap.flatten())
+            return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
         else:
             raise ValueError()
 

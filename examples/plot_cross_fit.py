@@ -20,6 +20,7 @@ import math
 
 import torch
 import matplotlib.pyplot as plt
+import scipy
 
 import implicitmodules.torch as dm
 
@@ -27,8 +28,14 @@ import implicitmodules.torch as dm
 # We load the data and plot them.
 #
 
-source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
-target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png", origin='lower')
+source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
+target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+
+# Smoothing
+sig_smooth = 0.
+source_image = torch.tensor(scipy.ndimage.gaussian_filter(source_image, sig_smooth))
+target_image = torch.tensor(scipy.ndimage.gaussian_filter(target_image, sig_smooth))
+
 
 extent_length = 31.
 extent = dm.Utilities.AABB(0., extent_length, 0., extent_length)
@@ -42,7 +49,7 @@ source_dots = 0.6*extent_length*dots + extent_length*torch.tensor([0.5, 0.5])
 
 target_dots = 0.6*extent_length*dm.Utilities.linear_transform(dots, dm.Utilities.rot2d(math.pi/4)) + extent_length*torch.tensor([0.5, 0.5])
 
-center = extent_length*torch.tensor([[0.2, 0.5]])
+center = extent_length*torch.tensor([[0.5, 0.5]])
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
@@ -74,16 +81,16 @@ rotation = dm.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center.c
 # rotation center.
 #
 
-source_deformable = dm.Models.DeformableImage(source_image, output='bitmap',
+source_deformable = dm.Models.DeformableImage(source_image, output='points',
                                               extent='match')
-target_deformable = dm.Models.DeformableImage(target_image, output='bitmap', 
+target_deformable = dm.Models.DeformableImage(target_image, output='points', 
                                               extent='match')
 
 source_dots_deformable = dm.Models.DeformablePoints(source_dots)
 target_dots_deformable = dm.Models.DeformablePoints(target_dots)
 
-# model = dm.Models.RegistrationModel([source_deformable], [rotation], [dm.Attachment.GeomlossAttachment(loss='sinkhorn', blur=0.01, scaling=0.9)], fit_gd=[True], lam=100.)
-model = dm.Models.RegistrationModel([source_deformable], [rotation], [dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=100.)
+model = dm.Models.RegistrationModel([source_deformable], [rotation], [dm.Attachment.GeomlossAttachment(loss='sinkhorn', blur=0.05, scaling=0.9)], fit_gd=[True], lam=100.)
+# model = dm.Models.RegistrationModel([source_deformable], [rotation], [dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=100.)
 
 
 ###############################################################################

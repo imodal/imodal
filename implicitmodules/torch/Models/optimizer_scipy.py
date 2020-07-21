@@ -39,6 +39,10 @@ class OptimizerScipy(BaseOptimizer):
 
         options['maxiter'] = max_iter
 
+        self.__naninf = False
+        if 'naninf' in options.keys():
+            self.__naninf = options['naninf']
+
         self.__last_cost = None
         scipy_res = minimize(self.__evaluate(target, shoot_solver, shoot_it), x0, method=self.__scipy_method, jac=self.__need_grad, tol=tol, callback=_post_iteration_callback, options=options)
 
@@ -56,10 +60,21 @@ class OptimizerScipy(BaseOptimizer):
 
             costs = self.model.evaluate(target, shoot_solver, shoot_it)
 
+            if np.any(np.isnan(np.array(list(costs.values())))):
+                if self.__naninf:
+                    costs = float('inf')
+                    print("Warning in OptimizerScipy.__evaluate_grad(): NaN cost computed, returning inf instead.")
+                else:
+                    raise ValueError("OptimizerScipy.__evaluate_grad(): evaluated cost is NaN!")
+
             d_costs = self.__model_to_numpy(self.model, True)
 
             if np.any(np.isnan(d_costs)):
-                raise ValueError("OptimizerScipy.__evaluate_grad(): evaluated costs gradients contain NaN values!")
+                if self.__naninf:
+                    d_costs = np.zeros_like(d_costs)
+                    print("Warning in OptimizerScipy.__evaluate_grad(): found NaN values in computed gradient, returning zero vector instead.")
+                else:
+                    raise ValueError("OptimizerScipy.__evaluate_grad(): evaluated costs gradients contain NaN values!")
 
             gc.collect()
 
@@ -75,6 +90,13 @@ class OptimizerScipy(BaseOptimizer):
 
             with torch.autograd.no_grad():
                 costs = self.model.evaluate(target, shoot_solver, shoot_it)
+
+            if np.any(np.isnan(np.array(list(costs.values())))):
+                if self.__naninf:
+                    costs = float('inf')
+                    print("Warning in OptimizerScipy.__evaluate_no_grad(): NaN cost computed, returning inf instead.")
+                else:
+                    raise ValueError("OptimizerScipy.__evaluate_no_grad(): evaluated cost is NaN!")
 
             gc.collect()
 
