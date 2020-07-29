@@ -1,7 +1,7 @@
 from collections import Iterable
 
 import torch
-from pykeops.torch import Kernel, kernel_product, Genred
+from pykeops.torch import Genred
 
 from implicitmodules.torch.Attachment.attachment import Attachment
 from implicitmodules.torch.Utilities.meshutils import close_shape, compute_centers_normals_lengths
@@ -32,7 +32,9 @@ class VarifoldAttachmentBase(Attachment):
         raise NotImplementedError
 
     def loss(self, source, target):
-        return sum([self.cost_varifold(source, target, sigma) for sigma in self.__sigmas])
+        costs = [self.cost_varifold(source, target, sigma) for sigma in self.__sigmas]
+
+        return sum([cost for cost in costs if cost > 1e-5])
 
 
 class VarifoldAttachment2D(VarifoldAttachmentBase):
@@ -55,14 +57,16 @@ class VarifoldAttachment2D_Torch(VarifoldAttachment2D):
 
             xy = torch.tensordot(torch.transpose(torch.tensordot(mx, my, dims=0), 1, 2), torch.eye(2, dtype=source.dtype, device=source.device))
 
-            d2 = torch.sum(mx * mx, dim=1).reshape(nx, 1).repeat(1, ny) + torch.sum(my * my, dim=1).repeat(nx, 1) - 2 * xy
+            d2 = torch.sum(mx * mx, dim=1).reshape(nx, 1).repeat(1, ny) + torch.sum(my * my, dim=1).repeat(nx, 1) - 2. * xy
 
-            kxy = torch.exp(-d2 / (2 * sigma ** 2))
+            kxy = torch.exp(-d2 / (2. * sigma ** 2))
 
             vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2, dtype=source.dtype, device=source.device)) ** 2
 
-            nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
-            nvy = torch.sqrt(torch.sum(vy * vy, dim=1))
+            # nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
+            # nvy = torch.sqrt(torch.sum(vy * vy, dim=1))
+            nvx = torch.norm(vx, dim=1)
+            nvy = torch.norm(vy, dim=1)
 
             mask = vxvy > 0
 
@@ -112,7 +116,7 @@ class VarifoldAttachment3D_Torch(VarifoldAttachment3D):
         return torch.mm(K * binet(torch.mm(x[1], y[1].T)), p)
 
     def varifold_scalar_product(self, x, y, lengths_x, lengths_y, normalized_x, normalized_y, sigma):
-        return  torch.dot(lengths_x.view(-1), self.__convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
+        return torch.dot(lengths_x.view(-1), self.__convolve((x, normalized_x), (y, normalized_y), lengths_y.view(-1, 1), sigma).view(-1))
 
 
 class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):

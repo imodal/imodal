@@ -1,6 +1,7 @@
 import torch
 import math
 
+
 def linear_transform(points, A):
     """ Applies a linear transformation to a point tensor.
 
@@ -10,7 +11,7 @@ def linear_transform(points, A):
         A :math:`N\\times d` tensor that will be transformed.
     A : torch.Tensor
         A :math:`d\\times d` matrix that represent the linear transformation.
-    
+
     Returns
     -------
     torch.Tensor
@@ -47,6 +48,7 @@ def generate_unit_square(points_per_side, dtype=None):
 
 def generate_unit_circle(angular_resolution, dtype=None):
     """ Generates an unit circle on the plane.
+    The generated circle is not closed, i.e. first and last point are not the same.
 
     Parameters
     ----------
@@ -61,8 +63,9 @@ def generate_unit_circle(angular_resolution, dtype=None):
         Points of the output circle
     """
     return torch.stack(
-        [torch.cos(torch.linspace(0, 2.*math.pi, angular_resolution, dtype=dtype)),
-         torch.sin(torch.linspace(0, 2.*math.pi, angular_resolution, dtype=dtype))], axis=1)
+        [torch.cos(torch.linspace(0, 2.*math.pi, angular_resolution + 1, dtype=dtype)[:-1]),
+         torch.sin(torch.linspace(0, 2.*math.pi, angular_resolution + 1, dtype=dtype)[:-1])], axis=1)
+
 
 def generate_rectangle(aabb, points_density, dtype=None):
     """ Generates a rectangle on the plane.

@@ -39,9 +39,7 @@ class OptimizerScipy(BaseOptimizer):
 
         options['maxiter'] = max_iter
 
-        self.__naninf = False
-        if 'naninf' in options.keys():
-            self.__naninf = options['naninf']
+        self.__naninf = options.get('naninf', False)
 
         self.__last_cost = None
         scipy_res = minimize(self.__evaluate(target, shoot_solver, shoot_it), x0, method=self.__scipy_method, jac=self.__need_grad, tol=tol, callback=_post_iteration_callback, options=options)

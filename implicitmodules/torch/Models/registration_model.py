@@ -1,5 +1,7 @@
 from collections import Iterable, OrderedDict
 
+import torch
+
 from implicitmodules.torch.DeformationModules import CompoundModule
 from implicitmodules.torch.Manifolds import CompoundManifold
 from implicitmodules.torch.Models import BaseModel, deformables_compute_deformed
@@ -144,6 +146,9 @@ class RegistrationModel(BaseModel):
 
         deformed_sources = self.compute_deformed(solver, it, costs=costs)
         costs['attach'] = self.__lam * self._compute_attachment_cost(deformed_sources, target)
+
+        if torch.any(torch.isnan(torch.tensor(list(costs.values())))):
+            print(costs)
 
         total_cost = sum(costs.values())
 

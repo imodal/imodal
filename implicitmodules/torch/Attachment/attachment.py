@@ -3,7 +3,7 @@ from collections import Iterable
 import geomloss
 import torch
 
-from implicitmodules.torch.Kernels.kernels import distances, scal, sqdistances, K_xy
+from implicitmodules.torch.Kernels.kernels import distances, scal
 
 
 class Attachment:
@@ -77,6 +77,7 @@ class EnergyAttachment(Attachment):
         K_yy = -distances(y_j, y_j)
         return .5*scal(a_i, torch.mm(K_xx, a_i.view(-1, 1))) - scal(a_i, torch.mm(K_xy, b_j.view(-1, 1))) + .5*scal(b_j, torch.mm(K_yy, b_j.view(-1, 1)))
 
+
 class L2NormAttachment(Attachment):
     """L2 norm distance between two measures."""
     def __init__(self, weight=1.):
@@ -92,11 +93,10 @@ class GeomlossAttachment(Attachment):
         self.__geomloss = geomloss.SamplesLoss(**kwargs)
 
     def loss(self, source, target):
-        x = source[0]
-        alpha = source[1]
-        y = target[0]
-        beta = target[1]
-        return self.__geomloss(alpha, x, beta, y)
+        if isinstance(source, Iterable) and not isinstance(source, torch.Tensor):
+            return self.__geomloss(source[1], source[0], target[1], target[0])
+        else:
+            return self.__geomloss(source, target)
 
 
 class EuclideanPointwiseDistanceAttachment(Attachment):
