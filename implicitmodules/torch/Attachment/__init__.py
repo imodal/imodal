@@ -1,3 +1,3 @@
 from implicitmodules.torch.Attachment.attachment import *
 from implicitmodules.torch.Attachment.attachment_varifold import VarifoldAttachment
-
+from implicitmodules.torch.Attachment.attachment_gradient import compute_attachment_gradient

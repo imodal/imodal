@@ -14,7 +14,7 @@ class AtlasModel(BaseModel):
         if other_parameters is None:
             other_parameters = []
 
-        if evaluate_mode != 'sequential' and evaluate_mode != 'parallel' and compute_mode != 'heterogeneous':
+        if evaluate_mode != 'sequential' and evaluate_mode != 'parallel' and evaluate_mode != 'heterogeneous':
             raise RuntimeError("Atlas.__init__(): evaluate_mode {evaluate_mode} not recognised!".format(evaluate_mode=evaluate_mode))
 
         if evaluate_mode == 'sequential':
@@ -127,9 +127,7 @@ class AtlasModel(BaseModel):
 
         shoot(Hamiltonian([translations_ht]), self.__ht_solver, self.__ht_it, intermediates=None)
 
-        deformed_template = translations_ht.manifold.gd
-
-        return deformed_template
+        return translations_ht.manifold.gd
 
     def evaluate(self, targets, solver, it):
         costs = {}
