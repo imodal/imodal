@@ -178,7 +178,7 @@ class DeformableImage(Deformable):
 
         # Forward shooting
         compound_modules = [self.module, *modules]
-        compound = CompoundModule(compound_modules)        
+        compound = CompoundModule(compound_modules)
 
         shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
 

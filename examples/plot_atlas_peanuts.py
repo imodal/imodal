@@ -39,6 +39,7 @@ template = dm.Utilities.linear_transform(template, torch.tensor([[1.3, 0.], [0.,
 template = dm.Utilities.close_shape(template)
 
 deformable_template = dm.Models.DeformablePoints(template.clone().requires_grad_(False))
+deformable_peanuts = [dm.Models.DeformablePoints(peanut) for peanut in peanuts]
 
 point_left_scale = torch.tensor([[-1., 0.]])
 point_right_scale = torch.tensor([[1., 0.]])
@@ -64,8 +65,11 @@ plt.show()
 #
 
 sigma_scale = 1.
+sigma_local = 0.03
+
 left_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_left_scale.clone().requires_grad_(), coeff=0.1)
 right_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_right_scale.clone().requires_grad_(), coeff=0.1)
+local_translation = dm.DeformationModules.ImplicitModule0(2, deformable_template.silent_module.manifold.gd.shape[0], sigma_local, gd=deformable_template.silent_module.manifold.gd, coeff=1., nu=0.1)
 
 global_translation = dm.DeformationModules.GlobalTranslation(2)
 
@@ -77,12 +81,10 @@ global_translation = dm.DeformationModules.GlobalTranslation(2)
 # their positions.
 #
 
-# sigmas_varifold = [0.5, 2., 5., 0.1, 15.]
 sigmas_varifold = [0.4, 2.5]
-# attachment = dm.Attachment.VarifoldAttachment(2, sigmas_varifold)
-attachment = dm.Attachment.GeomlossAttachment(loss='energy')
+attachment = dm.Attachment.VarifoldAttachment(2, sigmas_varifold)
 
-atlas = dm.Models.AtlasModel(deformable_template, [global_translation, left_scale, right_scale], [attachment], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.4, ht_it=10, ht_coeff=.5, ht_nu=0.5, fit_gd=[False, True, True])
+atlas = dm.Models.AtlasModel(deformable_template, [global_translation, left_scale, right_scale], [attachment], len(peanuts), lam=100., optimise_template=True, ht_sigma=0.4, ht_it=10, ht_coeff=.5, ht_nu=0.5, fit_gd=[False, True, True, False])
 
 
 ###############################################################################
@@ -93,11 +95,10 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(atlas, optimizer='scipy_l-bfgs-b')
-# fitter = dm.Models.Fitter(atlas, optimizer='torch_lbfgs')
+fitter = dm.Models.Fitter(atlas, optimizer='torch_lbfgs')
 
 # with torch.autograd.detect_anomaly():
-fitter.fit(peanuts, 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit(deformable_peanuts, 20, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -128,22 +129,11 @@ intermediates = {}
 with torch.autograd.no_grad():
     deformed_templates = atlas.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
 
-for deformed_template in deformed_templates:
-    deformed_template[0].requires_grad_()
-
-distance = 0.
-for deformed_template, peanut in zip(deformed_templates, peanuts):
-    distance += attachment(deformed_template[0], peanut)
-
-distance.backward()
-
 row_count = math.ceil(math.sqrt(len(peanuts)))
 
 for i, deformed, peanut in zip(range(len(peanuts)), deformed_templates, peanuts):
     plt.subplot(row_count, row_count, 1 + i)
     plt.plot(deformed[0].detach()[:, 0].numpy(), deformed[0].detach()[:, 1].numpy())
-    plt.quiver(deformed[0].detach()[:, 0].numpy(), deformed[0].detach()[:, 1].numpy(),
-               deformed[0].grad[:, 0].numpy(), deformed[0].grad[:, 1].numpy())
     plt.plot(peanut[:, 0].numpy(), peanut[:, 1].numpy())
     plt.axis('equal')
 

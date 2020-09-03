@@ -13,6 +13,7 @@ import sys
 
 import torch
 import matplotlib.pyplot as plt
+import scipy.interpolate
 
 sys.path.append("../")
 
@@ -47,6 +48,12 @@ template = dm.Utilities.close_shape(template)
 source = peanuts[4]
 target = peanuts[2]
 
+# # resampled = dm.Utilities.resample_curve(source, 1.)
+# # resampled = scipy.interpolate.splprep([source[:, 0].numpy(), source[:, 1].numpy()], k=1)
+# resampled = scipy.interpolate.SmoothBivariateSpline(source[:, 0].numpy(), source[:, 1].numpy(), kx=1, ky=1)
+# print(resampled)
+# exit()
+
 ###############################################################################
 # Varifold attachment
 #
@@ -67,5 +74,4 @@ plt.show()
 plt.title("Energy attachment")
 plot_attachment_gradient(source, target, dm.Attachment.EnergyAttachment())
 plt.show()
-
 

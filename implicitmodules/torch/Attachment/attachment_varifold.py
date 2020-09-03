@@ -32,9 +32,7 @@ class VarifoldAttachmentBase(Attachment):
         raise NotImplementedError
 
     def loss(self, source, target):
-        costs = [self.cost_varifold(source, target, sigma) for sigma in self.__sigmas]
-
-        return sum([cost for cost in costs if cost > 1e-5])
+        return sum([self.cost_varifold(source[0], target[0], sigma) for sigma in self.__sigmas])
 
 
 class VarifoldAttachment2D(VarifoldAttachmentBase):
@@ -63,8 +61,6 @@ class VarifoldAttachment2D_Torch(VarifoldAttachment2D):
 
             vxvy = torch.tensordot(torch.transpose(torch.tensordot(vx, vy, dims=0), 1, 2), torch.eye(2, dtype=source.dtype, device=source.device)) ** 2
 
-            # nvx = torch.sqrt(torch.sum(vx * vx, dim=1))
-            # nvy = torch.sqrt(torch.sum(vy * vy, dim=1))
             nvx = torch.norm(vx, dim=1)
             nvy = torch.norm(vy, dim=1)
 

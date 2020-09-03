@@ -105,7 +105,6 @@ class RegistrationModel(BaseModel):
 
             for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold[len(self.__deformables):]):
                 if fit_gd:
-                    print(init_manifold.gd)
                     self.__parameters['gd']['params'].extend(init_manifold.unroll_gd())
 
         # Other parameters
@@ -141,8 +140,8 @@ class RegistrationModel(BaseModel):
         if self.precompute_callback is not None:
             precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
 
-        if costs is not None and precompute_cost is not None:
-            costs['precompute'] = precompute_cost
+            if costs is not None:
+                costs['precompute'] = precompute_cost
 
         deformed_sources = self.compute_deformed(solver, it, costs=costs)
         costs['attach'] = self.__lam * self._compute_attachment_cost(deformed_sources, target)
@@ -160,8 +159,7 @@ class RegistrationModel(BaseModel):
             return costs
 
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
-        # return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
-        return sum([attachment(*deformed_source, target) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
+        return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
     def compute_deformed(self, solver, it, costs=None, intermediates=None):
         """ Compute the deformed source.
