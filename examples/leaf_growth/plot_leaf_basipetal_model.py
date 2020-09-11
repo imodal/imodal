@@ -14,11 +14,8 @@ basipetal growth pattern.
 import sys
 sys.path.append("../../")
 
-import math
 import pickle
-import copy
 
-import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
@@ -120,9 +117,11 @@ abc = torch.zeros(6, 2)
 abc[0] = torch.ones(2)
 abc.requires_grad_()
 
+
 # The polynomial model we will try to fit on our deformation constants
 def pol_order_2(pos, a, b, c, d, e, f):
     return a + b*pos[:, 0] + c*pos[:, 1] + d*pos[:, 0]**2 + e*pos[:, 1]**2 + f*pos[:, 0]*pos[:, 1]
+
 
 # Callback called when evaluating the model.
 # Serves as glue for our model of deformation constants.
@@ -143,12 +142,12 @@ def callback_compute_c(init_manifold, modules, parameters):
 # so that it also get learned.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
-            [global_translation, growth],
-            [dm.Attachment.VarifoldAttachment(2, [10., 50.]),
-            dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)],
-            lam=100., other_parameters={'abc': {'params': [abc]}},
-            precompute_callback=callback_compute_c)
+deformable_shape_source = dm.Models.DeformablePoints(shape_source)
+deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+deformable_dots_source = dm.Models.DeformablePoints(dots_source)
+deformable_dots_target = dm.Models.DeformablePoints(dots_target)
+
+model = dm.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [dm.Attachment.VarifoldAttachment(2, [5., 25, 80.]), dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)], lam=100., other_parameters={'abc': {'params': [abc]}}, precompute_callback=callback_compute_c)
 
 
 ###############################################################################
@@ -159,17 +158,12 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target, dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
-
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
-#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target, deformable_dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
-# Plot matching results. 
+# Plot matching results.
 #
 
 intermediates = {}
@@ -179,7 +173,6 @@ intermediate_states = intermediates['states']
 deformed_source = intermediate_states[-1][0].gd
 deformed_growth = intermediate_states[-1][3].gd[0]
 deformed_growth_rot = intermediate_states[-1][3].gd[1]
-
 
 aabb_target = dm.Utilities.AABB.build_from_points(shape_target).squared().scale(1.1)
 

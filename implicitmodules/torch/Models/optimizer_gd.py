@@ -1,14 +1,11 @@
 import math
-import copy
 from itertools import chain
 
 import torch
 
-from implicitmodules.torch.Models import register_optimizer
-
 
 class OptimizerGradientDescent:
-    def __init__(self, parameters, init_step_length=1e0, gamma1=0.8, gamma2=1./0.8, verbose=False):
+    def __init__(self, parameters, init_step_length=1e0, gamma1=0.2, gamma2=1.3, verbose=False):
         self.__parameters = parameters
         self.__gammas = {'gamma1': gamma1, 'gamma2': gamma2}
         self.__init_step_length = init_step_length

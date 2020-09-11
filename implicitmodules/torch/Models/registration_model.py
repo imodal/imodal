@@ -8,12 +8,12 @@ from implicitmodules.torch.Models import BaseModel, deformables_compute_deformed
 
 
 class RegistrationModel(BaseModel):
-    def __init__(self, deformables, modules, attachments, fit_gd=None, lam=1., precompute_callback=None, other_parameters=None):
+    def __init__(self, deformables, deformation_modules, attachments, fit_gd=None, lam=1., precompute_callback=None, other_parameters=None):
         if not isinstance(deformables, Iterable):
             deformables = [deformables]
 
-        if not isinstance(modules, Iterable):
-            modules = [modules]
+        if not isinstance(deformation_modules, Iterable):
+            deformation_modules = [deformation_modules]
 
         if not isinstance(attachments, Iterable):
             attachments = [attachments]
@@ -21,8 +21,8 @@ class RegistrationModel(BaseModel):
         assert len(deformables) == len(attachments)
 
         self.__deformables = deformables
-        self.__modules = modules
         self.__attachments = attachments
+        self.__deformation_modules = deformation_modules
         self.__precompute_callback = precompute_callback
         self.__fit_gd = fit_gd
         self.__lam = lam
@@ -30,13 +30,16 @@ class RegistrationModel(BaseModel):
         if other_parameters is None:
             other_parameters = []
 
-        [module.manifold.fill_cotan_zeros(requires_grad=True) for module in self.__modules]
+        [module.manifold.fill_cotan_zeros(requires_grad=True) for module in deformation_modules]
 
         deformable_manifolds = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
-        modules_manifolds = CompoundModule(self.__modules).manifold.clone()
+        deformation_modules_manifolds = CompoundModule(deformation_modules).manifold.clone()
 
-        self.__init_manifold = CompoundManifold([*deformable_manifolds, *modules_manifolds]).clone(requires_grad=True)
+        self.__init_manifold = CompoundManifold([*deformable_manifolds, *deformation_modules_manifolds]).clone(requires_grad=True)
         self.__init_other_parameters = other_parameters
+
+        self.__modules = [deformable.silent_module for deformable in self.__deformables]
+        self.__modules.extend(deformation_modules)
 
         # Update the parameter dict
         self._compute_parameters()
@@ -46,6 +49,10 @@ class RegistrationModel(BaseModel):
     @property
     def modules(self):
         return self.__modules
+
+    @property
+    def deformation_modules(self):
+        return self.__deformation_modules
 
     @property
     def attachments(self):
@@ -78,10 +85,6 @@ class RegistrationModel(BaseModel):
     @property
     def lam(self):
         return self.__lam
-
-    @property
-    def attachments(self):
-        return self.__attachments
 
     @property
     def deformables(self):
@@ -140,14 +143,15 @@ class RegistrationModel(BaseModel):
         if self.precompute_callback is not None:
             precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
 
-            if costs is not None:
+            if precompute_cost is not None:
                 costs['precompute'] = precompute_cost
 
         deformed_sources = self.compute_deformed(solver, it, costs=costs)
         costs['attach'] = self.__lam * self._compute_attachment_cost(deformed_sources, target)
 
-        if torch.any(torch.isnan(torch.tensor(list(costs.values())))):
-            print(costs)
+        # if torch.any(torch.isnan(torch.tensor(list(costs.values())))):
+        #     print("Registration model has been evaluated to NaN!")
+        #     print(costs)
 
         total_cost = sum(costs.values())
 
@@ -179,7 +183,7 @@ class RegistrationModel(BaseModel):
             List of deformed sources.
         """
 
-        compound_module = CompoundModule(self.__modules)
+        compound_module = CompoundModule(self.__deformation_modules)
         compound_module.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
         compound_module.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
 

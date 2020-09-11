@@ -1,5 +1,4 @@
 import torch
-import math
 
 from pykeops.torch import Genred, KernelSolve
 
@@ -55,9 +54,13 @@ class ImplicitModule1Base(DeformationModule):
     def manifold(self):
         return self.__manifold
 
-    @property
-    def C(self):
+    def __get_C(self):
         return self.__C
+
+    def __set_C(self, C):
+        self.__C = C
+
+    C = property(__get_C, __set_C)
 
     @property
     def sigma(self):

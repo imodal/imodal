@@ -1,20 +1,14 @@
-import time
-
 import torch
 from torch.autograd import grad
 from torchdiffeq import odeint as odeint
 from torchdiffeq._impl.odeint import SOLVERS as torchdiffeq_solvers
 
-from implicitmodules.torch.HamiltonianDynamic import Hamiltonian
-from implicitmodules.torch.Manifolds import CompoundManifold
-
 
 def shoot(h, solver, it, controls=None, intermediates=None):
     """ Shoot the hamiltonian system.
-    integrate ODE, associe a gd et mom initiaux la trajectoire lien article 
-    minimisation energie definit par le modele
-    obtient trajectoire minimisante
-    
+    integrate ODE, associe a gd et mom initiaux la trajectoire lien article.
+    minimisation energie definit par le modele.
+    obtient trajectoire minimisante.
 
     Parameters
     ----------

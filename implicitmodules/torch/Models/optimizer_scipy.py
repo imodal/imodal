@@ -115,6 +115,7 @@ class OptimizerScipy(BaseOptimizer):
             raise ValueError("Scipy optimization routines are only compatible with parameters given as *contiguous* tensors.")
 
         if grad:
+            #print([param.grad for param in self.__parameters_to_list(model.parameters)])
             tensors = [param.grad.data.flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]
         else:
             tensors = [param.detach().flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]

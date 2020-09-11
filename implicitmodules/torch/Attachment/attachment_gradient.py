@@ -15,7 +15,7 @@ def compute_attachment_gradient(sources, targets, attachment):
         targets = [targets]
 
     sources = [source.data.requires_grad_() for source in sources]
-    distance = sum([attachment(source, target) for source, target in zip(sources, targets)])
+    distance = sum([attachment([source], [target]) for source, target in zip(sources, targets)])
 
     distance.backward()
 

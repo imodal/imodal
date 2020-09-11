@@ -1,6 +1,5 @@
 import math
 
-import trimesh
 import torch
 from scipy.spatial import ConvexHull
 
@@ -587,6 +586,9 @@ def fill_area_random_density(area, aabb, density, **kwargs):
 
 
 def compute_centers_normals_lengths(vertices, faces):
+    """
+
+    """
     v0, v1, v2 = vertices.index_select(0, faces[:, 0]), vertices.index_select(0, faces[:, 1]), vertices.index_select(0, faces[:, 2])
     centers = 0.5 * (v0 + v1 + v2)
     normals = 0.5 * torch.cross(v1 - v0, v2 - v0)
@@ -595,10 +597,44 @@ def compute_centers_normals_lengths(vertices, faces):
 
 
 def kernel_smooth(points, kernel):
+    """
+
+    """
     K = kernel(points, points)
     return torch.mm(K, points)/torch.sum(K, dim=1).unsqueeze(1)
 
 
 def gaussian_kernel_smooth(points, sigma):
+    """
+
+    """
     return kernel_smooth(points, lambda x, y: K_xy(x, y, sigma))
+
+
+def resample_curve(curve, density):
+    """
+
+    """
+    if curve.shape[0] <= 1:
+        return curve
+
+    lengths = torch.norm(curve[1:] - close_shape(curve)[:-2], dim=1)
+    length = torch.sum(lengths)
+    out = torch.zeros(math.floor(length*density), curve.shape[1])
+
+    interval = 1./density
+    p0 = curve[0]
+    p1 = curve[1]
+    cur_length = 0.
+    length_index = 0
+    for i in range(0, out.shape[0]):
+        t = (cur_length-torch.sum(lengths[:length_index]))*lengths[length_index]
+        out[i] = t*p1 - p0
+        cur_length = cur_length + interval
+        if cur_length >= torch.sum(lengths[:length_index]):
+            p0 = p1
+            p1 = curve[length_index+2]
+            length_index = length_index + 1
+
+    return out
 

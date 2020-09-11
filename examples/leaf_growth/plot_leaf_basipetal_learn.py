@@ -14,11 +14,9 @@ basipetal growth pattern.
 import sys
 sys.path.append("../../")
 
-import math
 import pickle
-import copy
 
-import numpy as np
+
 import torch
 import matplotlib.pyplot as plt
 
@@ -116,11 +114,12 @@ growth = dm.DeformationModules.ImplicitModule1(
 # so that it also get learned.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
-            [global_translation, growth],
-            [dm.Attachment.VarifoldAttachment(2, [10., 50.]),
-            dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)],
-            lam=100., other_parameters={'C': {'params': [growth.C]}})
+deformable_shape_source = dm.Models.DeformablePoints(shape_source)
+deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+deformable_dots_source = dm.Models.DeformablePoints(dots_source)
+deformable_dots_target = dm.Models.DeformablePoints(dots_target)
+
+model = dm.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [dm.Attachment.VarifoldAttachment(2, [10., 50.]), dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)], lam=100., other_parameters={'C': {'params': [growth.C]}})
 
 
 ###############################################################################
@@ -130,16 +129,12 @@ model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
 shoot_solver = 'euler'
 shoot_it = 10
 
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
-#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target, dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target, deformable_dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
-# Plot matching results. 
+# Plot matching results.
 #
 
 intermediates = {}

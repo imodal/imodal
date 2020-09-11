@@ -13,7 +13,6 @@ import sys
 
 import torch
 import matplotlib.pyplot as plt
-import scipy.interpolate
 
 sys.path.append("../")
 
@@ -25,7 +24,7 @@ import implicitmodules.torch as dm
 #
 
 def plot_attachment_gradient(source, target, attachment):
-    gradients = dm.Attachment.compute_attachment_gradient(source, target, attachment)
+    gradients = dm.Attachment.compute_attachment_gradient([source], [target], attachment)[0]
 
     plt.plot(source[:, 0].numpy(), source[:, 1].numpy(), color='black')
     plt.plot(source[:, 0].numpy(), source[:, 1].numpy(), 'x', color='black', )

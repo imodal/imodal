@@ -18,11 +18,9 @@ some quadratic law.
 import sys
 sys.path.append("../../")
 
-import math
 import pickle
 import copy
 
-import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
@@ -107,7 +105,7 @@ plt.show()
 # We now build the deformation modules that will be used by the model.
 #
 
-nu = 0.01
+nu = 0.1
 coeff_small = 10.
 coeff_growth = 0.01
 scale_small = 5.
@@ -116,7 +114,7 @@ scale_growth = 25.
 global_translation = dm.DeformationModules.GlobalTranslation(2)
 
 small_scale_translation = dm.DeformationModules.ImplicitModule0(
-    2, points_small.shape[0], scale_small, coeff=coeff_small, nu=0.01,
+    2, points_small.shape[0], scale_small, coeff=coeff_small, nu=nu,
     gd=points_small)
 
 growth = dm.DeformationModules.ImplicitModule1(
@@ -128,9 +126,10 @@ growth = dm.DeformationModules.ImplicitModule1(
 # We now define the model.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source],
-            [global_translation, small_scale_translation, growth],
-            [dm.Attachment.VarifoldAttachment(2, [20., 100.])], lam=100.)
+deformable_shape_source = dm.Models.DeformablePoints(shape_source)
+deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+
+model = dm.Models.RegistrationModel([deformable_shape_source], [global_translation, small_scale_translation, growth], [dm.Attachment.VarifoldAttachment(2, [10., 50.])], lam=100.)
 
 
 ###############################################################################
@@ -141,13 +140,8 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = fitter.fit([shape_target], 100, log_interval=10,
-#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Plot results. Matching is very good.

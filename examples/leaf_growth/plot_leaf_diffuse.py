@@ -18,11 +18,9 @@ some linear law.
 import sys
 sys.path.append("../../")
 
-import math
 import pickle
 import copy
 
-import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
@@ -127,9 +125,10 @@ growth = dm.DeformationModules.ImplicitModule1(
 # We now define the model.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source],
-            [global_translation, small_scale_translation, growth],
-            [dm.Attachment.VarifoldAttachment(2, [20., 60.])], lam=100.)
+deformable_shape_source = dm.Models.DeformablePoints(shape_source)
+deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+
+model = dm.Models.RegistrationModel([deformable_shape_source], [global_translation, small_scale_translation, growth], [dm.Attachment.VarifoldAttachment(2, [20., 60.])], lam=100.)
 
 
 ###############################################################################
@@ -140,8 +139,8 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
