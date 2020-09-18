@@ -1,5 +1,5 @@
 import copy
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import torch
 
@@ -49,9 +49,15 @@ class AtlasModel(BaseModel):
 
             if fit_gd is not None and i != 0:
                 for j in range(len(modules)):
-                    if fit_gd[j]:
+                    if isinstance(fit_gd[j], bool) and fit_gd[j]:
                         # We fit the geometrical descriptor of some module. We optimise the one from the first model. For the other models, we assign a reference to the manifold of the first model.
                         self.__registration_models[i].init_manifold[j+1].gd = self.__registration_models[0].init_manifold[j+1].gd
+
+                    # Geometrical descriptor is multidimensional
+                    elif isinstance(fit_gd[j], Iterable):
+                        for b, k in enumerate(fit_gd[j]):
+                            if b:
+                                self.__registration_models[i].init_manifold[j+1].gd[k] = self.__registration_models[0].init_manifold[j+1].gd[k]
 
         # Momentum of the LDDMM translation module for the hypertemplate if used
         if self.__optimise_template:

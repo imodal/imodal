@@ -93,18 +93,25 @@ class DeformablePoints(Deformable):
 #         return (self.module.manifold.gd.detach(), self.__connections)
 
 
-# class DeformableMesh(DeformablePoints):
-#     def __init__(self, points, triangles):
-#         self.__triangles = triangles
-#         super().__init__(points)
+class DeformableMesh(DeformablePoints):
+    def __init__(self, points, triangles):
+        self.__triangles = triangles
+        super().__init__(points)
 
-#     @classmethod
-#     def load_from_file(cls, filename):
-#         pass
+    @classmethod
+    def load_from_file(cls, filename):
+        pass
 
-#     @property
-#     def geometry(self):
-#         return self.module.manifold.gd.detach(), self.__triangles
+    @property
+    def triangles(self):
+        return self.__triangles
+
+    @property
+    def geometry(self):
+        return (self.silent_module.manifold.gd, self.__triangles)
+
+    def _to_deformed(self, gd):
+        return (gd, self.__triangles)
 
 
 class DeformableImage(Deformable):

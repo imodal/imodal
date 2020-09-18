@@ -32,7 +32,7 @@ class VarifoldAttachmentBase(Attachment):
         raise NotImplementedError
 
     def loss(self, source, target):
-        return sum([self.cost_varifold(source[0], target[0], sigma) for sigma in self.__sigmas])
+        return sum([self.cost_varifold(source, target, sigma) for sigma in self.__sigmas])
 
 
 class VarifoldAttachment2D(VarifoldAttachmentBase):
@@ -46,6 +46,9 @@ class VarifoldAttachment2D(VarifoldAttachmentBase):
 
 class VarifoldAttachment2D_Torch(VarifoldAttachment2D):
     def cost_varifold(self, source, target, sigma):
+        source = source[0]
+        target = target[0]
+
         def dot_varifold(x, y, sigma):
             cx, cy = close_shape(x), close_shape(y)
             nx, ny = x.shape[0], y.shape[0]

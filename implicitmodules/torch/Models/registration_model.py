@@ -35,6 +35,7 @@ class RegistrationModel(BaseModel):
         deformable_manifolds = [deformable.silent_module.manifold.clone() for deformable in self.__deformables]
         deformation_modules_manifolds = CompoundModule(deformation_modules).manifold.clone()
 
+        # TODO: set requires_grad=None, check it does not break anything else
         self.__init_manifold = CompoundManifold([*deformable_manifolds, *deformation_modules_manifolds]).clone(requires_grad=True)
         self.__init_other_parameters = other_parameters
 
@@ -103,12 +104,17 @@ class RegistrationModel(BaseModel):
         self.__parameters['cotan'] = {'params': self.__init_manifold.unroll_cotan()}
 
         # Geometrical descriptors if specified
-        if self.__fit_gd and any(self.__fit_gd):
+        if self.__fit_gd:
             self.__parameters['gd'] = {'params': []}
 
             for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold[len(self.__deformables):]):
-                if fit_gd:
+                if isinstance(fit_gd, bool) and fit_gd:
                     self.__parameters['gd']['params'].extend(init_manifold.unroll_gd())
+                # Geometrical descriptor is multidimensional
+                elif isinstance(fit_gd, Iterable):
+                    for fit_gdi, init_manifold_gdi in zip(fit_gd, init_manifold.unroll_gd()):
+                        if fit_gdi:
+                            self.__parameters['gd']['params'].append(init_manifold_gdi)
 
         # Other parameters
         self.__parameters.update(self.__init_other_parameters)
