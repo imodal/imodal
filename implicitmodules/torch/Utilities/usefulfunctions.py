@@ -22,6 +22,60 @@ def rot2d(theta):
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
 
 
+def rot3d_x(theta):
+    return torch.tensor([[1., 0., 0.],
+                         [0., math.cos(theta), -math.sin(theta)],
+                         [0., math.sin(theta), math.cos(theta)]])
+
+
+def rot3d_y(theta):
+    return torch.tensor([[math.cos(theta), 0., -math.sin(theta)],
+                         [0., 1., 0.],
+                         [math.sin(theta), 0., math.cos(theta)]])
+
+
+def rot3d_z(alpha):
+    return torch.tensor([[math.cos(theta), -math.sin(theta), 0.],
+                         [math.sin(theta), math.cos(theta), 0.],
+                         [0., 0., 1.]])
+
+
+def rot3d_x_vec(thetas):
+    assert len(thetas.shape) == 1
+    zeros = torch.zeros(len(thetas))
+    ones = torch.ones(len(thetas))
+    sin = torch.sin(thetas)
+    cos = torch.cos(thetas)
+
+    return torch.stack([torch.stack([ones, zeros, zeros], dim=1),
+                        torch.stack([zeros, cos, -sin], dim=1),
+                        torch.stack([zeros, sin, cos], dim=1)], dim=2)
+
+
+def rot3d_y_vec(thetas):
+    assert len(thetas.shape) == 1
+    zeros = torch.zeros(len(thetas))
+    ones = torch.ones(len(thetas))
+    sin = torch.sin(thetas)
+    cos = torch.cos(thetas)
+
+    return torch.stack([torch.stack([cos, zeros, sin], dim=1),
+                        torch.stack([zeros, ones, zeros], dim=1),
+                        torch.stack([-sin, zeros, cos], dim=1)], dim=2)
+
+
+def rot3d_z_vec(thetas):
+    assert len(thetas.shape) == 1
+    zeros = torch.zeros(len(thetas))
+    ones = torch.ones(len(thetas))
+    sin = torch.sin(thetas)
+    cos = torch.cos(thetas)
+
+    return torch.stack([torch.stack([cos, -sin, zeros], dim=1),
+                        torch.stack([sin, cos, zeros], dim=1),
+                        torch.stack([zeros, zeros, ones], dim=1)], dim=2)
+
+
 def points2pixels(points, frame_shape, frame_extent, toindices=False):
     scale_u, scale_v = (frame_shape[1]-1)/frame_extent.width, (frame_shape[0]-1)/frame_extent.height
     u1, v1 = scale_u*(points[:, 0] - frame_extent.xmin), scale_v*(points[:, 1] - frame_extent.ymin)
