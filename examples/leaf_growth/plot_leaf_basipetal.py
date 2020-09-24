@@ -132,7 +132,10 @@ growth = dm.DeformationModules.ImplicitModule1(
 # We now define the model.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source],
+deformable_shape_source = dm.Models.DeformablePoints(shape_source)
+deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+
+model = dm.Models.RegistrationModel([deformable_shape_source],
             [global_translation, small_scale_translation, growth],
             [dm.Attachment.VarifoldAttachment(2, [20., 60.])], lam=100.)
 
@@ -144,14 +147,9 @@ model = dm.Models.ModelPointsRegistration([shape_source],
 shoot_solver = 'euler'
 shoot_it = 10
 
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = fitter.fit([shape_target], 100, log_interval=10,
-#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
+fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################

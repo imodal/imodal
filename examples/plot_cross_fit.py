@@ -73,7 +73,7 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-rotation = dm.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center.clone().requires_grad_())
+rotation = dm.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
 
 
 ###############################################################################
@@ -89,7 +89,6 @@ target_deformable = dm.Models.DeformableImage(target_image, output='bitmap',
 source_dots_deformable = dm.Models.DeformablePoints(source_dots)
 target_dots_deformable = dm.Models.DeformablePoints(target_dots)
 
-# model = dm.Models.RegistrationModel([source_deformable], [rotation], [dm.Attachment.GeomlossAttachment(loss='sinkhorn', blur=0.05, scaling=0.9)], fit_gd=[True], lam=100.)
 model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [dm.Attachment.EuclideanPointwiseDistanceAttachment(), dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=100.)
 
 
@@ -103,7 +102,7 @@ max_it = 100
 
 costs = {}
 fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
-# fitter = dm.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
+
 fitter.fit([target_deformable, target_dots_deformable], max_it, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 

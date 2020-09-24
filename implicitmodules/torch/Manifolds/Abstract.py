@@ -84,6 +84,15 @@ class BaseManifold:
         """
         raise NotImplementedError()
 
+    def gd_requires_grad_(self, requires_grad=True):
+        raise NotImplementedError()
+
+    def tan_requires_grad_(self, requires_grad=True):
+        raise NotImplementedError()
+
+    def cotan_requires_grad_(self, requires_grad=True):
+        raise NotImplementedError()
+
     def fill(self, manifold, copy=False, requires_grad=True):
         """
         TODO: write documentation
@@ -166,7 +175,7 @@ class BaseManifold:
     def add_cotan(self, cotan):
         """Same as **add_gd()**, for cotangents."""
         raise NotImplementedError()
-    
+
     def negate_gd(self):
         """Negate geometrical descriptors."""
         raise NotImplementedError()
@@ -233,12 +242,22 @@ class Manifold(BaseManifold):
 
         super().__init__(device, dtype)
 
+    def gd_requires_grad_(self, requires_grad=True, index=-1):
+        self.__gd.requires_grad_(requires_grad, index)
+
+    def tan_requires_grad_(self, requires_grad=True, index=-1):
+        self.__tan.requires_grad_(requires_grad, index)
+
+    def cotan_requires_grad_(self, requires_grad=True, index=-1):
+        self.__cotan.requires_grad_(requires_grad, index)
+
     def clone(self, requires_grad=None):
         """Returns a copy of the manifold. Detaches the computation graph.
         Parameters
         ----------
-        requires_grad : bool, default=False
-            Set to true to record futher operations on the manifold tensors.
+        requires_grad : bool, default=None
+            Set to True to record futher operations on the manifold tensors. Set
+            to None to not change the requires_grad setting.
         """
         out = copy.deepcopy(self)
         out.__gd.requires_grad_(requires_grad)

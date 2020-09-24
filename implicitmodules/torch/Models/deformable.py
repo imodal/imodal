@@ -177,7 +177,7 @@ class DeformableImage(Deformable):
 
     def _backward_module(self):
         pixel_grid = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
-        return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid.requires_grad_())
+        return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
         assert isinstance(costs, dict) or costs is None

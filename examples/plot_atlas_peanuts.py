@@ -67,9 +67,9 @@ plt.show()
 sigma_scale = 1.
 sigma_local = 0.03
 
-left_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_left_scale.clone().requires_grad_(), coeff=0.1)
-right_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_right_scale.clone().requires_grad_(), coeff=0.1)
-local_translation = dm.DeformationModules.ImplicitModule0(2, deformable_template.silent_module.manifold.gd.shape[0], sigma_local, gd=deformable_template.silent_module.manifold.gd, coeff=1., nu=0.1)
+left_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_left_scale, coeff=0.1)
+right_scale = dm.DeformationModules.LocalScaling(2, sigma_scale, gd=point_right_scale, coeff=0.1)
+local_translation = dm.DeformationModules.ImplicitModule0(2, deformable_template.silent_module.manifold.gd.shape[0], sigma_local, gd=deformable_template.silent_module.manifold.gd.clone(), coeff=1., nu=0.1)
 
 global_translation = dm.DeformationModules.GlobalTranslation(2)
 

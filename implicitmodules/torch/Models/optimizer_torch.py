@@ -1,5 +1,6 @@
 import math
 from itertools import chain
+import gc
 
 import torch
 
@@ -49,6 +50,9 @@ class OptimizerTorch(BaseOptimizer):
 
             self.__last_costs = costs
             self.__eval_count = self.__eval_count + 1
+
+            gc.collect()
+
             return sum(costs.values())
 
         last_total_cost = float('inf')

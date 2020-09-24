@@ -121,7 +121,7 @@ class TensorContainer:
         requires_grad : bool, default=False
             Set to true to record futher operations on the tensors.
         """
-        self.fill(tuple(torch.zeros(shape, device=self.__device, dtype=self.__dtype) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+        self.__tensors = tuple(torch.zeros(shape, device=self.__device, dtype=self.__dtype, requires_grad=requires_grad) for shape in self.__shapes)
 
     def fill_randn(self, requires_grad=False):
         """Fill each tensors of the manifold tensor with zeros.
@@ -131,18 +131,23 @@ class TensorContainer:
         requires_grad : bool, default=False
             Set to true to record futher operations on the tensors.
         """
-        self.fill(tuple(torch.randn(shape, device=self.__device) for shape in self.__shapes), clone=False, requires_grad=requires_grad)
+        self.__tensors = tuple(torch.randn(shape, device=self.__device, dtype=self.__dtype, requires_grad=requires_grad) for shape in self.__shapes)
 
-    def requires_grad_(self, requires_grad=True):
+    def requires_grad_(self, requires_grad=True, index=-1):
         """Set operation recording flag.
 
         Parameters
         ----------
         requires_grad : bool, default=True
-            Set to true to record futher operations on the tensors.
+            Set to true to record further operations on the tensors.
+        index : int, default=-1
+            Select tensor to record further operations from. If -1, all tensors
+            are selected.
         """
-        if requires_grad is not None:
+        if index == -1:
             [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
+        else:
+            self.__tensors[index].requires_grad_(requires_grad)
 
     def add(self, tensors):
         """Addition."""

@@ -42,6 +42,15 @@ class EmptyManifold(BaseManifold):
     def dim_gd(self):
         return ()
 
+    def gd_requires_grad_(self, requires_grad=True):
+        pass
+
+    def tan_requires_grad_(self, requires_grad=True):
+        pass
+
+    def cotan_requires_grad_(self, requires_grad=True):
+        pass
+
     def unroll_gd(self):
         return []
 

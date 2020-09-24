@@ -19,7 +19,7 @@ class ImplicitModule1Base(DeformationModule):
         self.__sigma = sigma
         self.__nu = nu
         self.__coeff = coeff
-        self.__dim_controls = C.shape[2]        
+        self.__dim_controls = C.shape[2]
         self.__sym_dim = int(self.manifold.dim * (self.manifold.dim + 1) / 2)
         self.__controls = torch.zeros(self.__dim_controls, device=self.__manifold.device)
 
@@ -95,7 +95,7 @@ class ImplicitModule1Base(DeformationModule):
     coeff = property(__get_coeff, __set_coeff)
 
     def fill_controls_zero(self):
-        self.fill_controls(torch.zeros(self.__dim_controls, device=self.device, requires_grad=True))
+        self.fill_controls(torch.zeros(self.__dim_controls, device=self.device))
 
     def __call__(self, points, k=0):
         return self.field_generator()(points, k)

@@ -10,7 +10,7 @@ from implicitmodules.torch.Utilities import append_in_dict_of_list
 
 
 class AtlasModel(BaseModel):
-    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_nu=0., ht_coeff=1., ht_solver='euler', ht_it=10, precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
+    def __init__(self, template, modules, attachement, population_count, lam=1., fit_gd=None, optimise_template=False, ht_sigma=None, ht_nu=0., ht_coeff=1., ht_solver='euler', ht_it=10, htgd=None, htgd_settings=None, precompute_callback=None, model_precompute_callback=None, other_parameters=None, evaluate_mode='sequential'):
         if other_parameters is None:
             other_parameters = []
 
@@ -27,6 +27,9 @@ class AtlasModel(BaseModel):
         if optimise_template and ht_sigma is None:
             raise RuntimeError("Atlas.__init__(): optimise_template has been set to True but ht_sigma has not been specified!")
 
+        if htgd and 'sigma' not in htgd_settings:
+            raise RuntimeError("Atlas.__init__(): htgd has been set to True but sigma has not been specified!")
+
         self.__evaluate_mode = evaluate_mode
 
         self.__population_count = population_count
@@ -42,22 +45,33 @@ class AtlasModel(BaseModel):
         self.__ht_it = ht_it
         self.__optimise_template = optimise_template
         self.__lam = lam
+        self.__htgd_settings = htgd_settings
 
         self.__registration_models = []
         for i in range(self.__population_count):
             self.__registration_models.append(RegistrationModel(copy.deepcopy(self.__template), copy.deepcopy(modules), attachement, precompute_callback=model_precompute_callback, other_parameters=other_parameters, lam=self.__lam))
 
-            if fit_gd is not None and i != 0:
-                for j in range(len(modules)):
-                    if isinstance(fit_gd[j], bool) and fit_gd[j]:
-                        # We fit the geometrical descriptor of some module. We optimise the one from the first model. For the other models, we assign a reference to the manifold of the first model.
-                        self.__registration_models[i].init_manifold[j+1].gd = self.__registration_models[0].init_manifold[j+1].gd
+            # if fit_gd is not None and i != 0:
+            #     for j in range(len(modules)):
+            #         if isinstance(fit_gd[j], bool) and fit_gd[j]:
+            #             # We fit the geometrical descriptor of some module. We optimise the one from the first model. For the other models, we assign a reference to the manifold of the first model.
+            #             self.__registration_models[i].init_manifold[j+1].gd = self.__registration_models[0].init_manifold[j+1].gd
 
-                    # Geometrical descriptor is multidimensional
-                    elif isinstance(fit_gd[j], Iterable):
-                        for b, k in enumerate(fit_gd[j]):
-                            if b:
-                                self.__registration_models[i].init_manifold[j+1].gd[k] = self.__registration_models[0].init_manifold[j+1].gd[k]
+            #         # Geometrical descriptor is multidimensional
+            #         elif isinstance(fit_gd[j], Iterable):
+            #             for b, k in enumerate(fit_gd[j]):
+            #                 if b:
+            #                     self.__registration_models[i].init_manifold[j+1].gd[k] = self.__registration_models[0].init_manifold[j+1].gd[k]
+
+        if fit_gd is not None:
+            for i, module in enumerate(modules):
+                if isinstance(fit_gd[i], bool) and fit_gd[i]:
+                    self.__registration_models[0].init_manifold[i+1].gd_requires_grad_()
+                    for model in self.__registration_models[1::]:
+                        model.init_manifold[i+1].gd_requires_grad_()
+                # elif isinstance(fit_gd[j], Iterable):
+                #     for b, j in enumerate(fit_gd[i]):
+                #         self.__registration_models[0].init_manifold[
 
         # Momentum of the LDDMM translation module for the hypertemplate if used
         if self.__optimise_template:
@@ -112,6 +126,8 @@ class AtlasModel(BaseModel):
             for i in range(self.__n_modules):
                 if self.__fit_gd[i]:
                     # We optimise the manifold of the first model (which will be reflected on the other models as the manifold reference is shared).
+                    # TODO: This only works if source/target has one component.
+                    # Change it to be able to account for more.
                     self.__parameters['gd']['params'].extend(self.__registration_models[0].init_manifold[i+1].unroll_gd())
 
         # Other parameters
@@ -134,6 +150,9 @@ class AtlasModel(BaseModel):
         shoot(Hamiltonian([translations_ht]), self.__ht_solver, self.__ht_it, intermediates=None)
 
         return translations_ht.manifold.gd
+
+    def compute_htgd(self, costs=None, intermediates=None):
+        pass
 
     def evaluate(self, targets, solver, it):
         costs = {}

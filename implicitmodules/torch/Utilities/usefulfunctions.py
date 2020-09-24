@@ -34,7 +34,7 @@ def rot3d_y(theta):
                          [math.sin(theta), 0., math.cos(theta)]])
 
 
-def rot3d_z(alpha):
+def rot3d_z(theta):
     return torch.tensor([[math.cos(theta), -math.sin(theta), 0.],
                          [math.sin(theta), math.cos(theta), 0.],
                          [0., 0., 1.]])
