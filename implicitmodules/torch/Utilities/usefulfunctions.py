@@ -22,6 +22,14 @@ def rot2d(theta):
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
 
 
+def rot2d_vec(thetas):
+    cos = torch.cos(thetas)
+    sin = torch.sin(thetas)
+
+    return torch.stack([torch.stack([cos, -sin], dim=1),
+                        torch.stack([sin, cos], dim=1)], dim=2)
+
+
 def rot3d_x(theta):
     return torch.tensor([[1., 0., 0.],
                          [0., math.cos(theta), -math.sin(theta)],

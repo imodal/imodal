@@ -1,6 +1,8 @@
 import torch
 import math
 
+from implicitmodules.torch.Utilities import rot2d
+
 
 def linear_transform(points, A):
     """ Applies a linear transformation to a point tensor.
@@ -158,4 +160,25 @@ def generate_disc_density(density, outer_radius=1., inner_radius=0.):
         r*torch.cos(torch.linspace(0., 2.*math.pi, math.ceil(angular_resolution))),
         r*torch.sin(torch.linspace(0., 2.*math.pi, math.ceil(angular_resolution)))], dim=1)
                       for angular_resolution, r in zip(angular_resolutions, radials)])
+
+
+def generate_boudin(left_width, right_width, height, thickness, arc_resolution, cap_resolution, fill_resolution):
+    t = torch.linspace(0., math.pi, arc_resolution)
+    half_circle = torch.stack([torch.cos(t), torch.sin(t)], dim=1)
+    t = torch.linspace(math.pi, 0., arc_resolution)
+    reversed_half_circle = torch.stack([torch.cos(t), torch.sin(t)], dim=1)
+
+    left_arc = linear_transform(half_circle, rot2d(math.pi/2.))*torch.tensor([left_width, height])
+    right_arc = linear_transform(reversed_half_circle, rot2d(math.pi/2.))*torch.tensor([right_width, height-thickness*2.]) + torch.tensor([thickness, 0.])
+
+    top_cap = linear_transform(half_circle, rot2d(-math.pi/2.))*torch.tensor([thickness, thickness]) + torch.tensor([thickness, height-thickness])
+    bottom_cap = linear_transform(half_circle, rot2d(-math.pi/2.))*torch.tensor([thickness, thickness]) + torch.tensor([thickness, -height+thickness])
+
+    top_fill = torch.stack([torch.linspace(thickness, 0., fill_resolution), height*torch.ones(fill_resolution)], dim=1)[1:-1]
+    bottom_fill = torch.stack([torch.linspace(0., thickness, fill_resolution), -height*torch.ones(fill_resolution)], dim=1)[1:-1]
+
+    boudin = torch.cat([left_arc, bottom_fill, bottom_cap, right_arc, top_cap, top_fill])
+
+    return boudin
+
 
