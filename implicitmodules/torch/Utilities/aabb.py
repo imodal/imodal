@@ -74,6 +74,7 @@ class AABB:
 
         self.__kmin = tuple(self.__kmin)
         self.__kmax = tuple(self.__kmax)
+        self.__dim = len(self.__kmin)
 
     @classmethod
     def build_from_points(cls, points):

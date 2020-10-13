@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 from numpy import loadtxt
+import meshio
 
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
@@ -64,7 +65,7 @@ class DeformablePoints(Deformable):
         assert isinstance(costs, dict) or costs is None
         assert isinstance(intermediates, dict) or intermediates is None
 
-        compound = CompoundModule([self.module, *modules])
+        compound = CompoundModule([self.silent_module, *modules])
 
         # Compute the deformation cost if needed
         if costs is not None:
@@ -102,6 +103,9 @@ class DeformableMesh(DeformablePoints):
     def load_from_file(cls, filename):
         pass
 
+    def save_to_file(self, filename):
+        meshio.write_points_cells(filename, self.silent_module.manifold.gd.detach().numpy(), [('triangle', self.__triangles)])
+
     @property
     def triangles(self):
         return self.__triangles
@@ -122,10 +126,12 @@ class DeformableImage(Deformable):
         self.__shape = bitmap.shape
         self.__output = output
 
+        self.__pixel_extent = AABB(0., self.__shape[1]-1, 0., self.__shape[0]-1)
+
         if extent is None:
             extent = AABB(0, 1., 0., 1.)
         elif isinstance(extent, str) and extent == 'match':
-            extent = AABB(0., self.__shape[1]-1, 0., self.__shape[0]-1)
+            extent = self.__pixel_extent
 
         self.__extent = extent
 
@@ -176,7 +182,8 @@ class DeformableImage(Deformable):
     output = property(__set_output, __get_output)
 
     def _backward_module(self):
-        pixel_grid = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
+        # pixel_grid = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
+        pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape), self.__shape, self.__extent)
         return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
@@ -184,7 +191,7 @@ class DeformableImage(Deformable):
         assert isinstance(intermediates, dict) or intermediates is None
 
         # Forward shooting
-        compound_modules = [self.module, *modules]
+        compound_modules = [self.silent_module, *modules]
         compound = CompoundModule(compound_modules)
 
         shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)

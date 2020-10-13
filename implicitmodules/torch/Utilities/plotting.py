@@ -143,3 +143,10 @@ def plot_polyline(ax, polyline, close=False, **kwargs):
     path = Path(polyline, codes)
     ax.add_artist(PathPatch(path, **kwargs))
 
+
+def plot_basis3d(points, basis, length=0.1, **kwargs):
+    plt.quiver(points[:, 0].numpy(), points[:, 1].numpy(), points[:, 2].numpy(), basis[:, 0, 0].numpy(), basis[:, 1, 0].numpy(), basis[:, 2, 0].numpy(), length=length, color='red', **kwargs)
+    plt.quiver(points[:, 0].numpy(), points[:, 1].numpy(), points[:, 2].numpy(), basis[:, 0, 1].numpy(), basis[:, 1, 1].numpy(), basis[:, 2, 1].numpy(), length=length, color='green', **kwargs)
+    plt.quiver(points[:, 0].numpy(), points[:, 1].numpy(), points[:, 2].numpy(), basis[:, 0, 2].numpy(), basis[:, 1, 2].numpy(), basis[:, 2, 2].numpy(), length=length, color='blue', **kwargs)
+
+

@@ -1,7 +1,7 @@
 import math
 
 import torch
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, Delaunay
 
 from implicitmodules.torch.Kernels.kernels import K_xy
 
@@ -127,6 +127,11 @@ def area_convex_shape(points, **kwargs):
     intersect = False
     if 'intersect' in kwargs:
         intersect = kwargs['intersect']
+
+    # TODO: generalize this for every dimensions
+    if points.shape[1] == 3:
+        hull = Delaunay(shape)
+        return hull.find_simplex(points) >= 0
 
     # For side = 1, shape is defined CW. For side = -1, shape is defined CCW
     side = 1
@@ -462,20 +467,28 @@ def extract_convex_hull(points):
 
     Notes
     -----
-    The output shape is CCW defined. Uses Scipy internaly.
+    The output shape in 2D is CCW defined. In 3D outputs a tuple of points and triangle list forming the convex hull. Uses Scipy internaly.
 
     Parameters
     ----------
     points : torch.Tensor
-        Points tensor of dimension (:math:`N`, 2), with :math:`N` the number of points, from which the convex hull will be computed.
+        Points tensor of dimension (:math:`N`, d), with :math:`N` the number of points and :math:`d` the dimension, from which the convex hull will be computed.
 
     Returns
     -------
     torch.Tensor
-        The resulting convex hull, of dimension (:math:`M`, 2), with :math:`M` the number of points the convex hull contains.
+        If in 2D, the resulting convex hull, of dimension (:math:`M`, 2), with :math:`M` the number of points the convex hull contains.
+        If in 3D, a 2-tuple with first element representing the points of the convex hull of dimension (:math:`M`, 3), with :math:`M` the number of points the convex hull contains and a list of 3-tuple representing the faces of the hull.
     """
+
     hull = ConvexHull(points.numpy())
-    return points[hull.vertices]
+
+    if points.shape[1] == 2:
+        return points[hull.vertices]
+    elif points.shape[1] == 3:
+        return points[hull.vertices], hull.simplices
+    else:
+        return ValueError
 
 
 def fill_area_uniform(area, enclosing_aabb, spacing, **kwargs):
