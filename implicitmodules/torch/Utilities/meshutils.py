@@ -131,7 +131,7 @@ def area_convex_shape(points, **kwargs):
     # TODO: generalize this for every dimensions
     if points.shape[1] == 3:
         hull = Delaunay(shape)
-        return hull.find_simplex(points) >= 0
+        return torch.tensor(hull.find_simplex(points) >= 0, dtype=torch.bool)
 
     # For side = 1, shape is defined CW. For side = -1, shape is defined CCW
     side = 1

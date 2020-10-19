@@ -1,9 +1,9 @@
 import math
 from collections import Iterable
+
 from torchviz import make_dot
 import torch
-
-# from implicitmodules.torch.Utilities import AABB
+import meshio
 
 
 # TODO: pythonize this
@@ -198,6 +198,43 @@ def append_in_dict_of_list(base, d):
         else:
             base[key].append(d[key])
 
+
 def make_grad_graph(tensor, filename, params=None):
     make_dot(tensor, params=params).render(filename)
+
+
+def export_implicit1_growth(filename, points, growth):
+    assert growth.shape[2] == 1
+
+    meshio.write_points_cell(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())], point_data={'growth', growth[:, points.shape[1]]})
+
+
+def export_point_basis(filename, points, basis):
+    meshio.write_points_cells(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())], point_data={'basis_x': basis[:, :, 0].numpy(), 'basis_y': basis[:, :, 1].numpy(), 'basis_z': basis[:, :, 2].numpy()})
+
+
+def import_implicit1_growth(filename, fieldname='growth', dtype=None):
+    mesh = meshio.read(filename)
+    if fieldname not in mesh.point_data.keys():
+        raise RuntimeError("{filename} mesh does not have field named {fieldname}!".format(filename=filename, fieldname=fieldname))
+
+    return torch.tensor(mesh.points, dtype=dtype), torch.tensor(mesh.point_data[fieldname]).reshape(mesh.points.shape[0], -1, 1)
+
+
+def import_point_basis(filename, fieldname='basis', dtype=None):
+    mesh = meshio.read(fieldname)
+
+    def _import_basis(fieldname):
+        if fieldname not in mesh.point_data.keys():
+            raise RuntimeError("{filename} mesh does not have field named {fieldname}!".format(filename=filename, fieldname=fieldname))
+
+        return torch.tensor(mesh.point_data[fieldname], dtype=dtype)
+
+    basis_x = _import_basis(fieldname + "_x")
+    basis_y = _import_basis(fieldname + "_y")
+    basis_z = _import_basis(fieldname + "_z")
+
+    basis = torch.stack([basis_x, basis_y, basis_z], dim=1)
+
+    return torch.tensor(mesh.points, dype=dtype), basis
 
