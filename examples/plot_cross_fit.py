@@ -89,7 +89,9 @@ target_deformable = dm.Models.DeformableImage(target_image, output='bitmap',
 source_dots_deformable = dm.Models.DeformablePoints(source_dots)
 target_dots_deformable = dm.Models.DeformablePoints(target_dots)
 
-model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [dm.Attachment.EuclideanPointwiseDistanceAttachment(), dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=100.)
+attachment = dm.Attachment.L2NormAttachment(transform=None)
+
+model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [attachment, dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=1000.)
 
 
 ###############################################################################

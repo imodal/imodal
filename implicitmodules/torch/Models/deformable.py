@@ -1,6 +1,7 @@
 import os
 from collections import Iterable
 import pickle
+import copy
 
 import torch
 from numpy import loadtxt, savetxt
@@ -294,6 +295,9 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
     shoot_backward = any([deformable._has_backward for deformable in deformables])
 
+    forward_silent_modules = copy.deepcopy(silent_modules)
+    #[silent_module.manifold.requires_grad_(False) for silent_module in silent_modules]
+
     # if backward_silent_modules is not None:
     if shoot_backward:
         # Backward shooting is needed
@@ -315,11 +319,17 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
     # Ugly way to compute the list of deformed objects. Not intended to stay!
     deformed = []
-    for deformable in deformables:
+    # for deformable in deformables:
+    #     if deformable._has_backward:
+    #         deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
+    #     else:
+    #         deformed.append(deformable._to_deformed(deformable.silent_module.manifold.gd))
+
+    for deformable, forward_silent_module in zip(deformables, forward_silent_modules):
         if deformable._has_backward:
             deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
         else:
-            deformed.append(deformable._to_deformed(deformable.silent_module.manifold.gd))
+            deformed.append(deformable._to_deformed(forward_silent_module.manifold.gd))
 
     return deformed
 

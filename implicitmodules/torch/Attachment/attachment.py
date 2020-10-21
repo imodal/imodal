@@ -78,15 +78,6 @@ class EnergyAttachment(Attachment):
         return .5*scal(a_i, torch.mm(K_xx, a_i.view(-1, 1))) - scal(a_i, torch.mm(K_xy, b_j.view(-1, 1))) + .5*scal(b_j, torch.mm(K_yy, b_j.view(-1, 1)))
 
 
-class L2NormAttachment(Attachment):
-    """L2 norm distance between two measures."""
-    def __init__(self, weight=1.):
-        super().__init__(weight)
-
-    def loss(self, source, target):
-        return torch.dist(source, target)
-
-
 class GeomlossAttachment(Attachment):
     def __init__(self, weight=1., **kwargs):
         super().__init__(weight)
@@ -108,4 +99,12 @@ class EuclideanPointwiseDistanceAttachment(Attachment):
         x = source[0]
         y = target[0]
         return torch.sum(torch.norm(x-y, dim=1))
+
+
+class NullLoss(Attachment):
+    def __init__(self):
+        super().__init__(0.)
+
+    def loss(self, source, target):
+        return torch.tensor(0.)
 
