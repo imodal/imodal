@@ -10,7 +10,7 @@ from implicitmodules.torch.Utilities.aabb import AABB
 
 def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
     """Load grescale image from disk as an array of normalised float values.
-    
+
     Parameters
     ----------
     filename : str
@@ -134,4 +134,12 @@ def deformed_intensities(deformed_points, intensities, extent):
             intensities[u1, v2] * gu * fv +
             intensities[u2, v1] * fu * gv +
             intensities[u2, v2] * fu * fv).view(intensities.shape)
+
+
+def interpolate_image(image, size=None, scale_factor=None, mode='nearest', align_corners=None, recompute_scale_factor=None):
+    """
+    Simple wrapper around torch.nn.functional.interpolate() for 2D images.
+    """
+    interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size, scale_factor, mode, align_corners, recompute_scale_factor)
+    return interpolated.view(interpolated.shape[2:])
 
