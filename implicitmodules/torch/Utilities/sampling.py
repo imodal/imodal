@@ -105,6 +105,7 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
 
 def load_and_sample_greyscale(filename, threshold=0., centered=False, normalise_weights=True):
     """Load a greyscale and sample points from it."""
+    
     image = load_greyscale_image(filename)
 
     return sample_from_greyscale(image, threshold, centered, normalise_weights)
@@ -140,6 +141,7 @@ def interpolate_image(image, size=None, scale_factor=None, mode='nearest', align
     """
     Simple wrapper around torch.nn.functional.interpolate() for 2D images.
     """
+    
     interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size, scale_factor, mode, align_corners, recompute_scale_factor)
     return interpolated.view(interpolated.shape[2:])
 
