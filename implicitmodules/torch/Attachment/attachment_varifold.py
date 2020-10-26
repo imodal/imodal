@@ -26,6 +26,9 @@ class VarifoldAttachmentBase(Attachment):
 
     @property
     def sigmas(self):
+        """
+        scales of the varifods.
+        """
         return self.__sigmas
 
     def cost_varifold(self, source, target, sigma):
