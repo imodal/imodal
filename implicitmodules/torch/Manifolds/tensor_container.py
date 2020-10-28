@@ -107,7 +107,7 @@ class TensorContainer:
         if clone and requires_grad is not None:
             self.__tensors = tuple(tensor.detach().clone().requires_grad_(requires_grad) for tensor in tensors)
         elif clone and requires_grad is None:
-            self.__tensors = tuple(tensor.detach().clone().requires_grad_(tensor.requires_grad) for tensor in tensors)
+            self.__tensors = tuple(tensor.clone() for tensor in tensors)
         else:
             self.__tensors = tuple(tensor for tensor in tensors)
 
@@ -145,9 +145,9 @@ class TensorContainer:
             are selected.
         """
         if index == -1:
-            [tensor.requires_grad_(requires_grad) for tensor in self.__tensors]
+            self.__tensors = [tensor.detach().requires_grad_(requires_grad) for tensor in self.__tensors]
         else:
-            self.__tensors[index].requires_grad_(requires_grad)
+            self.__tensors[index] = self.__tensors[index].detach().requires_grad_(requires_grad)
 
     def add(self, tensors):
         """Addition."""

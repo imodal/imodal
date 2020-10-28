@@ -147,7 +147,7 @@ deformable_shape_target = dm.Models.DeformablePoints(shape_target)
 deformable_dots_source = dm.Models.DeformablePoints(dots_source)
 deformable_dots_target = dm.Models.DeformablePoints(dots_target)
 
-model = dm.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [dm.Attachment.VarifoldAttachment(2, [5., 25, 80.]), dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)], lam=100., other_parameters={'abc': {'params': [abc]}}, precompute_callback=callback_compute_c)
+model = dm.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [dm.Attachment.VarifoldAttachment(2, [20., 120.]), dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)], lam=100., other_parameters={'abc': {'params': [abc]}}, precompute_callback=callback_compute_c)
 
 
 ###############################################################################
@@ -215,7 +215,7 @@ print("Learned growth constants model parameters:")
 print(learned_abc)
 
 ax = plt.subplot()
-dm.Utilities.plot_C_arrows(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.0035, mutation_scale=8.)
+dm.Utilities.plot_C_arrows(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.00035, mutation_scale=10.)
 plt.axis(aabb_source.squared().totuple())
 plt.show()
 

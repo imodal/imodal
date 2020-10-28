@@ -131,6 +131,7 @@ class DeformablePoints(Deformable):
     def _to_deformed(self, gd):
         return (gd,)
 
+
 # class DeformablePolylines(DeformablePoints):
 #     def __init__(self, points, connections):
 #         self.__connections = connections
@@ -153,7 +154,7 @@ class DeformableMesh(DeformablePoints):
     @classmethod
     def load_from_file(cls, filename, dtype=None):
         mesh = meshio.read(filename)
-        points = torch.tensor(mesh.points)
+        points = torch.tensor(mesh.points, dtype=dtype)
         triangles = torch.tensor(mesh.cell_dict['triangle'], torch.int)
         return cls(points, triangles)
 
@@ -183,7 +184,7 @@ class DeformableImage(Deformable):
         self.__pixel_extent = AABB(0., self.__shape[1]-1, 0., self.__shape[0]-1)
 
         if extent is None:
-            extent = AABB(0, 1., 0., 1.)
+            extent = AABB(0., 1., 0., 1.)
         elif isinstance(extent, str) and extent == 'match':
             extent = self.__pixel_extent
 
@@ -240,7 +241,6 @@ class DeformableImage(Deformable):
     output = property(__set_output, __get_output)
 
     def _backward_module(self):
-        # pixel_grid = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
         pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape), self.__shape, self.__extent)
         return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
 
@@ -296,15 +296,13 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     shoot_backward = any([deformable._has_backward for deformable in deformables])
 
     forward_silent_modules = copy.deepcopy(silent_modules)
-    #[silent_module.manifold.requires_grad_(False) for silent_module in silent_modules]
+    # forward_silent_modules = silent_modules
 
-    # if backward_silent_modules is not None:
     if shoot_backward:
         # Backward shooting is needed
 
         # Build/assemble the modules that will be shot backward
         backward_modules = [deformable._backward_module() for deformable in deformables if deformable._has_backward]
-        # compound = CompoundModule([*backward_silent_modules, *backward_modules, *modules])
         compound = CompoundModule([*silent_modules, *backward_modules, *modules])
 
         # Reverse the moments for backward shooting
@@ -319,12 +317,6 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
     # Ugly way to compute the list of deformed objects. Not intended to stay!
     deformed = []
-    # for deformable in deformables:
-    #     if deformable._has_backward:
-    #         deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
-    #     else:
-    #         deformed.append(deformable._to_deformed(deformable.silent_module.manifold.gd))
-
     for deformable, forward_silent_module in zip(deformables, forward_silent_modules):
         if deformable._has_backward:
             deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
