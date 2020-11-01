@@ -1,5 +1,6 @@
 import math
 
+import numpy as np
 import torch
 from scipy.spatial import ConvexHull, Delaunay
 
@@ -93,7 +94,10 @@ def area_convex_hull(points, **kwargs):
     if 'intersect' in kwargs:
         intersect = kwargs['intersect']
 
-    convex_hull = extract_convex_hull(scatter)
+    if scatter.shape[1] == 2:
+        convex_hull = extract_convex_hull(scatter)
+    else:
+        convex_hull, _ = extract_convex_hull(scatter)
 
     return area_convex_shape(points, shape=convex_hull, side=-1, intersect=intersect)
 
@@ -481,7 +485,12 @@ def extract_convex_hull(points):
         If in 3D, a 2-tuple with first element representing the points of the convex hull of dimension (:math:`M`, 3), with :math:`M` the number of points the convex hull contains and a list of 3-tuple representing the faces of the hull.
     """
 
-    hull = ConvexHull(points.numpy())
+    if isinstance(points, np.ndarray):
+        hull = ConvexHull(points)
+    elif isinstance(points, torch.Tensor):
+        hull = ConvexHull(points.numpy())
+    else:
+        raise ValueError("extract_convex_hull(): points data array type {arraytype} not understood!".format(arraytype=type(points)))
 
     if points.shape[1] == 2:
         return points[hull.vertices]

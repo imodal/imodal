@@ -9,13 +9,14 @@ from implicitmodules.torch.Models.optimizer_gd import OptimizerGradientDescent
 
 
 class OptimizerTorch(BaseOptimizer):
-    def __init__(self, torch_optimizer, model, single_parameter_group):
+    def __init__(self, torch_optimizer, model, single_parameter_group, verbose=True):
         self.__torch_optimizer = torch_optimizer
 
         # Creation of the Torch optimizer is deffered (optimization parameters are given
         # when optimize() is called)
         self.__optimizer = None
         self.__single_parameter_group = single_parameter_group
+        self.__verbose = verbose
 
         super().__init__(model)
 
@@ -53,7 +54,12 @@ class OptimizerTorch(BaseOptimizer):
 
             gc.collect()
 
-            return sum(costs.values())
+            sum_costs = sum(costs.values())
+
+            if self.__verbose:
+                print("Evaluated model with costs={sumcosts}".format(sumcosts=sum_costs))
+
+            return sum_costs
 
         last_total_cost = float('inf')
         for i in range(max_iter):

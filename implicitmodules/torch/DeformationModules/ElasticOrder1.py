@@ -216,9 +216,7 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
 
-        print("tlambdas...")
-        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
-        print("Done.")
+        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-3)
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
 
@@ -237,9 +235,7 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.controls)
-        print("Solve lambdas...")
         self.__lambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.__aqh, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
-        print("End")
         self.moments = torch.tensordot(self.__lambdas.view(-1, self.sym_dim), torch.transpose(eta(self.manifold.dim, device=self.device), 0, 2), dims=1)
 
     def __compute_aqkiaq(self):
