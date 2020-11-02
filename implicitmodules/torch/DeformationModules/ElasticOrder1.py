@@ -206,6 +206,12 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
     def backend(self):
         return 'keops'
 
+    def to_(self, *args, **kwargs):
+        super().to_(*args, **kwargs)
+        self.__keops_invsigmasq = self.__keops_invsigmasq.to(*args, **kwargs)
+        self.__keops_eye = self.__keops_eye.to(*args, **kwargs)
+        self.__keops_A = self.__keops_A.to(*args, **kwargs)
+
     def cost(self):
         return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
 
@@ -216,6 +222,11 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
 
+        # print(self.manifold.gd[0].device)
+        # print(S.device)
+        # print(self.__keops_eye.device)
+        # print(self.__keops_invsigmasq.device)
+        # print(self.__keops_A.device)
         tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-3)
 
         (aq, aqkiaq) = self.__compute_aqkiaq()

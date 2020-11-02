@@ -50,8 +50,9 @@ def rot3d_z(theta):
 
 def rot3d_x_vec(thetas):
     assert len(thetas.shape) == 1
-    zeros = torch.zeros(len(thetas))
-    ones = torch.ones(len(thetas))
+    device = thetas.device
+    zeros = torch.zeros(len(thetas), device=device)
+    ones = torch.ones(len(thetas), device=device)
     sin = torch.sin(thetas)
     cos = torch.cos(thetas)
 
@@ -62,8 +63,9 @@ def rot3d_x_vec(thetas):
 
 def rot3d_y_vec(thetas):
     assert len(thetas.shape) == 1
-    zeros = torch.zeros(len(thetas))
-    ones = torch.ones(len(thetas))
+    device = thetas.device
+    zeros = torch.zeros(len(thetas), device=device)
+    ones = torch.ones(len(thetas), device=device)
     sin = torch.sin(thetas)
     cos = torch.cos(thetas)
 
@@ -74,8 +76,9 @@ def rot3d_y_vec(thetas):
 
 def rot3d_z_vec(thetas):
     assert len(thetas.shape) == 1
-    zeros = torch.zeros(len(thetas))
-    ones = torch.ones(len(thetas))
+    device = thetas.device
+    zeros = torch.zeros(len(thetas), device=device)
+    ones = torch.ones(len(thetas), device=device)
     sin = torch.sin(thetas)
     cos = torch.cos(thetas)
 
