@@ -9,12 +9,14 @@ import torch
 
 from implicitmodules.numpy.DeformationModules.ElasticOrder1 import ElasticOrder1
 from implicitmodules.torch.DeformationModules.ElasticOrder1 import ImplicitModule1
+from implicitmodules.torch.Utilities import set_compute_backend
 
 torch.set_default_tensor_type(torch.DoubleTensor)
+set_compute_backend('keops')
 
 class TestCompareImplicitModules1(unittest.TestCase):
     def setUp(self):
-        self.sigma = 1.
+        self.sigma = 0.4
         self.N = 4
         self.q = 5.*np.random.rand(self.N, 2)
         self.R = 5.*np.random.rand(self.N, 2, 2)
@@ -22,17 +24,19 @@ class TestCompareImplicitModules1(unittest.TestCase):
         self.p_R = 5.*np.random.rand(self.N, 2, 2)
         self.dim_controls = 1
         self.controls = 5.*np.random.rand(self.dim_controls)
-        self.C = 5.*np.random.rand(self.N, 2, self.dim_controls)
+        self.C = 5.*np.ones([self.N, 2, self.dim_controls])
 
-        self.implicit1_torch = ImplicitModule1(2, self.N, self.sigma, torch.tensor(self.C), 0.001, gd=(torch.tensor(self.q), torch.tensor(self.R)), cotan=(torch.tensor(self.p), torch.tensor(self.p_R)))
+        self.implicit1_torch = ImplicitModule1(2, self.N, self.sigma, torch.tensor(self.C), 100., gd=(torch.tensor(self.q), torch.tensor(self.R)), cotan=(torch.tensor(self.p), torch.tensor(self.p_R)))
 
-        self.implicit1_numpy = ElasticOrder1(self.sigma, self.N, 2, 1., self.C, 0.001)
+        self.implicit1_numpy = ElasticOrder1(self.sigma, self.N, 2, 1., self.C, 10.)
         self.implicit1_numpy.GD.fill_cot_from_param(((self.q, self.R), (self.p, self.p_R)))
         self.implicit1_numpy.update()
 
     def test_geodesic_controls(self):
         self.implicit1_torch.compute_geodesic_control(self.implicit1_torch.manifold)
         self.implicit1_numpy.GeodesicControls_curr(self.implicit1_numpy.GD)
+        print(self.implicit1_torch.controls.detach())
+        print(self.implicit1_numpy.Cont)
 
         self.assertTrue(np.allclose(self.implicit1_torch.controls.detach().numpy(), self.implicit1_numpy.Cont))
 

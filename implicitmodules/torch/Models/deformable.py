@@ -10,10 +10,14 @@ import meshio
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
+from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points, vec2grid, plot_grid
+import matplotlib.pyplot as plt
 
 
 class Deformable:
+    """
+    Base class for deformable, which are the manipulated objects by the models.
+    """
     def __init__(self, manifold, module_label=None):
         self.__silent_module = SilentBase(manifold, module_label)
 
@@ -23,6 +27,9 @@ class Deformable:
 
     @property
     def geometry(self):
+        """
+        Returns geometric informations of the deformable.
+        """
         raise NotImplementedError()
 
     @property
@@ -33,6 +40,9 @@ class Deformable:
         raise NotImplementedError()
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
+        """
+        Computes the deformation.
+        """
         raise NotImplementedError()
 
     def _to_deformed(self):
@@ -40,9 +50,26 @@ class Deformable:
 
 
 class DeformablePoints(Deformable):
+    """
+    Deformable object representing a collection of points in space.
+    """
     def __init__(self, points):
         super().__init__(Landmarks(points.shape[1], points.shape[0], gd=points))
 
+    """
+    Load points from file.
+
+    Correct loader will be infered from the file extension.
+
+    Parameters
+    ----------
+    filename : str
+        Filename of the file to load.
+    dtype : torch.dtype, default=None
+        Type to transform the data into. If set to None, data will be transformed into the value returned by torch.get_default_dtype().
+    kwargs :
+        Arguments given to the loader (see specific loaders for parameters).
+    """
     @classmethod
     def load_from_file(cls, filename, dtype=None, **kwargs):
         file_extension = os.path.split(filename)[1]
@@ -57,6 +84,9 @@ class DeformablePoints(Deformable):
 
     @classmethod
     def load_from_csv(cls, filename, dtype=None, **kwargs):
+        """
+        Load points from a csv file.
+        """
         points = loadtxt(filename, **kwargs)
         return cls(torch.tensor(points, dtype=dtype))
 
@@ -270,8 +300,17 @@ class DeformableImage(Deformable):
         return self._to_deformed(silent_pixel_grid.manifold.gd)
 
     def _to_deformed(self, gd):
+        print("---------------------")
+        print(gd[::10])
         if self.__output == 'bitmap':
-            return (deformed_intensities(gd, self.__bitmap, self.__extent), )
+            a = (deformed_intensities(gd, self.__bitmap, self.__extent), )
+            # print(a)
+            # import matplotlib.pyplot as plt
+            # plt.plot(gd[::10, 0].numpy(), gd[::10, 1].numpy(), 'o', markersize=1.)
+            # plt.grid()
+            # # plt.imshow(a[0].numpy(), origin='lower', extent=self.__extent)
+            # plt.show()
+            return a
         elif self.__output == 'points':
             deformed_bitmap = deformed_intensities(gd, self.__bitmap, self.__extent)
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
@@ -279,7 +318,7 @@ class DeformableImage(Deformable):
             raise ValueError()
 
 
-def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None):
+def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
     assert isinstance(costs, dict) or costs is None
     assert isinstance(intermediates, dict) or intermediates is None
 
@@ -288,7 +327,7 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     compound = CompoundModule([*silent_modules, *modules])
 
     # Forward shooting
-    shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
+    shoot(Hamiltonian(compound), solver, it, intermediates=intermediates, controls=controls, t1=t1)
 
     # Regroup silent modules of each deformable thats need to shoot backward
     # backward_silent_modules = [deformable.silent_module for deformable in deformables if deformable._has_backward]
@@ -300,7 +339,6 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
     if shoot_backward:
         # Backward shooting is needed
-
         # Build/assemble the modules that will be shot backward
         backward_modules = [deformable._backward_module() for deformable in deformables if deformable._has_backward]
         compound = CompoundModule([*silent_modules, *backward_modules, *modules])
@@ -308,8 +346,25 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
         # Reverse the moments for backward shooting
         compound.manifold.negate_cotan()
 
-        # Backward shooting
-        shoot(Hamiltonian(compound), solver, it)
+        # # Backward shooting
+        # print(backward_modules[0].manifold.gd[::10])
+        # g = backward_modules[0].manifold.gd
+        # grid = vec2grid(g, 128, 128)
+        # ax = plt.subplot()
+        # plot_grid(ax, grid[0], grid[1], color='blue', lw=0.5)
+        # plt.axis('equal')
+        # plt.show()
+
+        shoot(Hamiltonian(compound), solver, it, t1=t1)
+        # print("===============")
+        # print(backward_modules[0].manifold.gd[::10])
+        # g = backward_modules[0].manifold.gd
+        # grid = vec2grid(g, 128, 128)
+        # plt.figure()
+        # ax = plt.subplot()
+        # plot_grid(ax, grid[0], grid[1], color='red', lw=0.5)
+        # plt.axis('equal')
+        # plt.show()
 
     # For now, we need to compute the deformation cost after each shooting (and not before any shooting) for computation tree reasons
     if costs is not None:
@@ -319,7 +374,17 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     deformed = []
     for deformable, forward_silent_module in zip(deformables, forward_silent_modules):
         if deformable._has_backward:
-            deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
+            print("+++++++++++++++++++++++")
+            gd = backward_modules.pop(0).manifold.gd
+            grid = vec2grid(gd, 128, 128)
+            plt.figure()
+            ax = plt.subplot()
+            plot_grid(ax, grid[0], grid[1], color='red', lw=0.5)
+            plt.axis('equal')
+            plt.show()
+
+            # deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
+            deformed.append(deformable._to_deformed(gd))
         else:
             deformed.append(deformable._to_deformed(forward_silent_module.manifold.gd))
 

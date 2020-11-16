@@ -4,7 +4,7 @@ from torchdiffeq import odeint as odeint
 from torchdiffeq._impl.odeint import SOLVERS as torchdiffeq_solvers
 
 
-def shoot(h, solver, it, controls=None, intermediates=None):
+def shoot(h, solver, it, controls=None, intermediates=None, t1=1.):
     """ Shoot the hamiltonian system.
     integrate ODE, associe a gd et mom initiaux la trajectoire lien article.
     minimisation energie definit par le modele.
@@ -41,7 +41,7 @@ def shoot(h, solver, it, controls=None, intermediates=None):
     if solver == "torch_euler":
         _shoot_euler(h, solver, it, controls=controls, intermediates=intermediates)
     elif solver in torchdiffeq_solvers:
-        _shoot_torchdiffeq(h, solver, it, controls=controls, intermediates=intermediates)
+        _shoot_torchdiffeq(h, solver, it, controls=controls, intermediates=intermediates, t1=t1)
     else:
         raise NotImplementedError("shoot(): {solver} solver not implemented!".format(solver=solver))
 
@@ -85,7 +85,7 @@ def _shoot_euler(h, solver, it, controls, intermediates):
             intermediates['controls'].append(list(map(lambda x: x.detach().clone(), h.module.controls)))
 
 
-def _shoot_torchdiffeq(h, solver, it, controls, intermediates):
+def _shoot_torchdiffeq(h, solver, it, controls, intermediates, t1=1.):
     # Wrapper class used by TorchDiffEq
     # Returns (\partial H \over \partial p, -\partial H \over \partial q)
     class TorchDiffEqHamiltonianGrad(torch.nn.Module):
@@ -138,7 +138,7 @@ def _shoot_torchdiffeq(h, solver, it, controls, intermediates):
     gradH = TorchDiffEqHamiltonianGrad(h, intermediates, controls)
 
     x_0 = torch.cat(list(map(lambda x: x.flatten(), [*gradH.h.module.manifold.unroll_gd(), *gradH.h.module.manifold.unroll_cotan()])), dim=0).view(2, -1)
-    x_1 = odeint(gradH, x_0, torch.linspace(0., 1., steps), method=solver)
+    x_1 = odeint(gradH, x_0, torch.linspace(0., t1, steps), method=solver)
 
     # Retrieve shot manifold out of the flattened state vector
     gd, mom = [], []
