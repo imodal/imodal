@@ -1,6 +1,6 @@
 import torch
 
-from implicitmodules.torch.Utilities import is_valid_backend, get_compute_backend, shared_tensors_property
+from implicitmodules.torch.Utilities import is_valid_backend, get_compute_backend, shared_tensors_property, tensors_device
 
 
 class BaseStructuredField:
@@ -100,11 +100,12 @@ class KernelSupportStructuredField(StructuredField):
 class SumStructuredField(BaseStructuredField):
     def __init__(self, fields):
         dim = shared_tensors_property(fields, lambda x: x.dim)
-        device = shared_tensors_property(fields, lambda x: x.device)
+        # device = shared_tensors_property(fields, lambda x: x.device)
+        device = tensors_device(fields)
         assert dim is not None
-        assert device is not None
+        # assert device is not None
         super().__init__(dim, device)
-        
+
         self.__fields = fields
 
     @property

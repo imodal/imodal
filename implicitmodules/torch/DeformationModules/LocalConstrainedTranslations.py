@@ -202,11 +202,30 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
         Computation backend the deformation module will 
     """
 
-    def f_vectors(gd):
+    def f_vectors_2d(gd):
         return torch.tensor([[-math.sin(2.*math.pi/3.*i), math.cos(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
-    def f_support(gd):
+    def f_support_2d(gd):
         return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
-    return LocalConstrainedTranslations(dim, 1, sigma, "Local rotation", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
+    tetra = torch.tensor([[1., 1., 1.], [1., -1., -1.], [-1., 1., -1.], [-1., -1., 1.]], device=gd.device, dtype=gd.dtype)
+
+    def f_vectors_3d(gd):
+        vec = gd[0]
+        return torch.cross(tetra, vec.repeat(4, 1))
+
+    def f_support_3d(gd):
+        return torch.zeros(3, device=gd.device).repeat(4, 1) + sigma/3. * tetra
+
+
+    f_vectors = f_vectors_2d
+    f_support = f_support_2d
+    pts_count = 1
+
+    if dim == 3:
+        f_vectors = f_vectors_3d
+        f_support = f_support_3d
+        pts_count = 1
+
+    return LocalConstrainedTranslations(dim, pts_count, sigma, "Local rotation", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
 

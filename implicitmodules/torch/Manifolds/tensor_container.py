@@ -9,7 +9,7 @@ class TensorContainer:
     Tensors are stored as a tuple of torch.Tensor."""
     def __init__(self, shapes, device, dtype):
         # TODO: have a lazy initialisation approach
-        self.__tensors = tuple(torch.zeros(shape) for shape in shapes)
+        self.__tensors = tuple(torch.zeros(shape, device=device, dtype=dtype) for shape in shapes)
 
         self.__shapes = shapes
 

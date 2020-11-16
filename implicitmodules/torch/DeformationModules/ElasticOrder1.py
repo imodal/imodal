@@ -46,6 +46,7 @@ class ImplicitModule1Base(DeformationModule):
     def to_(self, *args, **kwargs):
         self.__manifold.to_(*args, **kwargs)
         self.__controls = self.__controls.to(*args, **kwargs)
+        self.__C = self.__C.to(*args, **kwargs)
 
     @property
     def device(self):
@@ -138,7 +139,8 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
 
         self.__compute_sks()
 
-        tlambdas, _ = torch.solve(S.view(-1, 1), self.coeff * self.__sks)
+        tlambdas, _ = torch.solve(S.view(-1, 1), self.__sks)
+        tlambdas = tlambdas/self.coeff
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
         c, _ = torch.solve(torch.mm(aq.t(), tlambdas), aqkiaq)
@@ -222,12 +224,7 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
         S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
 
-        # print(self.manifold.gd[0].device)
-        # print(S.device)
-        # print(self.__keops_eye.device)
-        # print(self.__keops_invsigmasq.device)
-        # print(self.__keops_A.device)
-        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.coeff * S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-3)
+        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-5)/self.coeff
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
 
@@ -258,7 +255,7 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
             aqi = self.__compute_aqh(h).flatten()
             aq[:, i] = aqi
 
-            lambdas[i, :] = self.solve_sks(self.manifold.gd[0], self.manifold.gd[0], aqi.view(-1, self.sym_dim), self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-3).view(-1)
+            lambdas[i, :] = self.solve_sks(self.manifold.gd[0], self.manifold.gd[0], aqi.view(-1, self.sym_dim), self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=1e-5).view(-1)
 
         return (aq, torch.mm(lambdas, aq))
 

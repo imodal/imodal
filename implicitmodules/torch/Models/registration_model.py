@@ -91,6 +91,21 @@ class RegistrationModel(BaseModel):
     def deformables(self):
         return self.__deformables
 
+    def __str__(self):
+        outstr = "Registration model\n"
+        outstr += "=================\n"
+        outstr += ("Attachment={}\n".format(self.__attachments))
+        outstr += ("Lambda={}\n".format(self.__lam))
+        outstr += ("Fit geometrical descriptors={}\n".format(self.__fit_gd))
+        outstr += ("Precompute callback={}\n".format(self.__precompute_callback is not None))
+        outstr += ("Other parameters={}\n".format(len(self.__init_other_parameters) != 0))
+        outstr += "\n"
+        outstr += "Modules\n"
+        outstr += "=======\n"
+        for module in self.modules[1:]:
+            outstr += ( "\n" + str(module))
+        return outstr
+
     def _compute_parameters(self):
         # Fill the parameter dictionary that will be given to the optimizer.
 

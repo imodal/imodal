@@ -58,7 +58,7 @@ def rot3d_x_vec(thetas):
 
     return torch.stack([torch.stack([ones, zeros, zeros], dim=1),
                         torch.stack([zeros, cos, -sin], dim=1),
-                        torch.stack([zeros, sin, cos], dim=1)], dim=2)
+                        torch.stack([zeros, sin, cos], dim=1)], dim=2).transpose(1, 2)
 
 
 def rot3d_y_vec(thetas):
@@ -71,7 +71,7 @@ def rot3d_y_vec(thetas):
 
     return torch.stack([torch.stack([cos, zeros, sin], dim=1),
                         torch.stack([zeros, ones, zeros], dim=1),
-                        torch.stack([-sin, zeros, cos], dim=1)], dim=2)
+                        torch.stack([-sin, zeros, cos], dim=1)], dim=2).transpose(1, 2)
 
 
 def rot3d_z_vec(thetas):
@@ -84,7 +84,7 @@ def rot3d_z_vec(thetas):
 
     return torch.stack([torch.stack([cos, -sin, zeros], dim=1),
                         torch.stack([sin, cos, zeros], dim=1),
-                        torch.stack([zeros, zeros, ones], dim=1)], dim=2)
+                        torch.stack([zeros, zeros, ones], dim=1)], dim=2).transpose(1, 2)
 
 
 def points2pixels(points, frame_shape, frame_extent, toindices=False):
@@ -153,6 +153,8 @@ def shared_tensors_property(tensors, prop):
     if len(tensors) == 0:
         return None
 
+    # print(list(prop(tensor) for tensor in tensors))
+
     first = prop(tensors[0])
     all_same = (list(prop(tensor) for tensor in tensors).count(first) == len(tensors))
 
@@ -175,7 +177,7 @@ def tensors_device(tensors):
     torch.device
         The common device of the iterable of tensors. None if tensors lives on different devices.
     """
-    return shared_tensors_property(tensors, lambda tensor: tensor.device)
+    return shared_tensors_property(tensors, lambda tensor: str(tensor.device))
 
 
 def tensors_dtype(tensors):
@@ -206,10 +208,14 @@ def make_grad_graph(tensor, filename, params=None):
     make_dot(tensor, params=params).render(filename)
 
 
+def export_mesh(filename, points, triangles):
+    meshio.write_points_cells(filename, points.numpy(), [('triangle', triangles.numpy())])
+
+
 def export_implicit1_growth(filename, points, growth):
     assert growth.shape[2] == 1
 
-    meshio.write_points_cell(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())], point_data={'growth', growth[:, points.shape[1]]})
+    meshio.write_points_cells(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())], point_data={'growth': growth.numpy().reshape(-1, points.shape[1])})
 
 
 def export_point_basis(filename, points, basis):

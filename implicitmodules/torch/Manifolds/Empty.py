@@ -70,13 +70,13 @@ class EmptyManifold(BaseManifold):
         pass
 
     def __get_gd(self):
-        return torch.tensor([], requires_grad=True, device=self.device, dtype=self.dtype)
+        return torch.tensor([], device=self.device, dtype=self.dtype)
 
     def __get_tan(self):
-        return torch.tensor([], requires_grad=True, device=self.device, dtype=self.dtype)
+        return torch.tensor([], device=self.device, dtype=self.dtype)
  
     def __get_cotan(self):
-        return torch.tensor([], requires_grad=True, device=self.device, dtype=self.dtype)
+        return torch.tensor([], device=self.device, dtype=self.dtype)
 
     def fill_gd(self, gd, copy=False, requires_grad=True):
         pass

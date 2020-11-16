@@ -159,7 +159,7 @@ class DeformableMesh(DeformablePoints):
         return cls(points, triangles)
 
     def save_to_file(self, filename):
-        meshio.write_points_cells(filename, self.silent_module.manifold.gd.detach().numpy(), [('triangle', self.__triangles)])
+        meshio.write_points_cells(filename, self.silent_module.manifold.gd.detach().cpu().numpy(), [('triangle', self.__triangles.cpu())])
 
     @property
     def triangles(self):
@@ -241,7 +241,7 @@ class DeformableImage(Deformable):
     output = property(__set_output, __get_output)
 
     def _backward_module(self):
-        pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape), self.__shape, self.__extent)
+        pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
         return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
 
     def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):

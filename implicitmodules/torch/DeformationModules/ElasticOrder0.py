@@ -143,6 +143,10 @@ class ImplicitModule0_KeOps(ImplicitModule0Base):
     def backend(self):
         return 'keops'
 
+    def to_(self, *args, **kwargs):
+        super().to_(*args, **kwargs)
+        self.__keops_invsigmasq = self.__keops_invsigmasq.to(*args, **kwargs)
+
     def cost(self):
         return (0.5 * self.coeff * self.reduction_cost(self.manifold.gd, self.manifold.gd, self.controls, self.controls, self.__keops_invsigmasq, backend=self.__keops_backend)).sum() + (self.nu*self.controls**2).sum()
 
