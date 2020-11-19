@@ -27,6 +27,8 @@ target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitm
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
+plt.xlim(0., source_image.shape[0]-1)
+plt.ylim(0., source_image.shape[1]-1)
 plt.imshow(source_image, origin='lower')
 
 plt.subplot(1, 2, 2)
@@ -43,7 +45,7 @@ target_deformable = dm.Models.DeformableImage(target_image, extent='match')
 # Multi scale local points and deformation module generation
 #
 
-aabb = dm.Utilities.AABB(0, source_image.shape[0], 0, source_image.shape[1])
+aabb = dm.Utilities.AABB(0, source_image.shape[0]-1, 0, source_image.shape[1]-1)
 small_scale_density = 0.2
 large_scale_density = 0.02
 
@@ -103,7 +105,7 @@ plt.title("Fitted image")
 plt.imshow(deformed_image, origin='lower')
 
 plt.subplot(1, 3, 3)
-plt.title("target image")
+plt.title("Target image")
 plt.imshow(target_image, origin='lower')
 
 plt.show()

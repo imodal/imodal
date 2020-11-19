@@ -10,8 +10,38 @@ import meshio
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
 from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points, vec2grid, plot_grid
-import matplotlib.pyplot as plt
+from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
+
+
+class Deformable:
+    def __init__(self):
+        pass
+
+    @property
+    def geometry(self):
+        """
+        Returns geometric informations of the deformable.
+        """
+        raise NotImplementedError()
+
+    @property
+    def _has_backward(self):
+        """
+        Returns True if the deformable needs backward shooting.
+        """
+        raise NotImplementedError()
+
+    def _backward_module(self):
+        """
+        The backward deformation module that will be used while backward shooting.
+        """
+        raise NotImplementedError()
+
+    def _to_deformed(self):
+        """
+        Returns deformed geometric informations of the deformable.
+        """
+        raise NotImplementedError()
 
 
 class DeformableGrid:
@@ -33,18 +63,11 @@ class DeformableGrid:
     def _has_backward(self):
         return False
 
-    # def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
-    #     """
-    #     Computes the deformation.
-    #     """
-    #     raise NotImplementedError()
-
     def _to_deformed(self, gd):
         return (gd,)
 
 
-
-class Deformable:
+class SilentDeformable(Deformable):
     """
     Base class for deformable, which are the manipulated objects by the models.
     """
@@ -55,29 +78,6 @@ class Deformable:
     def silent_module(self):
         return self.__silent_module
 
-    @property
-    def geometry(self):
-        """
-        Returns geometric informations of the deformable.
-        """
-        raise NotImplementedError()
-
-    @property
-    def _has_backward(self):
-        raise NotImplementedError()
-
-    def _backward_module(self):
-        raise NotImplementedError()
-
-    def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
-        """
-        Computes the deformation.
-        """
-        raise NotImplementedError()
-
-    def _to_deformed(self):
-        raise NotImplementedError()
-
 
 class DeformablePoints(Deformable):
     """
@@ -86,22 +86,22 @@ class DeformablePoints(Deformable):
     def __init__(self, points):
         super().__init__(Landmarks(points.shape[1], points.shape[0], gd=points))
 
-    """
-    Load points from file.
-
-    Correct loader will be infered from the file extension.
-
-    Parameters
-    ----------
-    filename : str
-        Filename of the file to load.
-    dtype : torch.dtype, default=None
-        Type to transform the data into. If set to None, data will be transformed into the value returned by torch.get_default_dtype().
-    kwargs :
-        Arguments given to the loader (see specific loaders for parameters).
-    """
     @classmethod
     def load_from_file(cls, filename, dtype=None, **kwargs):
+        """
+        Load points from file.
+
+        Correct loader will be infered from the file extension.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of the file to load.
+        dtype : torch.dtype, default=None
+            Type to transform the data into. If set to None, data will be transformed into the value returned by torch.get_default_dtype().
+        kwargs :
+            Arguments given to the loader (see specific loaders for parameters).
+        """
         file_extension = os.path.split(filename)[1]
         if file_extension == '.csv':
             return cls.load_from_csv(filename, dtype=dtype, **kwargs)
@@ -172,47 +172,35 @@ class DeformablePoints(Deformable):
         points_count = self.geometry[0].shape[0]
         meshio.write_points_cells(filename, self.geometry[0].detach().cpu().numpy(), [('polygon'+str(points_count), torch.arange(points_count).view(1, -1).numpy())], **kwargs)
 
-    def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
-        assert isinstance(costs, dict) or costs is None
-        assert isinstance(intermediates, dict) or intermediates is None
-
-        compound = CompoundModule([self.silent_module, *modules])
-
-        # Compute the deformation cost if needed
-        if costs is not None:
-            compound.compute_geodesic_control(compound.manifold)
-            costs['deformation'] = compound.cost()
-
-        # Shoot the dynamical system
-        shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
-
-        return self._to_deformed(self.module.manifold.gd)
-
     def _to_deformed(self, gd):
         return (gd,)
 
 
-# class DeformablePolylines(DeformablePoints):
-#     def __init__(self, points, connections):
-#         self.__connections = connections
-#         super().__init__(points)
-
-#     @classmethod
-#     def load_from_file(cls, filename):
-#         pass
-
-#     @property
-#     def geometry(self):
-#         return (self.module.manifold.gd.detach(), self.__connections)
-
-
 class DeformableMesh(DeformablePoints):
     def __init__(self, points, triangles):
+        """
+        Parameters
+        ----------
+        points : torch.Tensor
+            Points.
+        triangles : torch.Tensor
+            Triangles.
+        """
         self.__triangles = triangles
         super().__init__(points)
 
     @classmethod
     def load_from_file(cls, filename, dtype=None):
+        """
+        Load and initialize the deformable from a file. Uses meshio, see its documentation for supported format.
+
+        Parameters
+        ----------
+        filename : str
+            Filename
+        dtype : torch.dtype, default=None
+            Type.
+        """
         mesh = meshio.read(filename)
         points = torch.tensor(mesh.points, dtype=dtype)
         triangles = torch.tensor(mesh.cell_dict['triangle'], torch.int)
@@ -234,7 +222,20 @@ class DeformableMesh(DeformablePoints):
 
 
 class DeformableImage(Deformable):
+    """
+    2D bitmap deformable object.
+    """
     def __init__(self, bitmap, output='bitmap', extent=None):
+        """
+        Parameters
+        ----------
+        bitmap : torch.Tensor
+            2 dimensional tensor representing the image to deform.
+        output: str, default='bitmap'
+            Representation used by the deformable.
+        extent: implicitmodules.torch.Utilities.AABB, default=None
+            Extent on the 2D plane on which the image is set.
+        """
         assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
         assert output == 'bitmap' or output == 'points'
 
@@ -304,31 +305,6 @@ class DeformableImage(Deformable):
         pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
         return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
 
-    def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
-        assert isinstance(costs, dict) or costs is None
-        assert isinstance(intermediates, dict) or intermediates is None
-
-        # Forward shooting
-        compound_modules = [self.silent_module, *modules]
-        compound = CompoundModule(compound_modules)
-
-        shoot(Hamiltonian(compound), solver, it, intermediates=intermediates)
-
-        # Prepare for reverse shooting
-        compound.manifold.negate_cotan()
-
-        silent_pixel_grid = self._backward_module()
-
-        # Reverse shooting with the newly constructed pixel grid module
-        compound = CompoundModule([silent_pixel_grid, *compound.modules])
-
-        shoot(Hamiltonian(compound), solver, it)
-
-        if costs is not None:
-            costs['deformation'] = compound.cost()
-
-        return self._to_deformed(silent_pixel_grid.manifold.gd)
-
     def _to_deformed(self, gd):
         if self.__output == 'bitmap':
             return (deformed_intensities(gd, self.__bitmap, self.__extent), )
@@ -340,6 +316,33 @@ class DeformableImage(Deformable):
 
 
 def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
+    """
+    Computes deformation of deformables by modules.
+
+    Parameters
+    ----------
+    deformables : list
+        List of deformable objects we want to deform.
+    modules : list
+        List of deformation modules that will perform the deformation.
+    solver : str
+        Name of the numerical ODE solver that will be used for shooting. See shoot() for a list of available solvers.
+    it : int
+        Number of steps the numerical ODE solver will perform.
+    costs : dict, default=None
+        If set to a dict, deformation cost will be filled under the 'deformation' key.
+    intermediates : dict, default=None
+        If set to a dict, intermediates states and control will be filled in the same manner than for shoot().
+    controls : list, default=None
+        The controls that will be used by the deformation modules. If set to None (by default), geodesic controls will be computed. Has to have the same length than the number of steps that will be performed while shooting.
+    t1 : float, default=1.
+        Final time of the ODE solver.
+
+    Returns
+    -------
+    list :
+        List of deformed objects.
+    """
     assert isinstance(costs, dict) or costs is None
     assert isinstance(intermediates, dict) or intermediates is None
 
@@ -349,6 +352,7 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
     incontrols = None
     if controls is not None:
+        # Construct control list
         incontrols = []
         for control in controls:
             silent_modules_controls = []
@@ -360,12 +364,9 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     shoot(Hamiltonian(compound), solver, it, intermediates=intermediates, controls=incontrols, t1=t1)
 
     # Regroup silent modules of each deformable thats need to shoot backward
-    # backward_silent_modules = [deformable.silent_module for deformable in deformables if deformable._has_backward]
-
     shoot_backward = any([deformable._has_backward for deformable in deformables])
 
     forward_silent_modules = copy.deepcopy(silent_modules)
-    # forward_silent_modules = silent_modules
 
     if shoot_backward:
         # Backward shooting is needed
@@ -378,6 +379,7 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
 
         backward_controls = None
         if controls is not None:
+            # Construct control list
             backward_controls = []
             for control in controls[::-1]:
                 silent_modules_controls = []
