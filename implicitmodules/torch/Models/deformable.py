@@ -8,10 +8,40 @@ from numpy import loadtxt, savetxt
 import meshio
 
 from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
-from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks
+from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from implicitmodules.torch.Manifolds import Landmarks
 from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points, vec2grid, plot_grid
 import matplotlib.pyplot as plt
+
+
+class DeformableGrid:
+    def __init__(self, extent, resolution, module_label=None):
+        self.__silent_module = DeformationGrid(extent, resolution, label=module_label)
+
+    @property
+    def silent_module(self):
+        return self.__silent_module
+
+    @property
+    def geometry(self):
+        """
+        Returns geometric informations of the deformable.
+        """
+        return (self.__silent_module.togrid(),)
+
+    @property
+    def _has_backward(self):
+        return False
+
+    # def compute_deformed(self, modules, solver, it, costs=None, intermediates=None):
+    #     """
+    #     Computes the deformation.
+    #     """
+    #     raise NotImplementedError()
+
+    def _to_deformed(self, gd):
+        return (gd,)
+
 
 
 class Deformable:
@@ -300,17 +330,8 @@ class DeformableImage(Deformable):
         return self._to_deformed(silent_pixel_grid.manifold.gd)
 
     def _to_deformed(self, gd):
-        print("---------------------")
-        print(gd[::10])
         if self.__output == 'bitmap':
-            a = (deformed_intensities(gd, self.__bitmap, self.__extent), )
-            # print(a)
-            # import matplotlib.pyplot as plt
-            # plt.plot(gd[::10, 0].numpy(), gd[::10, 1].numpy(), 'o', markersize=1.)
-            # plt.grid()
-            # # plt.imshow(a[0].numpy(), origin='lower', extent=self.__extent)
-            # plt.show()
-            return a
+            return (deformed_intensities(gd, self.__bitmap, self.__extent), )
         elif self.__output == 'points':
             deformed_bitmap = deformed_intensities(gd, self.__bitmap, self.__extent)
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
@@ -326,8 +347,17 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     silent_modules = [deformable.silent_module for deformable in deformables]
     compound = CompoundModule([*silent_modules, *modules])
 
+    incontrols = None
+    if controls is not None:
+        incontrols = []
+        for control in controls:
+            silent_modules_controls = []
+            for i in range(len(silent_modules)):
+                silent_modules_controls.append(torch.tensor([]))
+            incontrols.append([*silent_modules_controls, *control])
+
     # Forward shooting
-    shoot(Hamiltonian(compound), solver, it, intermediates=intermediates, controls=controls, t1=t1)
+    shoot(Hamiltonian(compound), solver, it, intermediates=intermediates, controls=incontrols, t1=t1)
 
     # Regroup silent modules of each deformable thats need to shoot backward
     # backward_silent_modules = [deformable.silent_module for deformable in deformables if deformable._has_backward]
@@ -346,25 +376,21 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
         # Reverse the moments for backward shooting
         compound.manifold.negate_cotan()
 
-        # # Backward shooting
-        # print(backward_modules[0].manifold.gd[::10])
-        # g = backward_modules[0].manifold.gd
-        # grid = vec2grid(g, 128, 128)
-        # ax = plt.subplot()
-        # plot_grid(ax, grid[0], grid[1], color='blue', lw=0.5)
-        # plt.axis('equal')
-        # plt.show()
+        backward_controls = None
+        if controls is not None:
+            backward_controls = []
+            for control in controls[::-1]:
+                silent_modules_controls = []
+                backward_modules_controls = []
+                for i in range(len(silent_modules)):
+                    silent_modules_controls.append(torch.tensor([]))
+                for i in range(len(backward_modules)):
+                    backward_modules_controls.append(torch.tensor([]))
+                modules_control = [-module_control for module_control in control]
 
-        shoot(Hamiltonian(compound), solver, it, t1=t1)
-        # print("===============")
-        # print(backward_modules[0].manifold.gd[::10])
-        # g = backward_modules[0].manifold.gd
-        # grid = vec2grid(g, 128, 128)
-        # plt.figure()
-        # ax = plt.subplot()
-        # plot_grid(ax, grid[0], grid[1], color='red', lw=0.5)
-        # plt.axis('equal')
-        # plt.show()
+                backward_controls.append([*silent_modules_controls, *backward_modules_controls, *modules_control])
+
+        shoot(Hamiltonian(compound), solver, it, t1=t1, controls=backward_controls)
 
     # For now, we need to compute the deformation cost after each shooting (and not before any shooting) for computation tree reasons
     if costs is not None:
@@ -374,17 +400,7 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     deformed = []
     for deformable, forward_silent_module in zip(deformables, forward_silent_modules):
         if deformable._has_backward:
-            print("+++++++++++++++++++++++")
-            gd = backward_modules.pop(0).manifold.gd
-            grid = vec2grid(gd, 128, 128)
-            plt.figure()
-            ax = plt.subplot()
-            plot_grid(ax, grid[0], grid[1], color='red', lw=0.5)
-            plt.axis('equal')
-            plt.show()
-
-            # deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
-            deformed.append(deformable._to_deformed(gd))
+            deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
         else:
             deformed.append(deformable._to_deformed(forward_silent_module.manifold.gd))
 

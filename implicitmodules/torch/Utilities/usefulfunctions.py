@@ -231,7 +231,7 @@ def import_implicit1_growth(filename, fieldname='growth', dtype=None):
 
 
 def import_point_basis(filename, fieldname='basis', dtype=None):
-    mesh = meshio.read(fieldname)
+    mesh = meshio.read(filename)
 
     def _import_basis(fieldname):
         if fieldname not in mesh.point_data.keys():
