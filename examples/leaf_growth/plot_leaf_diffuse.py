@@ -24,7 +24,7 @@ import copy
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We load the data, rescale it and zero it.
@@ -62,10 +62,10 @@ points_small = shape_source.clone()
 
 # Build AABB around the source shape and uniformly sample points for the implicit
 # module of order 1
-aabb_source = dm.Utilities.AABB.build_from_points(shape_source)
-points_growth = dm.Utilities.fill_area_uniform_density(dm.Utilities.area_shape, aabb_source, 0.25, shape=shape_source)
+aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
+points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, 0.25, shape=shape_source)
 
-rot_growth = torch.stack([dm.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
+rot_growth = torch.stack([imodal.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
 
 ###############################################################################
 # Plot everything.
@@ -94,7 +94,7 @@ K = 10
 C = K * torch.ones(points_growth.shape[0], 2, 1)
 
 ax = plt.subplot()
-dm.Utilities.plot_C_ellipses(ax, points_growth, C, color='green', scale=0.2)
+imodal.Utilities.plot_C_ellipses(ax, points_growth, C, color='green', scale=0.2)
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
 plt.axis('equal')
 plt.show()
@@ -110,13 +110,13 @@ coeff_growth = 0.01
 scale_small = 3.
 scale_growth = 15.
 
-global_translation = dm.DeformationModules.GlobalTranslation(2)
+global_translation = imodal.DeformationModules.GlobalTranslation(2)
 
-small_scale_translation = dm.DeformationModules.ImplicitModule0(
+small_scale_translation = imodal.DeformationModules.ImplicitModule0(
     2, points_small.shape[0], scale_small, coeff=coeff_small, nu=0.01,
     gd=points_small)
 
-growth = dm.DeformationModules.ImplicitModule1(
+growth = imodal.DeformationModules.ImplicitModule1(
     2, points_growth.shape[0], scale_growth, C, coeff=coeff_growth, nu=nu,
     gd=(points_growth, rot_growth))
 
@@ -125,10 +125,10 @@ growth = dm.DeformationModules.ImplicitModule1(
 # We now define the model.
 #
 
-deformable_shape_source = dm.Models.DeformablePoints(shape_source)
-deformable_shape_target = dm.Models.DeformablePoints(shape_target)
+deformable_shape_source = imodal.Models.DeformablePoints(shape_source)
+deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
-model = dm.Models.RegistrationModel([deformable_shape_source], [global_translation, small_scale_translation, growth], [dm.Attachment.VarifoldAttachment(2, [20., 60.])], lam=100.)
+model = imodal.Models.RegistrationModel([deformable_shape_source], [global_translation, small_scale_translation, growth], [imodal.Attachment.VarifoldAttachment(2, [20., 60.])], lam=100.)
 
 
 ###############################################################################
@@ -139,7 +139,7 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
@@ -156,7 +156,7 @@ deformed_source = intermediate_states[-1][0].gd
 deformed_small = intermediate_states[-1][2].gd
 deformed_growth = intermediate_states[-1][3].gd[0]
 
-aabb_target = dm.Utilities.AABB.build_from_points(shape_target).scale(1.2)
+aabb_target = imodal.Utilities.AABB.build_from_points(shape_target).scale(1.2)
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
@@ -186,11 +186,11 @@ plt.show()
 # We first need to compute the controls of each modules.
 #
 
-modules = dm.DeformationModules.CompoundModule(copy.copy(model.modules))
+modules = imodal.DeformationModules.Compounimodalodule(copy.copy(model.modules))
 modules.manifold.fill(model.init_manifold.clone(), copy=True)
 
 intermediates = {}
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian(modules), shoot_solver, shoot_it, intermediates=intermediates)
+imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian(modules), shoot_solver, shoot_it, intermediates=intermediates)
 
 intermediate_states = intermediates['states']
 intermediate_controls = intermediates['controls']
@@ -203,16 +203,16 @@ growth_controls = [control[3] for control in intermediate_controls]
 
 
 # We extract the modules of the models and fill the right manifolds.
-modules = dm.DeformationModules.CompoundModule(copy.copy(model.modules))
+modules = imodal.DeformationModules.Compounimodalodule(copy.copy(model.modules))
 modules.manifold.fill(model.init_manifold.clone(), copy=True)
 silent = copy.copy(modules[0])
-deformation_grid = dm.DeformationModules.DeformationGrid(dm.Utilities.AABB.build_from_points(shape_source).scale(1.2), [32, 32])
+deformation_grid = imodal.DeformationModules.DeformationGrid(imodal.Utilities.AABB.build_from_points(shape_source).scale(1.2), [32, 32])
 small_scale = copy.copy(modules[2])
 
 # We construct the controls list we will give will shooting
 controls = [[torch.tensor([]), torch.tensor([]), control] for control in ss_controls]
 
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, small_scale]), shoot_solver, shoot_it, controls=controls)
+imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, small_scale]), shoot_solver, shoot_it, controls=controls)
 
 ss_deformed_source = silent.manifold.gd.detach()
 ss_deformed_grid = deformation_grid.togrid()
@@ -223,16 +223,16 @@ ss_deformed_grid = deformation_grid.togrid()
 #
 
 # We extract the modules of the models and fill the right manifolds.
-modules = dm.DeformationModules.CompoundModule(copy.copy(model.modules))
+modules = imodal.DeformationModules.Compounimodalodule(copy.copy(model.modules))
 modules.manifold.fill(model.init_manifold.clone(), copy=True)
 silent = copy.copy(modules[0])
-deformation_grid = dm.DeformationModules.DeformationGrid(dm.Utilities.AABB.build_from_points(shape_source).scale(1.2), [32, 32])
+deformation_grid = imodal.DeformationModules.DeformationGrid(imodal.Utilities.AABB.build_from_points(shape_source).scale(1.2), [32, 32])
 growth = copy.copy(modules[3])
 
 # We construct the controls list we will give will shooting
 controls = [[torch.tensor([]), torch.tensor([]), control] for control in growth_controls]
 
-dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, growth]), shoot_solver, shoot_it, controls=controls)
+imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent, deformation_grid, growth]), shoot_solver, shoot_it, controls=controls)
 
 growth_deformed_source = silent.manifold.gd.detach()
 growth_deformed_grid = deformation_grid.togrid()
@@ -246,14 +246,14 @@ ax = plt.subplot(1, 2, 1)
 plt.title("Growth module")
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
 plt.plot(growth_deformed_source[:, 0].numpy(), growth_deformed_source[:, 1].numpy())
-dm.Utilities.plot_grid(ax, growth_deformed_grid[0], growth_deformed_grid[1], color='xkcd:light blue', lw=0.4)
+imodal.Utilities.plot_grid(ax, growth_deformed_grid[0], growth_deformed_grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 
 ax = plt.subplot(1, 2, 2)
 plt.title("Small scale module")
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
 plt.plot(ss_deformed_source[:, 0].numpy(), ss_deformed_source[:, 1].numpy())
-dm.Utilities.plot_grid(ax, ss_deformed_grid[0], ss_deformed_grid[1], color='xkcd:light blue', lw=0.4)
+imodal.Utilities.plot_grid(ax, ss_deformed_grid[0], ss_deformed_grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 
 plt.show()

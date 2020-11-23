@@ -1,6 +1,6 @@
 import torch
 
-from implicitmodules.torch.StructuredFields.Abstract import BaseStructuredField
+from imodal.StructuredFields.Abstract import BaseStructuredField
 
 
 class StructuredField_Affine(BaseStructuredField):

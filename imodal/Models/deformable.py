@@ -7,10 +7,10 @@ import torch
 from numpy import loadtxt, savetxt
 import meshio
 
-from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
-from implicitmodules.torch.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
-from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
+from imodal.HamiltonianDynamic import Hamiltonian, shoot
+from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
+from imodal.Manifolds import Landmarks
+from imodal.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
 
 
 class Deformable:
@@ -67,24 +67,18 @@ class DeformableGrid:
         return (gd,)
 
 
-class SilentDeformable(Deformable):
+class DeformablePoints(Deformable):
     """
-    Base class for deformable, which are the manipulated objects by the models.
+    Deformable object representing a collection of points in space.
     """
-    def __init__(self, manifold, module_label=None):
-        self.__silent_module = SilentBase(manifold, module_label)
+    def __init__(self, points, label=None):
+        super().__init__()
+        self.__silent_module = SilentBase(Landmarks(points.shape[1], points.shape[0], gd=points), label=label)
 
     @property
     def silent_module(self):
         return self.__silent_module
 
-
-class DeformablePoints(Deformable):
-    """
-    Deformable object representing a collection of points in space.
-    """
-    def __init__(self, points):
-        super().__init__(Landmarks(points.shape[1], points.shape[0], gd=points))
 
     @classmethod
     def load_from_file(cls, filename, dtype=None, **kwargs):
@@ -177,7 +171,7 @@ class DeformablePoints(Deformable):
 
 
 class DeformableMesh(DeformablePoints):
-    def __init__(self, points, triangles):
+    def __init__(self, points, triangles, label=None):
         """
         Parameters
         ----------
@@ -187,7 +181,7 @@ class DeformableMesh(DeformablePoints):
             Triangles.
         """
         self.__triangles = triangles
-        super().__init__(points)
+        super().__init__(points, label=label)
 
     @classmethod
     def load_from_file(cls, filename, dtype=None):
@@ -221,11 +215,11 @@ class DeformableMesh(DeformablePoints):
         return (gd, self.__triangles)
 
 
-class DeformableImage(Deformable):
+class DeformableImage(DeformablePoints):
     """
     2D bitmap deformable object.
     """
-    def __init__(self, bitmap, output='bitmap', extent=None):
+    def __init__(self, bitmap, output='bitmap', extent=None, label=None):
         """
         Parameters
         ----------
@@ -233,7 +227,7 @@ class DeformableImage(Deformable):
             2 dimensional tensor representing the image to deform.
         output: str, default='bitmap'
             Representation used by the deformable.
-        extent: implicitmodules.torch.Utilities.AABB, default=None
+        extent: imodal.Utilities.AABB, default=None
             Extent on the 2D plane on which the image is set.
         """
         assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
@@ -254,7 +248,7 @@ class DeformableImage(Deformable):
         pixel_points = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
 
         self.__bitmap = bitmap
-        super().__init__(Landmarks(2, pixel_points.shape[0], gd=pixel_points))
+        super().__init__(pixel_points, label=label)
 
     @classmethod
     def load_from_file(cls, filename, origin='lower', device=None):

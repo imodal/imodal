@@ -1,6 +1,6 @@
 import torch
 
-from implicitmodules.torch.Utilities import is_valid_backend, get_compute_backend, shared_tensors_property, tensors_device
+from imodal.Utilities import is_valid_backend, get_compute_backend, shared_tensors_property, tensors_device
 
 
 class BaseStructuredField:

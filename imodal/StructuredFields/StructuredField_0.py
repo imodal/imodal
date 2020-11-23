@@ -1,9 +1,9 @@
 import torch
 
-from implicitmodules.torch.Kernels.kernels import gauss_kernel, rel_differences
-from implicitmodules.torch.StructuredFields.Abstract import KernelSupportStructuredField
-from implicitmodules.torch.Utilities import get_compute_backend, is_valid_backend
-from implicitmodules.torch.Kernels import K_xy
+from imodal.Kernels.kernels import gauss_kernel, rel_differences
+from imodal.StructuredFields.Abstract import KernelSupportStructuredField
+from imodal.Utilities import get_compute_backend, is_valid_backend
+from imodal.Kernels import K_xy
 
 from pykeops.torch import Genred
 

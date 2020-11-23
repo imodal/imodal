@@ -3,17 +3,17 @@ import pickle
 
 from pykeops.torch import Genred, KernelSolve
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
-from implicitmodules.torch.Kernels.SKS import eta, compute_sks, A
-from implicitmodules.torch.Manifolds import Stiefel
-from implicitmodules.torch.StructuredFields import StructuredField_p
+from imodal.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
+from imodal.Kernels.SKS import eta, compute_sks, A
+from imodal.Manifolds import NormalFrame
+from imodal.StructuredFields import StructuredField_p
 
 
 class ImplicitModule1Base(DeformationModule):
     """ Implicit module of order 1. """
 
     def __init__(self, manifold, sigma, C, nu, coeff, label):
-        assert isinstance(manifold, Stiefel)
+        assert isinstance(manifold, NormalFrame)
         super().__init__(label)
         self.__manifold = manifold
         self.__C = C
@@ -37,7 +37,7 @@ class ImplicitModule1Base(DeformationModule):
 
     @classmethod
     def build(cls, dim, nb_pts, sigma, C, nu=0., coeff=1., gd=None, tan=None, cotan=None, label=None):
-        return cls(Stiefel(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff, label)
+        return cls(NormalFrame(dim, nb_pts, gd=gd, tan=tan, cotan=cotan), sigma, C, nu, coeff, label)
 
     @property
     def dim(self):

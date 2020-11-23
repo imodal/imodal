@@ -1,7 +1,7 @@
 import torch
 
-from implicitmodules.torch.Manifolds.Abstract import Manifold
-from implicitmodules.torch.StructuredFields import StructuredField_0, StructuredField_0_u, SumStructuredField
+from imodal.Manifolds.Abstract import Manifold
+from imodal.StructuredFields import StructuredField_0, StructuredField_0_u, SumStructuredField
 
 
 class LandmarksDirection(Manifold):

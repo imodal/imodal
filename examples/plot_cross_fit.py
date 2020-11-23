@@ -22,14 +22,14 @@ import torch
 import matplotlib.pyplot as plt
 import scipy.ndimage
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We load the data and plot them.
 #
 
-source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
-target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
+target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
 
 # Smoothing
 sig_smooth = 0.
@@ -38,16 +38,16 @@ target_image = torch.tensor(scipy.ndimage.gaussian_filter(target_image, sig_smoo
 
 
 extent_length = 31.
-extent = dm.Utilities.AABB(0., extent_length, 0., extent_length)
+extent = imodal.Utilities.AABB(0., extent_length, 0., extent_length)
 
 dots = torch.tensor([[0., 0.5],
                      [0.5, 0.],
                      [0., -0.5],
                      [-0.5, 0.]])
 
-source_dots = 0.6*extent_length*dm.Utilities.linear_transform(dots, dm.Utilities.rot2d(math.pi/3)) + extent_length*torch.tensor([0.5, 0.5])
+source_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/3)) + extent_length*torch.tensor([0.5, 0.5])
 
-target_dots = 0.6*extent_length*dm.Utilities.linear_transform(dots, dm.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
+target_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
 
 center = extent_length*torch.tensor([[0.2, 0.3]])
 
@@ -73,7 +73,7 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-rotation = dm.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
+rotation = imodal.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
 
 
 ###############################################################################
@@ -81,17 +81,17 @@ rotation = dm.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
 # rotation center.
 #
 
-source_deformable = dm.Models.DeformableImage(source_image, output='bitmap',
+source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap',
                                               extent='match')
-target_deformable = dm.Models.DeformableImage(target_image, output='bitmap',
+target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap',
                                               extent='match')
 
-source_dots_deformable = dm.Models.DeformablePoints(source_dots)
-target_dots_deformable = dm.Models.DeformablePoints(target_dots)
+source_dots_deformable = imodal.Models.DeformablePoints(source_dots)
+target_dots_deformable = imodal.Models.DeformablePoints(target_dots)
 
-attachment = dm.Attachment.L2NormAttachment(transform=None)
+attachment = imodal.Attachment.L2NormAttachment(transform=None)
 
-model = dm.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [attachment, dm.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=1000.)
+model = imodal.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [attachment, imodal.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=1000.)
 
 
 ###############################################################################
@@ -103,7 +103,7 @@ shoot_it = 10
 max_it = 100
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 
 fitter.fit([target_deformable, target_dots_deformable], max_it, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 

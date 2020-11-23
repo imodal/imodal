@@ -3,7 +3,7 @@ from collections import Iterable
 import geomloss
 import torch
 
-from implicitmodules.torch.Kernels.kernels import distances, scal
+from imodal.Kernels.kernels import distances, scal
 
 
 class Attachment:

@@ -2,7 +2,7 @@ import math
 
 import torch
 
-from implicitmodules.torch.Kernels.kernels import gauss_kernel, rel_differences
+from imodal.Kernels.kernels import gauss_kernel, rel_differences
 
 
 def A(dim, dtype, device):

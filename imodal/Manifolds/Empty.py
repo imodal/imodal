@@ -1,7 +1,7 @@
 import torch
 
-from implicitmodules.torch.Manifolds.Abstract import BaseManifold
-from implicitmodules.torch.StructuredFields import StructuredField_Null
+from imodal.Manifolds.Abstract import BaseManifold
+from imodal.StructuredFields import StructuredField_Null
 
 
 class EmptyManifold(BaseManifold):

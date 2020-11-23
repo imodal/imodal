@@ -1,7 +1,7 @@
 import torch
 import math
 
-from implicitmodules.torch.Utilities import rot2d
+from imodal.Utilities import rot2d
 
 
 def linear_transform(points, A):

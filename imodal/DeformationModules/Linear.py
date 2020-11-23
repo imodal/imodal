@@ -1,8 +1,8 @@
 import torch
 
-from implicitmodules.torch.StructuredFields import StructuredField_Affine
-from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
+from imodal.StructuredFields import StructuredField_Affine
+from imodal.Manifolds import Landmarks
+from imodal.DeformationModules.Abstract import DeformationModule
 
 
 class LinearDeformation(DeformationModule):

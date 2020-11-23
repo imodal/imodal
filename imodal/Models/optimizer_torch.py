@@ -4,8 +4,8 @@ import gc
 
 import torch
 
-from implicitmodules.torch.Models import BaseOptimizer, register_optimizer
-from implicitmodules.torch.Models.optimizer_gd import OptimizerGradientDescent
+from imodal.Models import BaseOptimizer, register_optimizer
+from imodal.Models.optimizer_gd import OptimizerGradientDescent
 
 
 class OptimizerTorch(BaseOptimizer):

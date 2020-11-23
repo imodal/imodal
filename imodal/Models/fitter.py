@@ -2,9 +2,9 @@ import time
 
 import torch
 
-from implicitmodules.torch.Models import BaseOptimizer, create_optimizer, get_default_optimizer
-from implicitmodules.torch.Models import BaseModel
-from implicitmodules.torch.Utilities import append_in_dict_of_list
+from imodal.Models import BaseOptimizer, create_optimizer, get_default_optimizer
+from imodal.Models import BaseModel
+from imodal.Utilities import append_in_dict_of_list
 
 
 class Fitter:

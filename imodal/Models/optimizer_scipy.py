@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from scipy.optimize import minimize
 
-from implicitmodules.torch.Models.optimizer import BaseOptimizer, register_optimizer
+from imodal.Models.optimizer import BaseOptimizer, register_optimizer
 
 
 class OptimizerScipy(BaseOptimizer):

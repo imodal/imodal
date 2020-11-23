@@ -1,7 +1,7 @@
 import copy
 
-from implicitmodules.torch.Utilities.factory import ObjectFactory
-from implicitmodules.torch.Utilities.compute_backend import get_compute_backend
+from imodal.Utilities.factory import ObjectFactory
+from imodal.Utilities.compute_backend import get_compute_backend
 
 
 class DeformationModule:

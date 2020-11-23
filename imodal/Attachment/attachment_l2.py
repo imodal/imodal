@@ -1,7 +1,7 @@
 import torch
 
-from implicitmodules.torch.Attachment import Attachment
-from implicitmodules.torch.Utilities import interpolate_image
+from imodal.Attachment import Attachment
+from imodal.Utilities import interpolate_image
 
 
 class L2NormAttachment(Attachment):

@@ -16,14 +16,14 @@ import math
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We load the data and plot them.
 #
 
-source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/heart_a.png", origin='lower')
-target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/heart_b.png", origin='lower')
+source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/heart_a.png", origin='lower')
+target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/heart_b.png", origin='lower')
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
@@ -37,15 +37,15 @@ plt.imshow(target_image, origin='lower')
 
 plt.show()
 
-source_deformable = dm.Models.DeformableImage(source_image, extent='match')
-target_deformable = dm.Models.DeformableImage(target_image, extent='match')
+source_deformable = imodal.Models.DeformableImage(source_image, extent='match')
+target_deformable = imodal.Models.DeformableImage(target_image, extent='match')
 
 
 ###############################################################################
 # Multi scale local points and deformation module generation
 #
 
-aabb = dm.Utilities.AABB(0, source_image.shape[0]-1, 0, source_image.shape[1]-1)
+aabb = imodal.Utilities.AABB(0, source_image.shape[0]-1, 0, source_image.shape[1]-1)
 small_scale_density = 0.2
 large_scale_density = 0.02
 
@@ -55,8 +55,8 @@ large_scale_points = aabb.fill_uniform_density(large_scale_density)
 small_scale_sigma = 1.5/small_scale_density
 large_scale_sigma = 1.5/large_scale_density
 
-small_scale_translations = dm.DeformationModules.ImplicitModule0(2, small_scale_points.shape[0], small_scale_sigma, nu=0.1, gd=small_scale_points.clone().requires_grad_())
-large_scale_translations = dm.DeformationModules.ImplicitModule0(2, large_scale_points.shape[0], large_scale_sigma, nu=0.1, gd=large_scale_points.clone().requires_grad_())
+small_scale_translations = imodal.DeformationModules.ImplicitModule0(2, small_scale_points.shape[0], small_scale_sigma, nu=0.1, gd=small_scale_points.clone().requires_grad_())
+large_scale_translations = imodal.DeformationModules.ImplicitModule0(2, large_scale_points.shape[0], large_scale_sigma, nu=0.1, gd=large_scale_points.clone().requires_grad_())
 
 ###############################################################################
 # Plot translations points
@@ -72,19 +72,19 @@ plt.show()
 # Model
 #
 
-model = dm.Models.RegistrationModel(source_deformable, [small_scale_translations, large_scale_translations], dm.Attachment.EuclideanPointwiseDistanceAttachment(), lam=100.)
+model = imodal.Models.RegistrationModel(source_deformable, [small_scale_translations, large_scale_translations], imodal.Attachment.EuclideanPointwiseDistanceAttachment(), lam=100.)
 
 
 ###############################################################################
 # We fit the model.
 #
 
-shoot_solver='euler'
+shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit(target_deformable, 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit(target_deformable, 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################

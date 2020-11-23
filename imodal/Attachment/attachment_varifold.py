@@ -3,10 +3,10 @@ from collections import Iterable
 import torch
 from pykeops.torch import Genred
 
-from implicitmodules.torch.Attachment.attachment import Attachment
-from implicitmodules.torch.Utilities.meshutils import close_shape, compute_centers_normals_lengths
-from implicitmodules.torch.Utilities.compute_backend import get_compute_backend
-from implicitmodules.torch.Kernels import K_xy
+from imodal.Attachment.attachment import Attachment
+from imodal.Utilities.meshutils import close_shape, compute_centers_normals_lengths
+from imodal.Utilities.compute_backend import get_compute_backend
+from imodal.Kernels import K_xy
 
 
 class VarifoldAttachmentBase(Attachment):

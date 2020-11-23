@@ -30,7 +30,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import pymesh
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # Generation of the disc and control points
@@ -61,19 +61,19 @@ control_density = 1.
 #
 
 # Lower disc
-control_points_lower = dm.Utilities.generate_disc_density(
+control_points_lower = imodal.Utilities.generate_disc_density(
     control_density, control_radius_outer, control_radius_inner)
 control_points_lower = torch.cat(
     [control_points_lower, -control_thickness/2.*torch.ones(control_points_lower.shape[0]).unsqueeze(1)], dim=1)
 
 # Middle disc
-control_points_middle = dm.Utilities.generate_disc_density(
+control_points_middle = imodal.Utilities.generate_disc_density(
     control_density, control_radius_outer, control_radius_inner)
 control_points_middle = torch.cat(
     [control_points_middle, torch.zeros(control_points_middle.shape[0]).unsqueeze(1)], dim=1)
 
 # Top disc
-control_points_upper = dm.Utilities.generate_disc_density(
+control_points_upper = imodal.Utilities.generate_disc_density(
     control_density, control_radius_outer, control_radius_inner)
 control_points_upper = torch.cat(
     [control_points_upper, control_thickness/2.*torch.ones(control_points_upper.shape[0]).unsqueeze(1)], dim=1)
@@ -89,7 +89,7 @@ print("Control points count={count}".format(count=control_points.shape[0]))
 
 ax = plt.subplot(projection='3d')
 plt.plot(control_points[:, 0].numpy(), control_points[:, 1].numpy(), control_points[:, 2].numpy(), '.')
-dm.Utilities.set_aspect_equal_3d(ax)
+imodal.Utilities.set_aspect_equal_3d(ax)
 plt.show()
 
 ###############################################################################
@@ -129,7 +129,7 @@ print("Growth points count={count}".format(count=len(growth_mesh.vertices)))
 ax = plt.subplot(projection='3d')
 ax.plot_trisurf(growth_points[:, 0].numpy(), growth_points[:, 1].numpy(), growth_points[:, 2].numpy(), triangles=growth_faces, linewidth=0.2, zsort='max', color=(0., 0., 0., 0.), edgecolor=(0., 0., 1., 1))
 ax.plot_trisurf(rigid_points[:, 0].numpy(), rigid_points[:, 1].numpy(), rigid_points[:, 2].numpy(), triangles=rigid_faces, linewidth=0.2, zsort='max', color=(0., 0., 0., 0.), edgecolor=(1., 0., 0., 1))
-dm.Utilities.set_aspect_equal_3d(ax)
+imodal.Utilities.set_aspect_equal_3d(ax)
 plt.show()
 
 
@@ -188,7 +188,7 @@ moments_R = torch.zeros_like(R)
 ax = plt.subplot(projection='3d')
 plt.plot(control_points[:, 0].numpy(), control_points[:, 1].numpy(), control_points[:, 2].numpy(), '.') 
 ax.quiver(control_points[:, 0].numpy(), control_points[:, 1].numpy(), control_points[:, 2].numpy(), moments[:, 0].numpy(), moments[:, 1].numpy(), moments[:, 2].numpy(), length=-5., normalize=True)
-dm.Utilities.set_aspect_equal_3d(ax)
+imodal.Utilities.set_aspect_equal_3d(ax)
 plt.show()
 
 ###############################################################################
@@ -197,7 +197,7 @@ plt.show()
 
 off = control_points_lower.shape[0]
 ax = plt.subplot()
-dm.Utilities.plot_C_arrows(ax, control_points_lower[:, 0:2], C[:off, 0:2, :], R=R[:off, 0:2, 0:2], color='xkcd:light blue')
+imodal.Utilities.plot_C_arrows(ax, control_points_lower[:, 0:2], C[:off, 0:2, :], R=R[:off, 0:2, 0:2], color='xkcd:light blue')
 plt.plot(control_points_lower[:, 0].numpy(), control_points_lower[:, 1].numpy(), '.')
 plt.axis('equal')
 plt.show()
@@ -208,7 +208,7 @@ plt.show()
 #
 
 ax = plt.subplot()
-dm.Utilities.plot_C_arrows(ax, control_points_middle[:, 0:2], C[off:2*off, 0:2, :], R=R[off:2*off, 0:2, 0:2], color='xkcd:light blue')
+imodal.Utilities.plot_C_arrows(ax, control_points_middle[:, 0:2], C[off:2*off, 0:2, :], R=R[off:2*off, 0:2, 0:2], color='xkcd:light blue')
 plt.plot(control_points_lower[:, 0].numpy(), control_points_lower[:, 1].numpy(), '.')
 plt.axis('equal')
 plt.show()
@@ -219,7 +219,7 @@ plt.show()
 #
 
 ax = plt.subplot()
-dm.Utilities.plot_C_arrows(ax, control_points_upper[:, 0:2], C[2*off:, 0:2, :], R=R[2*off:, 0:2, 0:2], color='xkcd:light blue')
+imodal.Utilities.plot_C_arrows(ax, control_points_upper[:, 0:2], C[2*off:, 0:2, :], R=R[2*off:, 0:2, 0:2], color='xkcd:light blue')
 plt.plot(control_points_lower[:, 0].numpy(), control_points_lower[:, 1].numpy(), '.')
 plt.axis('equal')
 plt.show()
@@ -236,11 +236,11 @@ plt.show()
 
 sigma = 2.
 
-growth = dm.DeformationModules.ImplicitModule1(3, control_points.shape[0], sigma, C, nu=0.01, gd=(control_points.clone().requires_grad_(), R.clone().requires_grad_()), cotan=(moments.clone().requires_grad_(), moments_R.clone().requires_grad_()))
+growth = imodal.DeformationModules.ImplicitModule1(3, control_points.shape[0], sigma, C, nu=0.01, gd=(control_points.clone().requires_grad_(), R.clone().requires_grad_()), cotan=(moments.clone().requires_grad_(), moments_R.clone().requires_grad_()))
 
-layer_rigid = dm.DeformationModules.SilentLandmarks(3, rigid_points.shape[0], gd=rigid_points.clone().requires_grad_())
+layer_rigid = imodal.DeformationModules.SilentLanimodalarks(3, rigid_points.shape[0], gd=rigid_points.clone().requires_grad_())
 
-layer_growth = dm.DeformationModules.SilentLandmarks(3, growth_points.shape[0], gd=growth_points.clone().requires_grad_())
+layer_growth = imodal.DeformationModules.SilentLanimodalarks(3, growth_points.shape[0], gd=growth_points.clone().requires_grad_())
 
 
 ###############################################################################
@@ -250,7 +250,7 @@ layer_growth = dm.DeformationModules.SilentLandmarks(3, growth_points.shape[0], 
 
 start = time.perf_counter()
 with torch.autograd.no_grad():
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 'euler', 10)
+    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 'euler', 10)
 print("Elapsed time={elapsed}".format(elapsed=time.perf_counter()-start))
 
 
@@ -266,7 +266,7 @@ deformed_growth_points = layer_growth.manifold.gd.detach()
 ax = plt.subplot(projection='3d')
 ax.plot_trisurf(deformed_growth_points[:, 0].numpy(), deformed_growth_points[:, 1].numpy(), deformed_growth_points[:, 2].numpy(), triangles=growth_faces, linewidth=0.2, zsort='max', color=(0., 0., 0., 0.), edgecolor=(0., 0., 1., 1))
 ax.plot_trisurf(deformed_rigid_points[:, 0].numpy(), deformed_rigid_points[:, 1].numpy(), deformed_rigid_points[:, 2].numpy(), triangles=rigid_faces, linewidth=0.2, zsort='max', color=(0., 0., 0., 0.), edgecolor=(1., 0., 0., 1))
-dm.Utilities.set_aspect_equal_3d(ax)
+imodal.Utilities.set_aspect_equal_3d(ax)
 plt.show()
 
 

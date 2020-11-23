@@ -3,10 +3,10 @@ import math
 
 from pykeops.torch import Genred, KernelSolve
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
-from implicitmodules.torch.Kernels.kernels import K_xy, K_xx
-from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.StructuredFields import StructuredField_0
+from imodal.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
+from imodal.Kernels.kernels import K_xy, K_xx
+from imodal.Manifolds import Landmarks
+from imodal.StructuredFields import StructuredField_0
 
 class LocalConstrainedTranslationsBase(DeformationModule):
     """Module generating sum of constrained translations."""

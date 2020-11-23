@@ -1,8 +1,8 @@
 import torch
 
-from implicitmodules.torch.Utilities import generate_mesh_grid, grid2vec, vec2grid
-from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.DeformationModules.SilentLandmark import SilentBase
+from imodal.Utilities import generate_mesh_grid, grid2vec, vec2grid
+from imodal.Manifolds import Landmarks
+from imodal.DeformationModules.SilentLandmark import SilentBase
 
 class DeformationGrid(SilentBase):
     """

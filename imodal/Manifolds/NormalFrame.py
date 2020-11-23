@@ -2,12 +2,12 @@ from typing import Iterable
 
 import torch
 
-from implicitmodules.torch.Manifolds.Abstract import Manifold
-from implicitmodules.torch.StructuredFields import StructuredField_m, StructuredField_0
-from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
+from imodal.Manifolds.Abstract import Manifold
+from imodal.StructuredFields import StructuredField_m, StructuredField_0
+from imodal.StructuredFields.Abstract import SumStructuredField
 
 
-class Stiefel(Manifold):
+class NormalFrame(Manifold):
     def __init__(self, dim, nb_pts, gd=None, tan=None, cotan=None, device=None):
         assert (gd is None) or ((gd[0].shape[0] == nb_pts) and (gd[0].shape[1] == dim) and\
                                 (gd[1].shape[0] == nb_pts) and (gd[1].shape[1] == dim) and\
@@ -40,7 +40,7 @@ class Stiefel(Manifold):
         S = 0.5 * (d_vx - torch.transpose(d_vx, 1, 2))
         vr = torch.bmm(S, self.gd[1])
 
-        return Stiefel(self.__dim, self.nb_pts, gd=self.gd, tan=(vx, vr))
+        return NormalFrame(self.__dim, self.nb_pts, gd=self.gd, tan=(vx, vr))
 
     def cot_to_vs(self, sigma, backend=None):
         v0 = StructuredField_0(self.gd[0], self.cotan[0], sigma, backend=backend)

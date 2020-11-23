@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from scipy.spatial import ConvexHull, Delaunay
 
-from implicitmodules.torch.Kernels.kernels import K_xy
+from imodal.Kernels.kernels import K_xy
 
 
 def area_side(points, **kwargs):

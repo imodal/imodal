@@ -1,6 +1,6 @@
-from implicitmodules.torch.StructuredFields.Abstract import SumStructuredField
-from implicitmodules.torch.Manifolds.Abstract import BaseManifold
-from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
+from imodal.StructuredFields.Abstract import SumStructuredField
+from imodal.Manifolds.Abstract import BaseManifold
+from imodal.Utilities import tensors_device, tensors_dtype
 
 
 class CompoundManifold(BaseManifold):

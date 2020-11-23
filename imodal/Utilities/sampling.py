@@ -3,9 +3,9 @@ import math
 import matplotlib.image
 import torch
 
-from implicitmodules.torch.Kernels import K_xy
-from implicitmodules.torch.Utilities.usefulfunctions import grid2vec, points2pixels
-from implicitmodules.torch.Utilities.aabb import AABB
+from imodal.Kernels import K_xy
+from imodal.Utilities.usefulfunctions import grid2vec, points2pixels
+from imodal.Utilities.aabb import AABB
 
 
 def load_greyscale_image(filename, origin='lower', dtype=None, device=None):

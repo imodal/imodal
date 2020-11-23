@@ -1,6 +1,6 @@
 from .Compound import CompoundManifold
 from .Landmark import Landmarks
-from .Stiefel import Stiefel
+from .NormalFrame import NormalFrame
 from .Empty import EmptyManifold
 from .LandmarkDirection import LandmarksDirection
 

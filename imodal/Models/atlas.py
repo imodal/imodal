@@ -3,10 +3,10 @@ from collections import OrderedDict, Iterable
 
 import torch
 
-from implicitmodules.torch.Models import BaseModel, RegistrationModel
-from implicitmodules.torch.HamiltonianDynamic import Hamiltonian, shoot
-from implicitmodules.torch.DeformationModules import ImplicitModule0
-from implicitmodules.torch.Utilities import append_in_dict_of_list
+from imodal.Models import BaseModel, RegistrationModel
+from imodal.HamiltonianDynamic import Hamiltonian, shoot
+from imodal.DeformationModules import ImplicitModule0
+from imodal.Utilities import append_in_dict_of_list
 
 
 class AtlasModel(BaseModel):

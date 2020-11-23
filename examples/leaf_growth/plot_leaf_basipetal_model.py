@@ -21,7 +21,7 @@ import pickle
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 torch.set_default_dtype(torch.float64)
 
@@ -38,8 +38,8 @@ height_target = 100.
 
 dots_source = torch.tensor(data['source_d'], dtype=torch.get_default_dtype())
 dots_target = torch.tensor(data['target_d'], dtype=torch.get_default_dtype())
-shape_source = dm.Utilities.close_shape(torch.tensor(data['source_c'], dtype=torch.get_default_dtype()))
-shape_target = dm.Utilities.close_shape(torch.tensor(data['target_c'], dtype=torch.get_default_dtype()))
+shape_source = imodal.Utilities.close_shape(torch.tensor(data['source_c'], dtype=torch.get_default_dtype()))
+shape_target = imodal.Utilities.close_shape(torch.tensor(data['target_c'], dtype=torch.get_default_dtype()))
 
 smin, smax = torch.min(shape_source[:, 1]), torch.max(shape_source[:, 1])
 sscale = height_source / (smax - smin)
@@ -69,13 +69,13 @@ dots_target = dots_target - offset_target
 
 # Build AABB around the source shape and uniformly sample points for the implicit
 # module of order 1
-aabb_source = dm.Utilities.AABB.build_from_points(1.2*shape_source)
-# aabb_source = dm.Utilities.AABB.build_from_points(1.*shape_source)
+aabb_source = imodal.Utilities.AABB.build_from_points(1.2*shape_source)
+# aabb_source = imodal.Utilities.AABB.build_from_points(1.*shape_source)
 points_growth_density = 0.25
-# points_growth = dm.Utilities.fill_area_uniform_density(dm.Utilities.area_shape, aabb_source, points_growth_density, shape=shape_source)
-points_growth = dm.Utilities.fill_area_uniform_density(dm.Utilities.area_shape, aabb_source, points_growth_density, shape=1.2*shape_source)
+# points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, points_growth_density, shape=shape_source)
+points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, points_growth_density, shape=1.2*shape_source)
 
-rot_growth = torch.stack([dm.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
+rot_growth = torch.stack([imodal.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
 
 ###############################################################################
 # Plot everything.
@@ -110,16 +110,16 @@ coeff_growth = 0.005
 scale_growth = 15
 scale_translations = height_source/10.
 
-global_translation = dm.DeformationModules.GlobalTranslation(2)
+global_translation = imodal.DeformationModules.GlobalTranslation(2)
 
 C = torch.empty(points_growth.shape[0], 2, 1)
 
-growth = dm.DeformationModules.ImplicitModule1(
+growth = imodal.DeformationModules.ImplicitModule1(
     2, points_growth.shape[0], scale_growth, C, coeff=coeff_growth, nu=nu,
     gd=(points_growth.clone().requires_grad_(),
         rot_growth.clone().requires_grad_()))
 
-translations = dm.DeformationModules.ImplicitModule0(
+translations = imodal.DeformationModules.ImplicitModule0(
     2, shape_source.shape[0], scale_translations, nu=nu, gd=shape_source, coeff=10.)
 
 print("Growth sigma={}".format(scale_growth))
@@ -159,12 +159,12 @@ def callback_compute_c(init_manifold, modules, parameters):
 # so that it also get learned.
 #
 
-deformable_shape_source = dm.Models.DeformablePoints(shape_source)
-deformable_shape_target = dm.Models.DeformablePoints(shape_target)
-deformable_dots_source = dm.Models.DeformablePoints(dots_source)
-deformable_dots_target = dm.Models.DeformablePoints(dots_target)
+deformable_shape_source = imodal.Models.DeformablePoints(shape_source)
+deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
+deformable_dots_source = imodal.Models.DeformablePoints(dots_source)
+deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
 
-model = dm.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [dm.Attachment.VarifoldAttachment(2, [20., 120.]), dm.Attachment.EuclideanPointwiseDistanceAttachment(1000.)], lam=10., other_parameters={'abc': {'params': [abc]}}, precompute_callback=callback_compute_c)
+model = imodal.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [imodal.Attachment.VarifoldAttachment(2, [20., 120.]), imodal.Attachment.EuclideanPointwiseDistanceAttachment(1000.)], lam=10., other_parameters={'abc': {'params': [abc]}}, precompute_callback=callback_compute_c)
 
 
 ###############################################################################
@@ -175,7 +175,7 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 fitter.fit([deformable_shape_target, deformable_dots_target], 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 print(abc)
@@ -195,7 +195,7 @@ deformed_growth_rot = intermediates['states'][-1][3].gd[1]
 global_translation_controls = [control[2] for control in intermediates['controls']]
 growth_controls = [control[3] for control in intermediates['controls']]
 
-aabb_target = dm.Utilities.AABB.build_from_points(shape_target).squared().scale(1.1)
+aabb_target = imodal.Utilities.AABB.build_from_points(shape_target).squared().scale(1.1)
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
@@ -236,13 +236,13 @@ print("Learned growth constants model parameters:")
 print(learned_abc)
 
 ax = plt.subplot()
-dm.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.00035)
+imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.00035)
 # plt.axis(aabb_source.squared().totuple())
 plt.axis('equal')
 plt.show()
 
 # We extract the modules of the models and fill the right manifolds.
-modules = dm.DeformationModules.CompoundModule(copy.copy(model.modules))
+modules = imodal.DeformationModules.Compounimodalodule(copy.copy(model.modules))
 modules.manifold.fill(model.init_manifold.clone(), copy=True)
 silent_shape = copy.copy(modules[0])
 silent_dots = copy.copy(modules[1])
@@ -250,7 +250,7 @@ global_translation = copy.copy(modules[2])
 square_size = 1.
 growth_grid_resolution = [math.floor(aabb_source.width/square_size),
                           math.floor(aabb_source.height/square_size)]
-deformation_grid = dm.DeformationModules.DeformationGrid(dm.Utilities.AABB.build_from_points(shape_source), growth_grid_resolution)
+deformation_grid = imodal.DeformationModules.DeformationGrid(imodal.Utilities.AABB.build_from_points(shape_source), growth_grid_resolution)
 growth = copy.copy(modules[3])
 
 # We construct the controls list we will give will shooting
@@ -258,11 +258,11 @@ controls = [[torch.tensor([]), torch.tensor([]), torch.tensor([]), global_transl
 
 intermediates_growth = {}
 with torch.autograd.no_grad():
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([silent_shape, silent_dots, deformation_grid, global_translation, growth]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_growth)
+    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent_shape, silent_dots, deformation_grid, global_translation, growth]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_growth)
 
-lddmm_deformed_shape = silent_shape.manifold.gd.detach()
-lddmm_deformed_dots = silent_dots.manifold.gd.detach()
-lddmm_deformed_grid = deformation_grid.togrid()
+ldimodalm_deformed_shape = silent_shape.manifold.gd.detach()
+ldimodalm_deformed_dots = silent_dots.manifold.gd.detach()
+ldimodalm_deformed_grid = deformation_grid.togrid()
 
 
 ###############################################################################
@@ -271,9 +271,9 @@ lddmm_deformed_grid = deformation_grid.togrid()
 ax = plt.subplot()
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '--', color='red')
-plt.plot(lddmm_deformed_shape[:, 0].numpy(), lddmm_deformed_shape[:, 1].numpy())
-plt.plot(lddmm_deformed_dots[:, 0].numpy(), lddmm_deformed_dots[:, 1].numpy(), '.')
-dm.Utilities.plot_grid(ax, lddmm_deformed_grid[0], lddmm_deformed_grid[1], color='xkcd:light blue', lw=0.4)
+plt.plot(ldimodalm_deformed_shape[:, 0].numpy(), ldimodalm_deformed_shape[:, 1].numpy())
+plt.plot(ldimodalm_deformed_dots[:, 0].numpy(), ldimodalm_deformed_dots[:, 1].numpy(), '.')
+imodal.Utilities.plot_grid(ax, ldimodalm_deformed_grid[0], ldimodalm_deformed_grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 
 plt.show()

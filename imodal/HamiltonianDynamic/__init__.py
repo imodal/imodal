@@ -1,2 +1,2 @@
-from implicitmodules.torch.HamiltonianDynamic.hamiltonian import Hamiltonian
-from implicitmodules.torch.HamiltonianDynamic.shooting import shoot
+from imodal.HamiltonianDynamic.hamiltonian import Hamiltonian
+from imodal.HamiltonianDynamic.shooting import shoot

@@ -1,15 +1,15 @@
 import torch
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
-from implicitmodules.torch.Manifolds.Abstract import BaseManifold
-from implicitmodules.torch.Manifolds import Landmarks
-from implicitmodules.torch.StructuredFields import StructuredField_Null
-from implicitmodules.torch.Utilities import generate_mesh_grid, grid2vec, vec2grid
+from imodal.DeformationModules.Abstract import DeformationModule
+from imodal.Manifolds.Abstract import BaseManifold
+from imodal.Manifolds import Landmarks
+from imodal.StructuredFields import StructuredField_Null
+from imodal.Utilities import generate_mesh_grid, grid2vec, vec2grid
+
 
 class SilentBase(DeformationModule):
     """Module handling silent points."""
-
-    def __init__(self, manifold, label):
+    def __init__(self, manifold, label=None):
         assert isinstance(manifold, BaseManifold)
         super().__init__(label)
         self.__manifold = manifold

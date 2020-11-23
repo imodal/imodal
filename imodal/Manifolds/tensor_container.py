@@ -1,6 +1,6 @@
 import torch
 
-from implicitmodules.torch.Utilities import tensors_device, tensors_dtype
+from imodal.Utilities import tensors_device, tensors_dtype
 
 
 class TensorContainer:

@@ -2,9 +2,9 @@ from collections import Iterable, OrderedDict
 
 import torch
 
-from implicitmodules.torch.DeformationModules import CompoundModule
-from implicitmodules.torch.Manifolds import CompoundManifold
-from implicitmodules.torch.Models import BaseModel, deformables_compute_deformed
+from imodal.DeformationModules import CompoundModule
+from imodal.Manifolds import CompoundManifold
+from imodal.Models import BaseModel, deformables_compute_deformed
 
 
 class RegistrationModel(BaseModel):

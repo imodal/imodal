@@ -4,8 +4,8 @@ from typing import Iterable
 import torch
 from numpy import prod
 
-from implicitmodules.torch.Utilities import tensors_device, tensors_dtype, flatten_tensor_list
-from implicitmodules.torch.Manifolds.tensor_container import TensorContainer
+from imodal.Utilities import tensors_device, tensors_dtype, flatten_tensor_list
+from imodal.Manifolds.tensor_container import TensorContainer
 
 
 class BaseManifold:

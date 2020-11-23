@@ -1,2 +1,2 @@
-from implicitmodules.torch.Kernels.kernels import *
-from implicitmodules.torch.Kernels.SKS import *
+from imodal.Kernels.kernels import *
+from imodal.Kernels.SKS import *

@@ -1,8 +1,8 @@
 from typing import Iterable
 
-from implicitmodules.torch.DeformationModules.Abstract import DeformationModule
-from implicitmodules.torch.Manifolds import CompoundManifold
-from implicitmodules.torch.StructuredFields import SumStructuredField
+from imodal.DeformationModules.Abstract import DeformationModule
+from imodal.Manifolds import CompoundManifold
+from imodal.StructuredFields import SumStructuredField
 
 
 class CompoundModule(DeformationModule, Iterable):

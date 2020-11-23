@@ -1,6 +1,6 @@
 from collections import Iterable
 
-from implicitmodules.torch.DeformationModules.Combination import CompoundModule
+from imodal.DeformationModules.Combination import CompoundModule
 
 
 class Hamiltonian:

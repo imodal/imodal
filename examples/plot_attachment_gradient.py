@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 sys.path.append("../")
 
-import implicitmodules.torch as dm
+import imodal
 
 
 ###############################################################################
@@ -24,7 +24,7 @@ import implicitmodules.torch as dm
 #
 
 def plot_attachment_gradient(source, target, attachment):
-    gradients = dm.Attachment.compute_attachment_gradient([source], [target], attachment)[0]
+    gradients = imodal.Attachment.compute_attachment_gradient([source], [target], attachment)[0]
 
     plt.plot(source[:, 0].numpy(), source[:, 1].numpy(), color='black')
     plt.plot(source[:, 0].numpy(), source[:, 1].numpy(), 'x', color='black', )
@@ -40,14 +40,14 @@ data = pickle.load(open("../data/peanuts.pickle", 'rb'))
 
 peanuts = [torch.tensor(peanut[:-1], dtype=torch.get_default_dtype()) for peanut in data[0]]
 
-template = dm.Utilities.generate_unit_circle(200)
-template = dm.Utilities.linear_transform(template, torch.tensor([[1.3, 0.], [0., 0.5]]))
-template = dm.Utilities.close_shape(template)
+template = imodal.Utilities.generate_unit_circle(200)
+template = imodal.Utilities.linear_transform(template, torch.tensor([[1.3, 0.], [0., 0.5]]))
+template = imodal.Utilities.close_shape(template)
 
 source = peanuts[4]
 target = peanuts[2]
 
-# # resampled = dm.Utilities.resample_curve(source, 1.)
+# # resampled = imodal.Utilities.resample_curve(source, 1.)
 # # resampled = scipy.interpolate.splprep([source[:, 0].numpy(), source[:, 1].numpy()], k=1)
 # resampled = scipy.interpolate.SmoothBivariateSpline(source[:, 0].numpy(), source[:, 1].numpy(), kx=1, ky=1)
 # print(resampled)
@@ -62,7 +62,7 @@ sigmas = [[1.], [10.], [0.5, 5.], [0.1, 0.5, 2., 6.]]
 for i, sigma in enumerate(sigmas):
     plt.subplot(2, 2, i + 1)
     plt.title("Varifold attachment with scales set to {sigma}".format(sigma=sigma))
-    plot_attachment_gradient(source, target, dm.Attachment.VarifoldAttachment(2, sigma))
+    plot_attachment_gradient(source, target, imodal.Attachment.VarifoldAttachment(2, sigma))
 plt.show()
 
 
@@ -71,6 +71,6 @@ plt.show()
 #
 
 plt.title("Energy attachment")
-plot_attachment_gradient(source, target, dm.Attachment.EnergyAttachment())
+plot_attachment_gradient(source, target, imodal.Attachment.EnergyAttachment())
 plt.show()
 

@@ -6,7 +6,7 @@ from collections import Iterable
 import torch
 import numpy as np
 
-from implicitmodules.torch.Utilities.usefulfunctions import grid2vec
+from imodal.Utilities.usefulfunctions import grid2vec
 
 
 class AABB:

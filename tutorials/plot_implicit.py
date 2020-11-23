@@ -13,30 +13,28 @@ growth constants influence the deformation pattern.
 import sys
 sys.path.append("../")
 
-import math
-
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 
 ###############################################################################
 # We now define some helper functions.
 #
 # First our deformation routine.
-# 
+#
 
 def deform_rod(positions, moments, sigma, C, solver, it):
-    rot = torch.stack([dm.Utilities.rot2d(0.)]*positions.shape[0], axis=0)
+    rot = torch.stack([imodal.Utilities.rot2d(0.)]*positions.shape[0], axis=0)
 
-    rod = dm.DeformationModules.ImplicitModule1(2, positions.shape[0], sigma, C, 0.01, gd=(positions, rot), cotan=(moments, torch.zeros_like(rot)))
+    rod = imodal.DeformationModules.ImplicitModule1(2, positions.shape[0], sigma, C, 0.01, gd=(positions, rot), cotan=(moments, torch.zeros_like(rot)))
 
-    deformation_grid = dm.DeformationModules.DeformationGrid(
-        dm.Utilities.AABB(-5., 5., -5., 5.),
+    deformation_grid = imodal.DeformationModules.DeformationGrid(
+        imodal.Utilities.AABB(-5., 5., -5., 5.),
         [32, 32])
 
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([rod, deformation_grid]), solver, it)
+    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([rod, deformation_grid]), solver, it)
 
     return rod.manifold.gd[0].detach(), deformation_grid.togrid()
 
@@ -46,9 +44,9 @@ def deform_rod(positions, moments, sigma, C, solver, it):
 # 
 
 def generate_rod(size, n, f_mom, f_C):
-    aabb = dm.Utilities.AABB(-size[0]/2., size[0]/2., -size[1]/2., size[1]/2.)
-    x, y = dm.Utilities.generate_mesh_grid(aabb, n)
-    positions = dm.Utilities.grid2vec(x, y)
+    aabb = imodal.Utilities.AABB(-size[0]/2., size[0]/2., -size[1]/2., size[1]/2.)
+    x, y = imodal.Utilities.generate_mesh_grid(aabb, n)
+    positions = imodal.Utilities.grid2vec(x, y)
 
     moments = torch.empty(n[0]*n[1], 2)
     moments[:, 0] = torch.cat([f_mom[0](position).view(1) for position in positions])
@@ -72,7 +70,7 @@ def plot_rod(positions, moments, C):
     plt.axis('equal')
 
     ax = plt.subplot(1, 2, 2)
-    dm.Utilities.plot_C_arrows(ax, positions, C, color='black', scale=0.3, mutation_scale=8.)
+    imodal.Utilities.plot_C_arrows(ax, positions, C, color='black', scale=0.3, mutation_scale=8.)
     plt.axis('equal')
 
     plt.show()
@@ -97,7 +95,7 @@ pos, mom, C = generate_rod(size, n,
                            [lambda x: -torch.ones(1), lambda x: torch.ones(1)])
 
 print("Surface before compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(pos).area))
+    surface=imodal.Utilities.AABB.build_from_points(pos).area))
 
 plot_rod(pos, mom, C)
 
@@ -110,11 +108,11 @@ plot_rod(pos, mom, C)
 deformed, grid = deform_rod(pos, mom, sigma, C, 'rk4', 10)
 
 print("Surface after compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(deformed).area))
+    surface=imodal.Utilities.AABB.build_from_points(deformed).area))
 
 ax = plt.subplot()
 plt.plot(deformed[:, 0].numpy(), deformed[:, 1].numpy(), '.')
-dm.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
+imodal.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 plt.show()
 
@@ -127,7 +125,7 @@ pos, mom, C = generate_rod(size, n,
                            [lambda x: -torch.ones(1), lambda x: torch.ones(1)])
 
 print("Surface before compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(pos).area))
+    surface=imodal.Utilities.AABB.build_from_points(pos).area))
 
 plot_rod(pos, mom, C)
 
@@ -140,11 +138,11 @@ plot_rod(pos, mom, C)
 deformed, grid = deform_rod(pos, mom, sigma, C, 'rk4', 10)
 
 print("Surface after compression: {surface}".format(
-    surface=dm.Utilities.AABB.build_from_points(deformed).area))
+    surface=imodal.Utilities.AABB.build_from_points(deformed).area))
 
 ax = plt.subplot()
 plt.plot(deformed[:, 0].numpy(), deformed[:, 1].numpy(), '.')
-dm.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
+imodal.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 plt.show()
 
@@ -177,7 +175,7 @@ deformed, grid = deform_rod(pos, mom, sigma, C, 'rk4', 10)
 
 ax = plt.subplot()
 plt.plot(deformed[:, 0].numpy(), deformed[:, 1].numpy(), '.')
-dm.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
+imodal.Utilities.plot_grid(ax, grid[0], grid[1], color='xkcd:light blue', lw=0.4)
 plt.axis('equal')
 plt.show()
 
