@@ -12,12 +12,10 @@ In this tutorial we will see how to create and use deformation modules.
 import sys
 sys.path.append("../")
 
-import math
-
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 
 ###############################################################################
@@ -46,12 +44,12 @@ plt.show()
 # We now create the silent module representing the points that will get
 # transported and the local translation module.
 
-silent = dm.DeformationModules.SilentLandmarks(
+silent = imodal.DeformationModules.SilentLandmarks(
     2, nb_points_line, gd=line.clone())
 
 silent.manifold.fill_cotan_zeros(False)
 
-translation = dm.DeformationModules.Translations(
+translation = imodal.DeformationModules.Translations(
     2, nb_points_translation, 0.3,
     gd=translation_points, cotan=mom_translation)
 
@@ -62,8 +60,8 @@ solver = 'rk4'
 it = 5
 
 intermediates = {}
-dm.HamiltonianDynamic.shoot(
-    dm.HamiltonianDynamic.Hamiltonian([silent, translation]),
+imodal.HamiltonianDynamic.shoot(
+    imodal.HamiltonianDynamic.Hamiltonian([silent, translation]),
     solver, it, intermediates=intermediates)
 
 ###############################################################################
@@ -71,7 +69,7 @@ dm.HamiltonianDynamic.shoot(
 
 intermediate_states = intermediates['states']
 
-aabb = dm.Utilities.AABB(-1.1, 1.1, 1., 1.)
+aabb = imodal.Utilities.AABB(-1.1, 1.1, 1., 1.)
 plt.rcParams['figure.figsize'] = (4, it*4)
 for i, state in zip(range(it), intermediate_states):
     deformed_line = state[0].gd.detach()

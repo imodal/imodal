@@ -20,23 +20,47 @@ import math
 
 import torch
 import matplotlib.pyplot as plt
+import scipy.ndimage
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We load the data and plot them.
 #
 
-source_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png")
-target_image = dm.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png")
+source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
+target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+
+# Smoothing
+sig_smooth = 0.
+source_image = torch.tensor(scipy.ndimage.gaussian_filter(source_image, sig_smooth))
+target_image = torch.tensor(scipy.ndimage.gaussian_filter(target_image, sig_smooth))
+
+
+extent_length = 31.
+extent = imodal.Utilities.AABB(0., extent_length, 0., extent_length)
+
+dots = torch.tensor([[0., 0.5],
+                     [0.5, 0.],
+                     [0., -0.5],
+                     [-0.5, 0.]])
+
+source_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/3)) + extent_length*torch.tensor([0.5, 0.5])
+
+target_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
+
+center = extent_length*torch.tensor([[0.2, 0.3]])
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
-plt.imshow(source_image, origin='lower')
+plt.imshow(source_image, origin='lower', extent=extent.totuple())
+plt.plot(source_dots.numpy()[:, 0], source_dots.numpy()[:, 1], '.')
+plt.plot(center.numpy()[:, 0], center.numpy()[:, 1], '.')
 
 plt.subplot(1, 2, 2)
 plt.title("Target image")
-plt.imshow(target_image, origin='lower')
+plt.imshow(target_image, origin='lower', extent=extent.totuple())
+plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
 
 plt.show()
 
@@ -49,9 +73,7 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-center = torch.tensor([[10., 10]])
-
-rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().requires_grad_())
+rotation = imodal.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
 
 
 ###############################################################################
@@ -59,60 +81,77 @@ rotation = dm.DeformationModules.LocalRotation(2, 35., gd=center.clone().require
 # rotation center.
 #
 
-source_deformable = dm.Models.DeformableImage(source_image)
-target_deformable = dm.Models.DeformableImage(target_image)
+source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap',
+                                              extent='match')
+target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap',
+                                              extent='match')
 
-model = dm.Models.RegistrationModel(source_deformable, [rotation], dm.Attachment.EuclideanPointwiseDistanceAttachment(), fit_gd=[True], lam=100.)
+source_dots_deformable = imodal.Models.DeformablePoints(source_dots)
+target_dots_deformable = imodal.Models.DeformablePoints(target_dots)
+
+attachment = imodal.Attachment.L2NormAttachment(transform=None)
+
+model = imodal.Models.RegistrationModel([source_deformable, source_dots_deformable], [rotation], [attachment, imodal.Attachment.EuclideanPointwiseDistanceAttachment()], fit_gd=[True], lam=1000.)
 
 
 ###############################################################################
 # We fit the model.
 #
 
-shoot_solver='rk4'
+shoot_solver = 'rk4'
 shoot_it = 10
+max_it = 100
 
 costs = {}
-fitter = dm.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
-fitter.fit(target_deformable, 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+
+fitter.fit([target_deformable, target_dots_deformable], max_it, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
 # Plot total cost evolution
 #
 
+total_costs = [sum(cost) for cost in list(map(list, zip(*costs.values())))]
+
 plt.title("Total cost evolution")
 plt.xlabel("Iteration")
 plt.ylabel("Cost")
 plt.grid(True)
-plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
+plt.plot(range(len(total_costs)), total_costs, color='black', lw=0.7)
 plt.show()
 
 
 ###############################################################################
-# We compute the deformed source and plot it.
+# we compute the deformed source and plot it.
 #
 
 with torch.autograd.no_grad():
-    deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0]
+    model.deformables[0].output = 'bitmap'
+    deformed = model.compute_deformed(shoot_solver, shoot_it)
 
-fitted_center = model.init_manifold[1].gd.detach()
+    deformed_image = deformed[0][0].view_as(source_image)
+    deformed_dots = deformed[1][0]
+
+fitted_center = model.init_manifold[2].gd.detach()
 
 print("Fitted rotatation center: {center}".format(center=fitted_center.detach().tolist()))
 
 plt.subplot(1, 3, 1)
 plt.title("Source image")
-plt.imshow(source_image.numpy())
+plt.imshow(source_image.numpy(), origin='lower', extent=extent.totuple())
+plt.plot(source_dots.numpy()[:, 0], source_dots.numpy()[:, 1], '.')
 plt.plot(center.numpy()[0, 0], center.numpy()[0, 1], 'X')
 
 plt.subplot(1, 3, 2)
 plt.title("Fitted image")
-plt.imshow(deformed_image.numpy())
+plt.imshow(deformed_image.numpy(), origin='lower', extent=extent.totuple())
+plt.plot(deformed_dots.numpy()[:, 0], deformed_dots.numpy()[:, 1], '.')
 plt.plot(fitted_center.numpy()[0, 0], fitted_center.numpy()[0, 1], 'X')
 
 plt.subplot(1, 3, 3)
 plt.title("target image")
-plt.imshow(target_image.numpy())
+plt.imshow(target_image.numpy(), origin='lower', extent=extent.totuple())
+plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
 
 plt.show()
-

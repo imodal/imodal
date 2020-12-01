@@ -14,7 +14,7 @@ import implicitmodules.torch as im
 torch.set_default_tensor_type(torch.DoubleTensor)
 
 def make_test_stiefel(dim, backend):
-    class TestStiefel(unittest.TestCase):
+    class TestNormalFrame(unittest.TestCase):
         def setUp(self):
             self.nb_pts = 10
             self.gd_pts = torch.rand(self.nb_pts, dim)
@@ -29,7 +29,7 @@ def make_test_stiefel(dim, backend):
             self.cotan = (self.cotan_pts, self.cotan_mat)
 
         def test_constructor(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             self.assertEqual(stiefel.nb_pts, self.nb_pts)
             self.assertEqual(stiefel.dim, dim)
@@ -70,7 +70,7 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(torch.all(torch.eq(l_rolled_cotan[1], self.cotan[1])))
 
         def test_fill(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts)
 
             stiefel.fill_gd(self.gd, copy=True)
             stiefel.fill_tan(self.tan, copy=True)
@@ -84,7 +84,7 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1])))
 
         def test_assign(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts)
 
             stiefel.gd = self.gd
             stiefel.tan = self.tan
@@ -98,7 +98,7 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1])))
 
         def test_add(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             d_gd = (torch.rand(self.nb_pts, dim),
                     torch.rand(self.nb_pts, dim, dim))
@@ -119,7 +119,7 @@ def make_test_stiefel(dim, backend):
             self.assertTrue(torch.all(torch.eq(stiefel.cotan[1], self.cotan[1] + d_cotan[1])))
 
         def test_action(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             nb_pts_mod = 15
             trans = im.DeformationModules.Translations(dim, nb_pts_mod, 0.2, gd=torch.randn(nb_pts_mod, dim), backend=backend)
@@ -127,10 +127,10 @@ def make_test_stiefel(dim, backend):
 
             man = stiefel.infinitesimal_action(trans.field_generator())
 
-            self.assertIsInstance(man, im.Manifolds.Stiefel)
+            self.assertIsInstance(man, im.Manifolds.NormalFrame)
 
         def test_inner_prod_field(self):
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts, gd=self.gd, tan=self.tan, cotan=self.cotan)
 
             nb_pts_mod = 15
             trans = im.DeformationModules.Translations(dim, nb_pts_mod, 0.2, gd=torch.randn(nb_pts_mod, dim), backend=backend)
@@ -161,7 +161,7 @@ def make_test_stiefel(dim, backend):
             self.cotan_pts.requires_grad_()
             self.cotan_mat.requires_grad_()
 
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts)
 
             self.assertTrue(gradcheck(fill_gd, (self.gd_pts, self.gd_mat), raise_exception=False))
             self.assertTrue(gradcheck(fill_tan, (self.tan_pts, self.tan_mat), raise_exception=False))
@@ -183,7 +183,7 @@ def make_test_stiefel(dim, backend):
                 stiefel.add_cotan((cotan_pts, cotan_mat))
                 return stiefel.cotan[0], stiefel.cotan[1]
 
-            stiefel = im.Manifolds.Stiefel(dim, self.nb_pts)
+            stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts)
 
             self.gd[0].requires_grad_()
             self.gd[1].requires_grad_()
@@ -207,7 +207,7 @@ def make_test_stiefel(dim, backend):
             def action(gd_pts, gd_mat, controls):
                 module = im.DeformationModules.ImplicitModule1(dim, self.nb_pts, 0.001, C, nu=0.01, gd=(gd_pts, gd_mat), backend=backend)
                 module.fill_controls(controls)
-                stiefel = im.Manifolds.Stiefel(dim, self.nb_pts, gd=(gd_pts, gd_mat))
+                stiefel = im.Manifolds.NormalFrame(dim, self.nb_pts, gd=(gd_pts, gd_mat))
                 man = stiefel.infinitesimal_action(module.field_generator())
                 return man.gd[0], man.gd[1], man.tan[0], man.tan[1]
 
@@ -233,22 +233,22 @@ def make_test_stiefel(dim, backend):
 
         #     self.assertTrue(gradcheck(inner_prod_field, (self.gd, controls), raise_exception=False))
 
-    return TestStiefel
+    return TestNormalFrame
 
 
-class TestStiefel2D_Torch(make_test_stiefel(2, 'torch')):
+class TestNormalFrame2D_Torch(make_test_stiefel(2, 'torch')):
     pass
 
 
-class TestStiefel2D_KeOps(make_test_stiefel(2, 'keops')):
+class TestNormalFrame2D_KeOps(make_test_stiefel(2, 'keops')):
     pass
 
 
-class TestStiefel3D_Torch(make_test_stiefel(3, 'torch')):
+class TestNormalFrame3D_Torch(make_test_stiefel(3, 'torch')):
     pass
 
 
-class TestStiefel3D_KeOps(make_test_stiefel(3, 'keops')):
+class TestNormalFrame3D_KeOps(make_test_stiefel(3, 'keops')):
     pass
 
 if __name__ == '__main__':

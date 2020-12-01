@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import meshio
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We generate the layers.
@@ -33,9 +33,9 @@ layer_length = 40.
 layer_growth_thickness = 2.
 layer_rigid_thickness = 12.
 
-aabb_growth = dm.Utilities.AABB(-layer_length/2., layer_length/2.,
+aabb_growth = imodal.Utilities.AABB(-layer_length/2., layer_length/2.,
                                 0, layer_growth_thickness)
-aabb_rigid = dm.Utilities.AABB(-layer_length/2., layer_length/2.,
+aabb_rigid = imodal.Utilities.AABB(-layer_length/2., layer_length/2.,
                                -layer_rigid_thickness, 0.)
 
 points_density = 0.5
@@ -44,8 +44,8 @@ points_layer_density = 2.
 points_growth = aabb_growth.fill_uniform_density(points_density)
 points_rigid = aabb_rigid.fill_uniform_density(points_density)
 
-points_layer_growth = dm.Utilities.generate_rectangle(dm.Utilities.AABB.build_from_points(points_growth), points_layer_density)
-points_layer_rigid = dm.Utilities.generate_rectangle(dm.Utilities.AABB.build_from_points(points_rigid), points_layer_density)
+points_layer_growth = imodal.Utilities.generate_rectangle(imodal.Utilities.AABB.build_from_points(points_growth), points_layer_density)
+points_layer_rigid = imodal.Utilities.generate_rectangle(imodal.Utilities.AABB.build_from_points(points_rigid), points_layer_density)
 
 ###############################################################################
 # Plot everything.
@@ -73,7 +73,7 @@ plt.show()
 # 
 
 points = torch.cat([points_rigid, points_growth], dim=0)
-R = torch.cat([dm.Utilities.rot2d(0.).unsqueeze(0)]*points.shape[0])
+R = torch.cat([imodal.Utilities.rot2d(0.).unsqueeze(0)]*points.shape[0])
 
 def step(x):
     if x >= 0.:
@@ -121,7 +121,7 @@ plt.show()
 ax = plt.subplot()
 plt.plot(points_layer_rigid[:, 0].numpy(), points_layer_rigid[:, 1].numpy(), color='xkcd:red', lw=0.5)
 plt.plot(points_layer_growth[:, 0].numpy(), points_layer_growth[:, 1].numpy(), color='xkcd:blue', lw=0.5)
-dm.Utilities.plot_C_arrows(ax, points, C, scale=2., color='blue', mutation_scale=2.)
+imodal.Utilities.plot_C_arrows(ax, points, C, scale=2., color='blue', mutation_scale=2.)
 plt.axis('equal')
 plt.show()
 
@@ -133,11 +133,11 @@ plt.show()
 #
 
 sigma = 5.
-growth = dm.DeformationModules.ImplicitModule1(2, points.shape[0], sigma, C, nu=0.01, gd=(points, R), cotan=(moments, moments_R))
+growth = imodal.DeformationModules.ImplicitModule1(2, points.shape[0], sigma, C, nu=0.01, gd=(points, R), cotan=(moments, moments_R))
 
-layer_rigid = dm.DeformationModules.SilentLandmarks(2, points_layer_rigid.shape[0], gd=points_layer_rigid)
+layer_rigid = imodal.DeformationModules.SilentLanimodalarks(2, points_layer_rigid.shape[0], gd=points_layer_rigid)
 
-layer_growth = dm.DeformationModules.SilentLandmarks(2, points_layer_growth.shape[0], gd=points_layer_growth)
+layer_growth = imodal.DeformationModules.SilentLanimodalarks(2, points_layer_growth.shape[0], gd=points_layer_growth)
 
 
 ###############################################################################
@@ -146,7 +146,7 @@ layer_growth = dm.DeformationModules.SilentLandmarks(2, points_layer_growth.shap
 
 start = time.perf_counter()
 with torch.autograd.no_grad():
-    dm.HamiltonianDynamic.shoot(dm.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 'midpoint', 10)
+    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([growth, layer_rigid, layer_growth]), 'midpoint', 10)
 print("Elapsed time={elapsed}".format(elapsed=time.perf_counter()-start))
 
 ###############################################################################

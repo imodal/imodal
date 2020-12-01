@@ -14,15 +14,13 @@ basipetal growth pattern.
 import sys
 sys.path.append("../../")
 
-import math
 import pickle
-import copy
 
-import numpy as np
+
 import torch
 import matplotlib.pyplot as plt
 
-import implicitmodules.torch as dm
+import imodal
 
 ###############################################################################
 # We load the data, rescale it and zero it.
@@ -65,10 +63,10 @@ shape_target = shape_target[shape_target[:, 0] <= 0]
 
 # Build AABB around the source shape and uniformly sample points for the implicit
 # module of order 1
-aabb_source = dm.Utilities.AABB.build_from_points(shape_source)
-points_growth = dm.Utilities.fill_area_uniform_density(dm.Utilities.area_shape, aabb_source, 0.25, shape=shape_source)
+aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
+points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, 0.25, shape=shape_source)
 
-rot_growth = torch.stack([dm.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
+rot_growth = torch.stack([imodal.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
 
 ###############################################################################
 # Plot everything.
@@ -101,11 +99,11 @@ nu = 0.001
 coeff_growth = 1.
 scale_growth = 25.
 
-global_translation = dm.DeformationModules.GlobalTranslation(2)
+global_translation = imodal.DeformationModules.GlobalTranslation(2)
 
 C = torch.ones(points_growth.shape[0], 2, 1, requires_grad=True)
 
-growth = dm.DeformationModules.ImplicitModule1(
+growth = imodal.DeformationModules.ImplicitModule1(
     2, points_growth.shape[0], scale_growth, C, coeff=coeff_growth, nu=nu,
     gd=(points_growth.clone().requires_grad_(),
         rot_growth.clone().requires_grad_()))
@@ -116,11 +114,12 @@ growth = dm.DeformationModules.ImplicitModule1(
 # so that it also get learned.
 #
 
-model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
-            [global_translation, growth],
-            [dm.Attachment.VarifoldAttachment(2, [10., 50.]),
-            dm.Attachment.EuclideanPointwiseDistanceAttachment(50.)],
-            lam=100., other_parameters={'C': {'params': [growth.C]}})
+deformable_shape_source = imodal.Models.DeformablePoints(shape_source)
+deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
+deformable_dots_source = imodal.Models.DeformablePoints(dots_source)
+deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
+
+model = imodal.Models.RegistrationModel([deformable_shape_source, deformable_dots_source], [global_translation, growth], [imodal.Attachment.VarifoldAttachment(2, [10., 50.]), imodal.Attachment.EuclideanPointwiseDistanceAttachment(50.)], lam=100., other_parameters={'C': {'params': [growth.C]}})
 
 
 ###############################################################################
@@ -130,16 +129,12 @@ model = dm.Models.ModelPointsRegistration([shape_source, dots_source],
 shoot_solver = 'euler'
 shoot_it = 10
 
-# fitter = dm.Models.ModelFittingScipy(model)
-# costs = fitter.fit([shape_target, dots_target], 500, log_interval=25,
-#                    options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
-
 costs = {}
-fitter = dm.Models.Fitter(model)
-fitter.fit([shape_target, dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([deformable_shape_target, deformable_dots_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
-# Plot matching results. 
+# Plot matching results.
 #
 
 intermediates = {}
@@ -152,7 +147,7 @@ deformed_growth = intermediate_states[-1][3].gd[0]
 deformed_growth_rot = intermediate_states[-1][3].gd[1]
 
 
-aabb_target = dm.Utilities.AABB.build_from_points(shape_target).squared().scale(1.1)
+aabb_target = imodal.Utilities.AABB.build_from_points(shape_target).squared().scale(1.1)
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
@@ -183,7 +178,7 @@ plt.show()
 learned_C = growth.C.detach()
 
 ax = plt.subplot()
-dm.Utilities.plot_C_arrows(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.1, mutation_scale=8.)
+imodal.Utilities.plot_C_arrows(ax, points_growth, learned_C, R=deformed_growth_rot, scale=0.1, mutation_scale=8.)
 plt.axis(aabb_source.squared().totuple())
 plt.show()
 
