@@ -106,6 +106,24 @@ def pixels2points(pixels, frame_shape, frame_extent):
     return torch.stack([x, y], dim=1)
 
 
+def points2nel(points, frame_shape, frame_extent, toindices=False):
+    scales = [(shape-1)/extent_shape for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
+    uv = [scale*(points[:, i] - extent_min) for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
+
+    if toindices:
+        uv = [torch.floor(u).long() for u in uv]
+
+    return torch.stack(uv, dim=1)
+
+
+def nel2points(nels, frame_shape, frame_extent):
+    scales = [extent_shape/(shape-1) for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
+
+    xy = [scale*nels[:, i] + extent_min for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
+
+    return torch.stack(xy, dim=1)
+
+
 def flatten_tensor_list(l, out_list=None):
     """Simple recursive list flattening function that stops at torch.Tensor (without unwrapping)."""
     if out_list is None:

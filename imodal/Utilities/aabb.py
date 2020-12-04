@@ -159,7 +159,7 @@ class AABB:
     @property
     def ymin(self):
         return self.__kmin[1]
-    
+
     @property
     def ymax(self):
         return self.__kmax[1]
@@ -242,7 +242,7 @@ class AABB:
         assert isinstance(counts, int) or (isinstance(counts, Iterable) and len(counts) == self.__dim)
 
         if isinstance(counts, int):
-            spacing = [counts]*self.__dim
+            counts = [counts]*self.__dim
 
         grids = torch.meshgrid([torch.linspace(kmin, kmax, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
         return grid2vec(*grids)

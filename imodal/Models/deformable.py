@@ -7,10 +7,12 @@ import torch
 from numpy import loadtxt, savetxt
 import meshio
 
+import nibabel as nib
+
 from imodal.HamiltonianDynamic import Hamiltonian, shoot
 from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from imodal.Manifolds import Landmarks
-from imodal.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
+from imodal.Utilities import deformed_intensities, deformed_intensities3d, AABB, load_greyscale_image, pixels2points, nel2points
 
 
 class Deformable:
@@ -78,7 +80,6 @@ class DeformablePoints(Deformable):
     @property
     def silent_module(self):
         return self.__silent_module
-
 
     @classmethod
     def load_from_file(cls, filename, dtype=None, **kwargs):
@@ -231,7 +232,11 @@ class DeformableImage(DeformablePoints):
             Extent on the 2D plane on which the image is set.
         """
         assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
+
         assert output == 'bitmap' or output == 'points'
+
+        if extent is not None and not isinstance(extent, str) and extent.dim != 2:
+            raise RuntimeError("DeformableImage.__init__(): given extent is not 2 dimensional!")
 
         self.__shape = bitmap.shape
         self.__output = output
@@ -304,6 +309,100 @@ class DeformableImage(DeformablePoints):
             return (deformed_intensities(gd, self.__bitmap, self.__extent), )
         elif self.__output == 'points':
             deformed_bitmap = deformed_intensities(gd, self.__bitmap, self.__extent)
+            return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
+        else:
+            raise ValueError()
+
+
+class Deformable3DImage(DeformablePoints):
+    """
+    3D image deformable object.
+    """
+    def __init__(self, bitmap, output='bitmap', extent=None, label=None):
+        """
+        Parameters
+        ----------
+        bitmap : torch.Tensor
+            3 dimensional tensor representing the image to deform.
+        output: str, default='bitmap'
+            Representation used by the deformable.
+        extent: imodal.Utilities.AABB, default=None
+            Extent on the 3D volume on which the image is set.
+        """
+        assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
+        assert output == 'bitmap' or output == 'points'
+
+        if extent is not None and extent.dim != 3:
+            raise RuntimeError("Deformable3DImage.__init__(): given extent is not 3 dimensional!")
+
+        self.__shape = bitmap.shape
+        self.__output = output
+
+        self.__voxel_extent = AABB(0., self.__shape[0]-1, 0., self.__shape[1]-1, 0., self.__shape[2]-1)
+
+        if extent is None:
+            extent = AABB(0., 1., 0., 1., 0., 1.)
+        elif isinstance(extent, str) and extent == 'match':
+            extent = self.__voxel_extent
+
+        self.__extent = extent
+
+        voxel_points = nel2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
+
+        self.__bitmap = bitmap
+        super().__init__(voxel_points, label=label)
+
+    @classmethod
+    def load_from_file(cls, filename, origin='lower', device=None):
+        img = nib.load(filename)
+        return cls(torch.tensor(img.get_fdata()))
+
+    @property
+    def geometry(self):
+        if self.__output == 'bitmap':
+            return (self.bitmap,)
+        elif self.__output == 'points':
+            return (self.silent_module.manifold.gd, self.__bitmap.flatten()/torch.sum(self.__bitmap))
+        else:
+            raise ValueError()
+
+    @property
+    def shape(self):
+        return self.__shape
+
+    @property
+    def extent(self):
+        return self.__extent
+
+    @property
+    def points(self):
+        return self.silent_module.manifold.gd
+
+    @property
+    def bitmap(self):
+        return self.__bitmap
+
+    @property
+    def _has_backward(self):
+        return True
+
+    def __set_output(self):
+        return self.__output
+
+    def __get_output(self, output):
+        self.__output = output
+
+    output = property(__set_output, __get_output)
+
+    def _backward_module(self):
+        voxel_grid = nel2points(self.__voxel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
+        return SilentLandmarks(3, voxel_grid.shape[0], gd=voxel_grid)
+
+    def _to_deformed(self, gd):
+        if self.__output == 'bitmap':
+            return (deformed_intensities3d(gd, self.__bitmap, self.__extent), )
+        elif self.__output == 'points':
+            deformed_bitmap = deformed_intensities3d(gd, self.__bitmap, self.__extent)
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
         else:
             raise ValueError()
