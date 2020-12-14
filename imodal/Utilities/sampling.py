@@ -144,6 +144,7 @@ def deformed_intensities3d(deformed_points, intensities, extent):
     """
 
     uvw = points2nel(deformed_points, intensities.shape, extent)
+
     u, v, w = uvw[:, 0], uvw[:, 1], uvw[:, 2]
     u1 = torch.floor(uvw[:, 0]).long()
     v1 = torch.floor(uvw[:, 1]).long()

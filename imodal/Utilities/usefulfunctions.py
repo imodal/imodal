@@ -87,6 +87,19 @@ def rot3d_z_vec(thetas):
                         torch.stack([zeros, zeros, ones], dim=1)], dim=2).transpose(1, 2)
 
 
+def translation_matrix3d(translation, dtype=None):
+    return torch.tensor([[1., 0., 0., translation[0]],
+                         [0., 1., 0., translation[1]],
+                         [0., 0., 1., translation[2]],
+                         [0., 0., 0., 1.]], dtype=dtype)
+
+
+def rigid_deformation3d(angles, translation):
+    rot = torch.eye(4)
+    rot[0:3, 0:3] = rot3d_x(angles[0]) @ rot3d_y(angles[1]) @ rot3d_z(angles[2])
+    return translation_matrix3d(translation) @ rot
+
+
 def points2pixels(points, frame_shape, frame_extent, toindices=False):
     scale_u, scale_v = (frame_shape[1]-1)/frame_extent.width, (frame_shape[0]-1)/frame_extent.height
     u1, v1 = scale_u*(points[:, 0] - frame_extent.xmin), scale_v*(points[:, 1] - frame_extent.ymin)
@@ -108,18 +121,24 @@ def pixels2points(pixels, frame_shape, frame_extent):
 
 def points2nel(points, frame_shape, frame_extent, toindices=False):
     scales = [(shape-1)/extent_shape for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
+    # print("points2nel: {}".format(scales))
+
     uv = [scale*(points[:, i] - extent_min) for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
 
     if toindices:
         uv = [torch.floor(u).long() for u in uv]
+
+    # print("points2nel uv: {}".format(uv))
 
     return torch.stack(uv, dim=1)
 
 
 def nel2points(nels, frame_shape, frame_extent):
     scales = [extent_shape/(shape-1) for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
+    # print("nel2points: {}".format(scales))
 
     xy = [scale*nels[:, i] + extent_min for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
+    # print("nel2points xy: {}".format(xy))
 
     return torch.stack(xy, dim=1)
 

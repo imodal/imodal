@@ -318,7 +318,7 @@ class Deformable3DImage(DeformablePoints):
     """
     3D image deformable object.
     """
-    def __init__(self, bitmap, output='bitmap', extent=None, label=None):
+    def __init__(self, bitmap, affine=None, output='bitmap', extent=None, label=None):
         """
         Parameters
         ----------
@@ -332,11 +332,16 @@ class Deformable3DImage(DeformablePoints):
         assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
         assert output == 'bitmap' or output == 'points'
 
-        if extent is not None and extent.dim != 3:
-            raise RuntimeError("Deformable3DImage.__init__(): given extent is not 3 dimensional!")
+        # if extent is not None and (extent.dim != 3 or isinstance(extent, str)):
+        #     raise RuntimeError("Deformable3DImage.__init__(): given extent is not 3 dimensional!")
 
         self.__shape = bitmap.shape
         self.__output = output
+
+        if affine is None:
+            affine = torch.eye(4)
+
+        self.__affine = affine
 
         self.__voxel_extent = AABB(0., self.__shape[0]-1, 0., self.__shape[1]-1, 0., self.__shape[2]-1)
 
@@ -353,9 +358,9 @@ class Deformable3DImage(DeformablePoints):
         super().__init__(voxel_points, label=label)
 
     @classmethod
-    def load_from_file(cls, filename, origin='lower', device=None):
+    def load_from_file(cls, filename, origin='lower', extent=None, device=None):
         img = nib.load(filename)
-        return cls(torch.tensor(img.get_fdata()))
+        return cls(torch.tensor(img.get_fdata(), device=device), affine=torch.tensor(img.affine), extent=extent)
 
     @property
     def geometry(self):
@@ -383,6 +388,10 @@ class Deformable3DImage(DeformablePoints):
         return self.__bitmap
 
     @property
+    def affine(self):
+        return self.__affine
+
+    @property
     def _has_backward(self):
         return True
 
@@ -393,6 +402,9 @@ class Deformable3DImage(DeformablePoints):
         self.__output = output
 
     output = property(__set_output, __get_output)
+
+    def save_to_file(self, filename):
+        nib.save(self.__bitmap, filename)
 
     def _backward_module(self):
         voxel_grid = nel2points(self.__voxel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
