@@ -1,12 +1,14 @@
 """
-Deformation module
-==================
+Deformation modules
+===================
 
 In this tutorial we will see how to create and use deformation modules.
+
+Using a local translation module, we will displace a line represented by a silent module.
 """
 
 ###############################################################################
-# We first need to import
+# Import relevant modules.
 #
 
 import sys
@@ -21,6 +23,7 @@ import imodal
 ###############################################################################
 # First, we create some synthetic data.
 # Lets displace a line using some local translation deformation module.
+#
 
 nb_points_line = 50
 line = torch.stack([torch.linspace(-1., 1., nb_points_line),
@@ -30,8 +33,10 @@ nb_points_translation = 2
 translation_points = torch.tensor([[-0.9, -0.1], [0.9, 0.1]])
 mom_translation = torch.tensor([[0., -0.5], [0., 0.5]])
 
+
 ###############################################################################
-# plot the synthetic data
+# Plot the synthetic data
+#
 
 plt.plot(line[:, 0], line[:, 1], color='blue')
 plt.plot(translation_points[:, 0], translation_points[:, 1], 'x', color='black')
@@ -40,21 +45,30 @@ plt.quiver(translation_points[:, 0], translation_points[:, 1],
 plt.axis('equal')
 plt.show()
 
+
 ###############################################################################
 # We now create the silent module representing the points that will get
-# transported and the local translation module.
+# transported.
+#
 
 silent = imodal.DeformationModules.SilentLandmarks(
     2, nb_points_line, gd=line.clone())
 
 silent.manifold.fill_cotan_zeros(False)
 
+
+###############################################################################
+# We now create the local translation module that will deform the ambiant space.
+#
+
 translation = imodal.DeformationModules.Translations(
     2, nb_points_translation, 0.3,
     gd=translation_points, cotan=mom_translation)
 
+
 ###############################################################################
-# Shooting
+# Shooting. Solves the shooting ODE using 5 steps of RK4.
+#
 
 solver = 'rk4'
 it = 5
@@ -64,8 +78,11 @@ imodal.HamiltonianDynamic.shoot(
     imodal.HamiltonianDynamic.Hamiltonian([silent, translation]),
     solver, it, intermediates=intermediates)
 
+
 ###############################################################################
-# Plotting the result
+# Plot each step of the deformation. We see how both the local translations
+# transport its local ambiant space and thus the silent points.
+#
 
 intermediate_states = intermediates['states']
 

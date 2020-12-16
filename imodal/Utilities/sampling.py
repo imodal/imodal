@@ -3,8 +3,7 @@ import math
 import matplotlib.image
 import torch
 
-from imodal.Kernels import K_xy
-from imodal.Utilities.usefulfunctions import grid2vec, points2pixels, points2nel
+from imodal.Utilities.usefulfunctions import points2pixels, points2nel
 from imodal.Utilities.aabb import AABB
 
 
@@ -38,8 +37,8 @@ def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
     image = matplotlib.image.imread(filename)
     if(image.ndim == 2):
         return _set_origin(torch.tensor(1. - image, dtype=dtype, device=device), origin)
-    elif(image.ndim ==3):
-        return _set_origin(torch.tensor(1. - image[:,:,0], dtype=dtype, device=device), origin)
+    elif(image.ndim == 3):
+        return _set_origin(torch.tensor(1. - image[:, :, 0], dtype=dtype, device=device), origin)
     else:
         raise NotImplementedError
 
@@ -53,9 +52,9 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
     image : torch.Tensor
         Tensor of shape [width, height] representing the image from which we will sample the points.
     threshold : float
-        Minimum pixel value (i.e. point weight) 
+        Minimum pixel value (i.e. point weight).
     centered : bool, default=False
-        If true, center the sampled points such that mean 
+        If true, center the sampled points.
     normalise_weights : bool, default=False
         If true, normalise weight values, such that :math:'\alpha_i = \frac{\alpha_i}{\sum_k \alpha_k}'
     normalise_position : bool, default=True
