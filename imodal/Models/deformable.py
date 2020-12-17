@@ -45,6 +45,9 @@ class Deformable:
         """
         raise NotImplementedError()
 
+    def to_device(self, device):
+        pass
+
 
 class DeformableGrid:
     def __init__(self, extent, resolution, module_label=None):
@@ -67,6 +70,9 @@ class DeformableGrid:
 
     def _to_deformed(self, gd):
         return (gd,)
+
+    def to_device(self, device):
+        self.__silent_module.to_(device=device)
 
 
 class DeformablePoints(Deformable):
@@ -170,6 +176,9 @@ class DeformablePoints(Deformable):
     def _to_deformed(self, gd):
         return (gd,)
 
+    def to_device(self, device):
+        self.__silent_module.to_(device=device)
+
 
 class DeformableMesh(DeformablePoints):
     def __init__(self, points, triangles, label=None):
@@ -214,6 +223,10 @@ class DeformableMesh(DeformablePoints):
 
     def _to_deformed(self, gd):
         return (gd, self.__triangles)
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__triangles = self.__triangles.to(device=device)
 
 
 class DeformableImage(DeformablePoints):
@@ -312,6 +325,10 @@ class DeformableImage(DeformablePoints):
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
         else:
             raise ValueError()
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__bitmap = self.__bitmap.to(device=device)
 
 
 class Deformable3DImage(DeformablePoints):
@@ -418,6 +435,10 @@ class Deformable3DImage(DeformablePoints):
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
         else:
             raise ValueError()
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__bitmap = self.__bitmap.to(device=device)
 
 
 def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):

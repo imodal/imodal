@@ -9,7 +9,7 @@ The dataset consists of peanuts that haven't been built using diffeomorphisms.
 """
 
 ###############################################################################
-# Import relevant modules.
+# Import relevant Python modules.
 #
 
 import sys

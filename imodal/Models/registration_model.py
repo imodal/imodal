@@ -135,6 +135,10 @@ class RegistrationModel(BaseModel):
         # Other parameters
         self.__parameters.update(self.__init_other_parameters)
 
+    def to_device(self, device):
+        [deformation_module.to_(device=device) for deformation_module in self.__deformation_modules]
+        [deformable.to_device(device) for deformable in self.__deformables]
+
     def evaluate(self, target, solver, it, costs=None, backpropagation=True):
         """ Evaluate the model and output its cost.
 
