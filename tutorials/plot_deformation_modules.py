@@ -21,8 +21,9 @@ import imodal
 
 
 ###############################################################################
-# First, we create some synthetic data.
-# Lets displace a line using some local translation deformation module.
+# We create the synthetic data.
+# First a line that will get displaced, then the position and moments of the
+# local translation module.
 #
 
 nb_points_line = 50
@@ -35,7 +36,7 @@ mom_translation = torch.tensor([[0., -0.5], [0., 0.5]])
 
 
 ###############################################################################
-# Plot the synthetic data
+# Plot the synthetic data.
 #
 
 plt.plot(line[:, 0], line[:, 1], color='blue')
@@ -48,7 +49,7 @@ plt.show()
 
 ###############################################################################
 # We now create the silent module representing the points that will get
-# transported.
+# displaced.
 #
 
 silent = imodal.DeformationModules.SilentLandmarks(
@@ -80,8 +81,8 @@ imodal.HamiltonianDynamic.shoot(
 
 
 ###############################################################################
-# Plot each step of the deformation. We see how both the local translations
-# transport its local ambiant space and thus the silent points.
+# Plot each step of the deformation. We see how both points of the local
+# translations transport its local ambiant space and thus the silent points.
 #
 
 intermediate_states = intermediates['states']

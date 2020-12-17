@@ -31,14 +31,14 @@ torch.set_default_dtype(torch.float32)
 
 data = pickle.load(open("../data/peanuts.pickle", 'rb'))
 
-peanuts_count = 4
+peanuts_count = 8
 peanuts = [torch.tensor(peanut[:-1], dtype=torch.get_default_dtype()) for peanut in data[0][1:peanuts_count+1]]
 
 template = imodal.Utilities.generate_unit_circle(200)
 template = imodal.Utilities.linear_transform(template, torch.tensor([[1.3, 0.], [0., 0.5]]))
 template = imodal.Utilities.close_shape(template)
 
-deformable_template = imodal.Models.DeformablePoints(template.clone().requires_grad_(False))
+deformable_template = imodal.Models.DeformablePoints(template.clone())
 deformable_peanuts = [imodal.Models.DeformablePoints(peanut) for peanut in peanuts]
 
 point_left_scale = torch.tensor([[-1., 0.]])
@@ -77,8 +77,8 @@ global_translation = imodal.DeformationModules.GlobalTranslation(2)
 ###############################################################################
 # Initialise the model.
 #
-# We set the `fit_gd` flags to `True` for the scaling modules in order to optimise
-# their positions.
+# We set the `fit_gd` flags to `True` for the scaling modules in order to
+# optimise their positions.
 #
 
 sigmas_varifold = [0.4, 2.5]
@@ -102,7 +102,8 @@ fitter.fit(deformable_peanuts, 20, costs=costs, options={'shoot_solver': shoot_s
 
 
 ###############################################################################
-# Extract and plot optimised positions.
+# Compute the resulting hypertemplate and extract and scaling position.
+# We then plot everything.
 #
 
 optimised_left = atlas.registration_models[0].init_manifold[2].gd.detach().view(2)
@@ -141,7 +142,7 @@ plt.show()
 
 
 ###############################################################################
-# Display shooting steps for each pair.
+# Display shooting steps for each hypertemplate/target pairs.
 #
 
 it_per_snapshot = 1
