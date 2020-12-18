@@ -5,11 +5,11 @@ Basipetal Leaf Growth Model using LDDMM
 """
 
 ###############################################################################
-# Python module import.
+# Import relevant Python modules.
 #
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 import math
 import copy
 import pickle
@@ -20,16 +20,18 @@ import matplotlib.pyplot as plt
 
 import imodal
 
+imodal.Utilities.set_compute_backend('torch')
+
 ###############################################################################
 # We load the data (shape of the source and target leaves).
 #
-with open("data/basipetal.pickle", 'rb') as f:
+with open("../../data/basipetal.pickle", 'rb') as f:
     data = pickle.load(f)
 
 shape_source = torch.tensor(data['shape_source']).type(torch.get_default_dtype())
 shape_target = torch.tensor(data['shape_target']).type(torch.get_default_dtype())
 
-aabb_source = imodal.Utilities.AABB.build_from_points(shape_target)
+aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
 aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 
 
@@ -37,6 +39,8 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
+
+"""
 plt.subplot(1, 2, 1)
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='blue')
 plt.axis(aabb_target.squared().totuple())
@@ -44,6 +48,23 @@ plt.subplot(1, 2, 2)
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='blue')
 plt.axis(aabb_target.squared().totuple())
 plt.show()
+
+aabb_source.scale_(1.2)
+# Define the deformation grid.
+square_size = 1.
+lddmm_grid_resolution = [math.floor(aabb_source.width/square_size),
+                         math.floor(aabb_source.height/square_size)]
+deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, lddmm_grid_resolution)
+
+ax = plt.subplot()
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '.-', color='red')
+#plt.plot(shoot_deformed_shape[:, 0].numpy(), shoot_deformed_shape[:, 1].numpy())
+imodal.Utilities.plot_grid(ax, deformation_grid.togrid()[0], deformation_grid.togrid()[1], color='xkcd:light blue', lw=0.4)
+plt.axis('equal')
+
+plt.show()
+"""
 
 
 ###############################################################################
@@ -79,7 +100,8 @@ plt.show()
 #
 
 nu = 0.1
-scale_lddmm = 5./points_density**(1/2)
+#scale_lddmm = 5./points_density**(1/2)
+scale_lddmm = 10.
 lddmm = imodal.DeformationModules.ImplicitModule0(2, points_lddmm.shape[0], scale_lddmm, nu=nu, gd=points_lddmm)
 
 
@@ -97,7 +119,7 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
     [lddmm],
-    [imodal.Attachment.VarifoldAttachment(2, [20, 120.])],
+    [imodal.Attachment.VarifoldAttachment(2, [10., 50.])],
     lam=10.)
 
 
@@ -161,8 +183,9 @@ modules.manifold.fill(model.init_manifold.clone())
 silent_shape = copy.copy(modules[0])
 lddmm = copy.copy(modules[1])
 
+aabb_source.scale_(1.2)
 # Define the deformation grid.
-square_size = 2.5
+square_size = 1.
 lddmm_grid_resolution = [math.floor(aabb_source.width/square_size),
                          math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, lddmm_grid_resolution)

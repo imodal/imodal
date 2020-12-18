@@ -12,7 +12,7 @@ Basipetal Leaf Growth Model using Implicit Modules
 #
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 import math
 import copy
 import pickle
@@ -27,12 +27,10 @@ import imodal
 
 
 ###############################################################################
-# +
-#
 # We load the data (shape and dots of the source and target leaves), rescale it and center it.
 #
 
-with open("data/basipetal.pickle", 'rb') as f:
+with open("../../data/basipetal.pickle", 'rb') as f:
     data = pickle.load(f)
 
 dots_source = torch.tensor(data['dots_source'], dtype=torch.get_default_dtype())

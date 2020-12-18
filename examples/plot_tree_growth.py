@@ -21,8 +21,8 @@ import torch
 
 import imodal
 
-# device = 'cuda:2'
-device = 'cpu'
+device = 'cuda:2'
+#device = 'cpu'
 torch.set_default_dtype(torch.float64)
 
 imodal.Utilities.set_compute_backend('keops')
@@ -40,7 +40,7 @@ target_image = data['target_image'].to(torch.get_default_dtype())
 
 # Segmentations as Axis Aligned Bounding Boxes (AABB)
 aabb_trunk = data['aabb_trunk']
-aabb_crown = data['aabb_crown']
+aabb_crown = data['aabb_leaves']
 extent = data['extent']
 
 
@@ -79,8 +79,8 @@ implicit1_trunk_points = aabb_trunk.is_inside(implicit1_points)
 implicit1_crown_points = aabb_crown.is_inside(implicit1_points)
 
 implicit1_points = implicit1_points[implicit1_trunk_points | implicit1_crown_points]
-implicit1_trunk_points = aabb_implicit1_trunk.is_inside(implicit1_points)
-implicit1_crown_points = aabb_implicit1_crown.is_inside(implicit1_points)
+implicit1_trunk_points = aabb_trunk.is_inside(implicit1_points)
+implicit1_crown_points = aabb_crown.is_inside(implicit1_points)
 
 assert implicit1_points[implicit1_trunk_points].shape[0] + implicit1_points[implicit1_crown_points].shape[0] == implicit1_points.shape[0]
 
@@ -154,6 +154,7 @@ target_image_deformable = imodal.Models.DeformableImage(target_image.to(device=d
 # Move the deformation modules on the right device (e.g. GPU) if necessary.
 #
 
+"""
 source_image_deformable.silent_module.to_(device)
 target_image_deformable.silent_module.to_(device)
 global_translation.to_(device)
@@ -162,7 +163,7 @@ implicit1.to_(device)
 if str(device) is not 'cpu':
     translations._ImplicitModule0_KeOps__keops_backend = 'GPU'
     implicit1._ImplicitModule1_KeOps__keops_backend = 'GPU'
-
+"""
 
 ###############################################################################
 # Define the registration model.
@@ -171,6 +172,7 @@ if str(device) is not 'cpu':
 attachment_image = imodal.Attachment.L2NormAttachment(weight=1e0)
 
 model = imodal.Models.RegistrationModel([source_image_deformable], [implicit1, global_translation], [attachment_image], lam=1.)
+model.to_device(device)
 
 
 ###############################################################################
