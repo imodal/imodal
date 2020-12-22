@@ -21,8 +21,8 @@ import torch
 
 import imodal
 
-device = 'cuda:2'
-#device = 'cpu'
+#device = 'cuda:2'
+device = 'cpu'
 torch.set_default_dtype(torch.float64)
 
 imodal.Utilities.set_compute_backend('keops')
@@ -59,20 +59,6 @@ plt.plot(source_shape[shape_is_crown, 0].numpy(), source_shape[shape_is_crown, 1
 plt.subplot(1, 2, 2)
 plt.imshow(target_image, cmap='gray', origin='lower', extent=extent.totuple())
 plt.show()
-
-
-###############################################################################
-# Plot the 4 dimensional growth factor.
-#
-
-for i in range(4):
-    _, ax = plt.subplots(figsize=figsize)
-    plt.imshow(results['source'], origin='lower', extent=extent, cmap='gray')
-    dm.Utilities.plot_C_ellipses(ax, implicit1_points, implicit1_c, c_index=i, color='blue', scale=0.03)
-    plt.xlim(0., 1.)
-    plt.ylim(0., 1.)
-    plt.axis('off')
-    plt.show()
 
 
 ###############################################################################
@@ -126,6 +112,20 @@ plt.show()
 
 
 ###############################################################################
+# Plot the 4 dimensional growth factor.
+#
+
+for i in range(4):
+    _, ax = plt.subplots()
+    plt.imshow(source_image, origin='lower', extent=extent, cmap='gray')
+    imodal.Utilities.plot_C_ellipses(ax, implicit1_points, implicit1_c, c_index=i, color='blue', scale=0.03)
+    plt.xlim(0., 1.)
+    plt.ylim(0., 1.)
+    plt.axis('off')
+    plt.show()
+
+
+###############################################################################
 # Create the deformation model with a combination of 3 modules : implicit module
 # of order 1 (growth model), implicit module of order 0 (small corrections) and
 # a global translation.
@@ -172,7 +172,7 @@ target_image_deformable.to_device(device)
 attachment_image = imodal.Attachment.L2NormAttachment(weight=1e0)
 
 model = imodal.Models.RegistrationModel([source_image_deformable], [implicit1, global_translation], [attachment_image], lam=1.)
-model.to_device(device)
+# model.to_device(device)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -182,8 +182,9 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([target_image_deformable], 200, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
+fitter = imodal.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
+#fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
+fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
@@ -214,80 +215,82 @@ plt.show()
 
 
 ###############################################################################
-#
-# Function to compute a deformation given a set of controls up to some time point.
-#
-
-grid_resolution = [16, 16]
-def compute_intermediate_deformed(it, controls, t1, intermediates=None):
-    implicit1 = dm.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=100., gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points.clone(), implicit1_cotan_r.clone()), coeff=0.1)
-    global_translation = dm.DeformationModules.GlobalTranslation(2, coeff=1.)
-
-    incontrols = []
-    for control in controls:
-        incontrols.append([control[0], control[1]])
-
-    shape_deformable = dm.Models.DeformablePoints(source_shape)
-
-    source_deformable = dm.Models.DeformableImage(source_image.clone(b), output='bitmap', extent=results['extent'])
-    source_deformable.silent_module.manifold.cotan = silent_cotan.clone()
-
-    grid_deformable = dm.Models.DeformableGrid(extent, [32, 32])
-
-    costs = {}
-    with torch.autograd.no_grad():
-        deformed = dm.Models.deformables_compute_deformed([source_deformable, shape_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=incontrols, t1=t1, intermediates=intermediates, costs=costs)
-
-    return deformed[0][0]
-
-
-###############################################################################
 # Functions generating controls to follow one part of the deformation.
 #
 
 def generate_implicit1_controls(table):
     outcontrols = []
-    for control in results['intermediates']['controls']:
+    for control in intermediates['controls']:
         outcontrols.append(control[1]*torch.tensor(table, dtype=torch.get_default_dtype()))
 
     return outcontrols
 
+
 def generate_controls(implicit1_table, trans):
     outcontrols = []
     implicit1_controls = generate_implicit1_controls(implicit1_table)
-    for control, implicit1_control in zip(results['intermediates']['controls'], implicit1_controls):
+    for control, implicit1_control in zip(intermediates['controls'], implicit1_controls):
         outcontrols.append([implicit1_control, control[2]*torch.tensor(trans)])
 
     return outcontrols
 
 
 ###############################################################################
+# Function to compute a deformation given a set of controls up to some time point.
+#
+
+grid_resolution = [16, 16]
+
+
+def compute_intermediate_deformed(it, controls, t1, intermediates=None):
+    implicit1_cotan_points = model.init_manifold[1].cotan[0]
+    implicit1_cotan_r = model.init_manifold[1].cotan[1]
+    silent_cotan = model.init_manifold[0].cotan
+
+    implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=100., gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points.clone(), implicit1_cotan_r.clone()), coeff=0.1)
+    global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=1.)
+
+    incontrols = []
+    for control in controls:
+        incontrols.append([control[0], control[1]])
+
+    source_deformable = imodal.Models.DeformableImage(source_image.clone(), output='bitmap', extent=extent)
+    source_deformable.silent_module.manifold.cotan = silent_cotan.clone()
+
+    grid_deformable = imodal.Models.DeformableGrid(extent, [32, 32])
+
+    costs = {}
+    with torch.autograd.no_grad():
+        deformed = imodal.Models.deformables_compute_deformed([source_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=incontrols, t1=t1, intermediates=intermediates, costs=costs)
+
+    return deformed[0][0]
+
+
+###############################################################################
 # Functions to generate the deformation trajectory given a set of controls.
 #
 
-def generate_images(table, trans, experience):
+def generate_images(table, trans):
     incontrols = generate_controls(table, trans)
     intermediates_shape = {}
-    deformed, _ = compute_intermediate_deformed(10, incontrols, 1., intermediates=intermediates_shape)
+    deformed = compute_intermediate_deformed(10, incontrols, 1., intermediates=intermediates_shape)
 
-    trajectory_shape = [state[1].gd for state in intermediates_shape['states']]
-    trajectory_grid = [dm.Utilities.vec2grid(state[2].gd, 32, 32) for state in intermediates_shape['states']]
+    trajectory_grid = [imodal.Utilities.vec2grid(state[1].gd, 32, 32) for state in intermediates_shape['states']]
 
-    trajectory = [results['source']]
+    trajectory = [source_image]
     t = torch.linspace(0., 1., 11)
     print("Computing trajectories...")
     for step in range(1, len(t)):
         print("{}, t={}".format(step, t[step]))
-        intermediates = {}
         deformed = compute_intermediate_deformed(step, incontrols[:step], t[step])
 
         trajectory.append(deformed)
 
     print("Generating images...")
     for i, deformed in enumerate(trajectory):
-        _, ax = plt.subplots(figsize=figsize)
+        _, ax = plt.subplots()
         plt.imshow(deformed, origin='lower', extent=extent, cmap='gray')
-        dm.Utilities.plot_grid(ax, trajectory_grid[i][0], trajectory_grid[i][1], color='blue', lw=0.5)
+        imodal.Utilities.plot_grid(ax, trajectory_grid[i][0], trajectory_grid[i][1], color='blue', lw=0.5)
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.axis('off')
@@ -298,18 +301,18 @@ def generate_images(table, trans, experience):
 # Generate trajectory of the total optimized deformation.
 #
 
-generate_images([True, True, True, True], True, "all_grid")
+generate_images([True, True, True, True], True)
 
 ###############################################################################
 # Generate trajectory following vertical elongation of the trunk.
 #
 
-generate_images([False, True, False, False], False, "trunk_vertical")
+generate_images([False, True, False, False], False)
 
 ###############################################################################
 # Generate trajectory following horizontal elongation of the crown.
 #
 
-generate_images([False, False, True, False], False, "crown_horizontal")
+generate_images([False, False, True, False], False)
 
 

@@ -9,7 +9,7 @@ Acropetal Leaf Growth Model using LDDMM
 #
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 import math
 import copy
 import pickle
@@ -24,7 +24,7 @@ import imodal
 # We load the data (shape of the source and target leaves).
 #
 
-with open("../data/acropetal.pickle", 'rb') as f:
+with open("../../data/acropetal.pickle", 'rb') as f:
     data = pickle.load(f)
 
 shape_source = imodal.Utilities.close_shape(torch.tensor(data['shape_source']).type(torch.get_default_dtype()))
