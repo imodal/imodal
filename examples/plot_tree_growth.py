@@ -62,6 +62,20 @@ plt.show()
 
 
 ###############################################################################
+# Plot the 4 dimensional growth factor.
+#
+
+for i in range(4):
+    _, ax = plt.subplots(figsize=figsize)
+    plt.imshow(results['source'], origin='lower', extent=extent, cmap='gray')
+    dm.Utilities.plot_C_ellipses(ax, implicit1_points, implicit1_c, c_index=i, color='blue', scale=0.03)
+    plt.xlim(0., 1.)
+    plt.ylim(0., 1.)
+    plt.axis('off')
+    plt.show()
+
+
+###############################################################################
 # Generating implicit modules of order 1 points and growth factors
 #
 
@@ -145,25 +159,11 @@ translations = imodal.DeformationModules.ImplicitModule0(2, source_shape.shape[0
 # Define deformables used by the registration model.
 #
 
-source_image_deformable = imodal.Models.DeformableImage(source_image.to(device=device), output='bitmap', extent=extent)
+source_image_deformable = imodal.Models.DeformableImage(source_image, output='bitmap', extent=extent)
+target_image_deformable = imodal.Models.DeformableImage(target_image, output='bitmap', extent=extent)
 
-target_image_deformable = imodal.Models.DeformableImage(target_image.to(device=device), output='bitmap', extent=extent)
-
-
-###############################################################################
-# Move the deformation modules on the right device (e.g. GPU) if necessary.
-#
-
-"""
-source_image_deformable.silent_module.to_(device)
-target_image_deformable.silent_module.to_(device)
-global_translation.to_(device)
-translations.to_(device)
-implicit1.to_(device)
-if str(device) is not 'cpu':
-    translations._ImplicitModule0_KeOps__keops_backend = 'GPU'
-    implicit1._ImplicitModule1_KeOps__keops_backend = 'GPU'
-"""
+source_image_deformable.to_device(device)
+target_image_deformable.to_device(device)
 
 ###############################################################################
 # Define the registration model.
@@ -173,7 +173,6 @@ attachment_image = imodal.Attachment.L2NormAttachment(weight=1e0)
 
 model = imodal.Models.RegistrationModel([source_image_deformable], [implicit1, global_translation], [attachment_image], lam=1.)
 model.to_device(device)
-
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -212,4 +211,105 @@ plt.imshow(deformed_image.cpu(), extent=extent.totuple(), origin='lower')
 plt.subplot(1, 3, 3)
 plt.imshow(target_image, extent=extent.totuple(), origin='lower')
 plt.show()
+
+
+###############################################################################
+#
+# Function to compute a deformation given a set of controls up to some time point.
+#
+
+grid_resolution = [16, 16]
+def compute_intermediate_deformed(it, controls, t1, intermediates=None):
+    implicit1 = dm.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=100., gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points.clone(), implicit1_cotan_r.clone()), coeff=0.1)
+    global_translation = dm.DeformationModules.GlobalTranslation(2, coeff=1.)
+
+    incontrols = []
+    for control in controls:
+        incontrols.append([control[0], control[1]])
+
+    shape_deformable = dm.Models.DeformablePoints(source_shape)
+
+    source_deformable = dm.Models.DeformableImage(source_image.clone(b), output='bitmap', extent=results['extent'])
+    source_deformable.silent_module.manifold.cotan = silent_cotan.clone()
+
+    grid_deformable = dm.Models.DeformableGrid(extent, [32, 32])
+
+    costs = {}
+    with torch.autograd.no_grad():
+        deformed = dm.Models.deformables_compute_deformed([source_deformable, shape_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=incontrols, t1=t1, intermediates=intermediates, costs=costs)
+
+    return deformed[0][0]
+
+
+###############################################################################
+# Functions generating controls to follow one part of the deformation.
+#
+
+def generate_implicit1_controls(table):
+    outcontrols = []
+    for control in results['intermediates']['controls']:
+        outcontrols.append(control[1]*torch.tensor(table, dtype=torch.get_default_dtype()))
+
+    return outcontrols
+
+def generate_controls(implicit1_table, trans):
+    outcontrols = []
+    implicit1_controls = generate_implicit1_controls(implicit1_table)
+    for control, implicit1_control in zip(results['intermediates']['controls'], implicit1_controls):
+        outcontrols.append([implicit1_control, control[2]*torch.tensor(trans)])
+
+    return outcontrols
+
+
+###############################################################################
+# Functions to generate the deformation trajectory given a set of controls.
+#
+
+def generate_images(table, trans, experience):
+    incontrols = generate_controls(table, trans)
+    intermediates_shape = {}
+    deformed, _ = compute_intermediate_deformed(10, incontrols, 1., intermediates=intermediates_shape)
+
+    trajectory_shape = [state[1].gd for state in intermediates_shape['states']]
+    trajectory_grid = [dm.Utilities.vec2grid(state[2].gd, 32, 32) for state in intermediates_shape['states']]
+
+    trajectory = [results['source']]
+    t = torch.linspace(0., 1., 11)
+    print("Computing trajectories...")
+    for step in range(1, len(t)):
+        print("{}, t={}".format(step, t[step]))
+        intermediates = {}
+        deformed = compute_intermediate_deformed(step, incontrols[:step], t[step])
+
+        trajectory.append(deformed)
+
+    print("Generating images...")
+    for i, deformed in enumerate(trajectory):
+        _, ax = plt.subplots(figsize=figsize)
+        plt.imshow(deformed, origin='lower', extent=extent, cmap='gray')
+        dm.Utilities.plot_grid(ax, trajectory_grid[i][0], trajectory_grid[i][1], color='blue', lw=0.5)
+        plt.xlim(0., 1.)
+        plt.ylim(0., 1.)
+        plt.axis('off')
+        plt.show()
+
+
+###############################################################################
+# Generate trajectory of the total optimized deformation.
+#
+
+generate_images([True, True, True, True], True, "all_grid")
+
+###############################################################################
+# Generate trajectory following vertical elongation of the trunk.
+#
+
+generate_images([False, True, False, False], False, "trunk_vertical")
+
+###############################################################################
+# Generate trajectory following horizontal elongation of the crown.
+#
+
+generate_images([False, False, True, False], False, "crown_horizontal")
+
 

@@ -19,14 +19,14 @@ import imodal
 
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
-# device = 'cuda'
-device = 'cpu'
+device = 'cuda:2'
+# device = 'cpu'
 
 ###############################################################################
 # Load source and target data.
 #
 
-data_folder = "data/"
+data_folder = "../data/"
 source_mesh = meshio.read(data_folder+"bunny_source.ply")
 target_mesh = meshio.read(data_folder+"bunny_shear_ear.ply")
 
@@ -90,21 +90,28 @@ sigma1 = 2./implicit1_density**(1/3)
 
 implicit1 = imodal.DeformationModules.ImplicitModule1(3, implicit1_points.shape[0], sigma1, implicit1_c, nu=1000., gd=(implicit1_points, implicit1_r), coeff=0.001)
 
+print("{} points for the implicit module of order 1.".format(implicit1_points.shape[0]))
+
 
 ###############################################################################
 # Create and initialize the local translations module.
 #
 
+implicit0_density = 0.2
 sigma0 = 3./implicit0_density**(1/3)
 
+implicit0_points = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_convex_hull, aabb_source, implicit0_density, scatter=1.4*source_points)
+
 implicit0 = imodal.DeformationModules.ImplicitModule0(3, implicit0_points.shape[0], sigma0, nu=1., gd=implicit0_points, coeff=100.)
+
+print("{} points for the implicit module of order 0.".format(implicit0_points.shape[0]))
 
 
 ###############################################################################
 # Create and initialize the local large scale rotation.
 #
 
-rotation = imodal.DeformationModules.LocalRotation(3, 30., gd=torch.tensor([[0., 0., 1.]], device=device, requires_grad=True), backend='torch', coeff=10.)
+rotation = imodal.DeformationModules.LocalRotation(3, 30., gd=torch.tensor([[0., 0., 0.], [0., 0., 1.]], device=device, requires_grad=True), backend='torch', coeff=10.)
 
 
 ###############################################################################
@@ -132,25 +139,14 @@ def precompute(init_manifold, modules, parameters):
 
 
 ###############################################################################
-# Move the deformation modules on the right device (e.g. GPU) if necessary.
-#
-
-deformable_source.silent_module.to_(device)
-deformable_target.silent_module.to_(device)
-global_translation.to_(device)
-implicit0.to_(device)
-implicit1.to_(device)
-rotation.to_(device)
-if str(device) is not 'cpu':
-    implicit0._ImplicitModule0_KeOps__keops_backend = 'GPU'
-    implicit1._ImplicitModule1_KeOps__keops_backend = 'GPU'
-
-###############################################################################
 # Define deformables used by the registration model.
 #
 
-deformable_source = imodal.Models.DeformableMesh(source_points, source_triangles.to(device))
-deformable_target = imodal.Models.DeformableMesh(target_points, target_triangles.to(device))
+deformable_source = imodal.Models.DeformableMesh(source_points, source_triangles)
+deformable_target = imodal.Models.DeformableMesh(target_points, target_triangles)
+
+deformable_source.to_device(device)
+deformable_target.to_device(device)
 
 ###############################################################################
 # Define the registration model.
@@ -160,7 +156,7 @@ sigmas_varifold = [1., 5., 15.]
 attachment = imodal.Attachment.VarifoldAttachment(3, sigmas_varifold)
 
 model = imodal.Models.RegistrationModel(deformable_source, [implicit1, implicit0, global_translation, rotation], [attachment], fit_gd=None, lam=100., precompute_callback=precompute, other_parameters={'growth': {'params': [angles, growth_constants]}})
-
+model.to_device(device)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -188,4 +184,15 @@ print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
 basis = compute_basis(angles.detach()).cpu()
 C = compute_growth(growth_constants.detach()).cpu()
 
+imodal.Utilities.export_mesh("results_implicit_bunny/source.ply", source_points.cpu(), source_triangles)
+imodal.Utilities.export_mesh("results_implicit_bunny/target.ply", target_points.cpu(), target_triangles)
+
+for i, inter in enumerate(intermediates['states']):
+    imodal.Utilities.export_mesh("results_implicit_bunny/{}.ply".format(i), inter[0].gd.cpu(), source_triangles)
+
+with open("results_implicit_bunny/model.txt", 'w') as f:
+    f.write(str(model))
+
+with open("results_implicit_bunny/intermediates.pt", 'wb') as f:
+    torch.save(intermediates, f)
 

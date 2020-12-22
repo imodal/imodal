@@ -215,8 +215,7 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
         return torch.cross(tetra, vec.repeat(4, 1))
 
     def f_support_3d(gd):
-        pass
-        # return torch.(3, device=gd.device).repeat(4, 1) + sigma/3. * tetra
+        return torch.zeros(3, device=gd.device).repeat(4, 1) + sigma/3. * tetra
         # return torch.(3, device=gd.device).repeat(4, 1) + sigma/3. * tetra
 
     f_vectors = f_vectors_2d

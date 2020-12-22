@@ -214,6 +214,12 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
         self.__keops_eye = self.__keops_eye.to(*args, **kwargs)
         self.__keops_A = self.__keops_A.to(*args, **kwargs)
 
+        if 'device' in kwargs:
+            if kwargs['device'].split(":")[0].lower() == "cuda":
+                self.__keops_backend = 'GPU'
+            elif kwargs['device'].split(":")[0].lower() == "cpu":
+                self.__keops_backend = 'CPU'
+
     def cost(self):
         return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
 

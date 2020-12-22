@@ -138,6 +138,9 @@ class RegistrationModel(BaseModel):
     def to_device(self, device):
         [deformation_module.to_(device=device) for deformation_module in self.__deformation_modules]
         [deformable.to_device(device) for deformable in self.__deformables]
+        [manifold.to_(device=device) for manifold in self.__init_manifold]
+
+        self._compute_parameters()
 
     def evaluate(self, target, solver, it, costs=None, backpropagation=True):
         """ Evaluate the model and output its cost.
