@@ -27,8 +27,8 @@ device = 'cpu'
 # Load source and target images.
 #
 
-source_image = imodal.Utilities.interpolate_image(imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/key_a.png", origin='lower'), scale_factor=0.25)
-target_image = imodal.Utilities.interpolate_image(imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/key_b.png", origin='lower'), scale_factor=0.25)
+source_image = imodal.Utilities.interpolate_image(imodal.Utilities.load_greyscale_image("../data/images/key_a.png", origin='lower'), scale_factor=0.25)
+target_image = imodal.Utilities.interpolate_image(imodal.Utilities.load_greyscale_image("../data/images/key_b.png", origin='lower'), scale_factor=0.25)
 
 aabb = imodal.Utilities.AABB(0, source_image.shape[1]-1, 0, source_image.shape[0]-1)
 

@@ -31,7 +31,7 @@ import imodal
 # We load the data (shape and dots of the source and target leaves).
 #
 
-with open("../data/acropetal.pickle", 'rb') as f:
+with open("../../data/acropetal.pickle", 'rb') as f:
     data = pickle.load(f)
 
 dots_source = torch.tensor(data['dots_source'], dtype=torch.get_default_dtype())

@@ -25,8 +25,8 @@ import imodal
 # Load image data and generate dots.
 #
 
-source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
-target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+source_image = imodal.Utilities.load_greyscale_image("../data/images/cross_+_30.png", origin='lower')
+target_image = imodal.Utilities.load_greyscale_image("../data/images/cross_+.png", origin='lower')
 
 # Smoothing
 sig_smooth = 0.
