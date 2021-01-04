@@ -139,9 +139,9 @@ plt.show()
 sigma = 5.
 growth = imodal.DeformationModules.ImplicitModule1(2, points.shape[0], sigma, C, nu=0.01, gd=(points, R), cotan=(moments, moments_R))
 
-layer_rigid = imodal.DeformationModules.SilentLanimodalarks(2, points_layer_rigid.shape[0], gd=points_layer_rigid)
+layer_rigid = imodal.DeformationModules.SilentLandmarks(2, points_layer_rigid.shape[0], gd=points_layer_rigid)
 
-layer_growth = imodal.DeformationModules.SilentLanimodalarks(2, points_layer_growth.shape[0], gd=points_layer_growth)
+layer_growth = imodal.DeformationModules.SilentLandmarks(2, points_layer_growth.shape[0], gd=points_layer_growth)
 
 
 ###############################################################################

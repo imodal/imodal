@@ -9,21 +9,12 @@ Example of a disc shaped layered growth model in 3D.
 # Import relevant modules.
 #
 
-import os
 import sys
-import copy
 import math
-import pickle
 import time
 
 sys.path.append("../../")
 
-import plotly
-import plotly.graph_objs as go
-import plotly.io as pio
-pio.orca.config.use_xvfb = True
-
-import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
