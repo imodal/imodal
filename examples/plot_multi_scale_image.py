@@ -21,7 +21,8 @@ import imodal
 
 imodal.Utilities.set_compute_backend('keops')
 
-device = 'cpu'
+# device = 'cpu'
+device = 'cuda:2'
 
 ###############################################################################
 # Load source and target images.
@@ -74,7 +75,7 @@ def model(scales, it=1):
     with torch.autograd.no_grad():
         deformed_image = model.compute_deformed(shoot_solver, shoot_it)[0][0]
 
-    return scale_points, scale_sigmas, deformed_image
+    return scale_points, scale_sigmas, deformed_image.cpu()
 
 
 ###############################################################################

@@ -167,7 +167,7 @@ shoot_it = 10
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 
-fitter.fit(deformable_target, 1000, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 250})
+fitter.fit(deformable_target, 1500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 500})
 
 
 ###############################################################################
