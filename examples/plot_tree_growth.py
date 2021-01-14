@@ -21,8 +21,8 @@ import torch
 
 import imodal
 
-#device = 'cuda:2'
-device = 'cpu'
+device = 'cuda:2'
+#device = 'cpu'
 torch.set_default_dtype(torch.float64)
 
 imodal.Utilities.set_compute_backend('keops')
@@ -172,7 +172,7 @@ target_image_deformable.to_device(device)
 attachment_image = imodal.Attachment.L2NormAttachment(weight=1e0)
 
 model = imodal.Models.RegistrationModel([source_image_deformable], [implicit1, global_translation], [attachment_image], lam=1.)
-# model.to_device(device)
+model.to_device(device)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.

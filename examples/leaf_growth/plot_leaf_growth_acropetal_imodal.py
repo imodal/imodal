@@ -22,10 +22,6 @@ import matplotlib.pyplot as plt
 
 import imodal
 
-# +
-#
-#
-
 
 ###############################################################################
 # We load the data (shape and dots of the source and target leaves).
@@ -42,6 +38,7 @@ shape_target = imodal.Utilities.close_shape(torch.tensor(data['shape_target']).t
 
 aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
 aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
+
 
 ###############################################################################
 # Plot source and target.

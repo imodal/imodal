@@ -61,6 +61,9 @@ def model(scales, it=1):
     source_deformable = imodal.Models.DeformableImage(copy.deepcopy(source_image), extent='match')
     target_deformable = imodal.Models.DeformableImage(copy.deepcopy(target_image), extent='match')
 
+    source_deformable.to_device(device)
+    target_deformable.to_device(device)
+
     model = imodal.Models.RegistrationModel(source_deformable, scale_translations, imodal.Attachment.EuclideanPointwiseDistanceAttachment(), lam=100.)
 
     model.to_device(device)
