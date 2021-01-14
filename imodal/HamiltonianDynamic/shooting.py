@@ -118,10 +118,14 @@ def _shoot_torchdiffeq(h, solver, it, controls, intermediates, t1=1.):
                 if self.intermediates is not None:
                     self.intermediates['controls'].append(list(map(lambda x: x.detach().clone(), self.h.module.controls)))
 
-                delta = grad(h(),
-                             [*self.h.module.manifold.unroll_gd(),
-                              *self.h.module.manifold.unroll_cotan()],
-                             create_graph=True, allow_unused=True)
+                l = [*self.h.module.manifold.unroll_gd(), *self.h.module.manifold.unroll_cotan()]
+
+                delta = list(grad(h(), l, create_graph=True, allow_unused=True))
+
+                # Nulls are replaced by zero tensors
+                for i in range(len(delta)):
+                    if delta[i] is None:
+                        delta[i] = torch.zeros_like(l[i])
 
                 gd_out = delta[:int(len(delta)/2)]
                 mom_out = delta[int(len(delta)/2):]

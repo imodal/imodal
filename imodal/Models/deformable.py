@@ -12,7 +12,7 @@ import nibabel as nib
 from imodal.HamiltonianDynamic import Hamiltonian, shoot
 from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from imodal.Manifolds import Landmarks
-from imodal.Utilities import deformed_intensities, deformed_intensities3d, AABB, load_greyscale_image, pixels2points, nel2points
+from imodal.Utilities import deformed_intensities, deformed_intensities3d, AABB, load_greyscale_image, pixels2points, voxels2points_affine, extent_transformation4d
 
 
 class Deformable:
@@ -320,6 +320,10 @@ class Deformable3DImage(DeformablePoints):
     """
     def __init__(self, bitmap, affine=None, output='bitmap', extent=None, label=None):
         """
+        Initialisation for the voxel deformable.
+
+        Transformation from the voxel space into point space can be done using either an affine transform or by giving an extent to the point space on which points will be mapped uniformly. If neither are provided, no mapping will occur and computation will happen on the unit cube.
+
         Parameters
         ----------
         bitmap : torch.Tensor
@@ -327,40 +331,49 @@ class Deformable3DImage(DeformablePoints):
         output: str, default='bitmap'
             Representation used by the deformable.
         extent: imodal.Utilities.AABB, default=None
-            Extent on the 3D volume on which the image is set.
+            Extent on the 3D volume on which the image is set. If set to 'match', extent will match the voxel space extent. If set to None, extent is set to the unit cube.
+        affine: Affine transformation (as a 4x4 matrix) used to transform voxels into point space.
         """
-        assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
         assert output == 'bitmap' or output == 'points'
-
-        # if extent is not None and (extent.dim != 3 or isinstance(extent, str)):
-        #     raise RuntimeError("Deformable3DImage.__init__(): given extent is not 3 dimensional!")
 
         self.__shape = bitmap.shape
         self.__output = output
-
-        if affine is None:
-            affine = torch.eye(4)
-
-        self.__affine = affine
-
         self.__voxel_extent = AABB(0., self.__shape[0]-1, 0., self.__shape[1]-1, 0., self.__shape[2]-1)
 
-        if extent is None:
+        if extent is not None and affine is not None:
+            raise RuntimeError("Deformable3DImage.__init__(): both extent and affine parameters are not set to None!")
+        elif extent is None and affine is None:
             extent = AABB(0., 1., 0., 1., 0., 1.)
-        elif isinstance(extent, str) and extent == 'match':
-            extent = self.__voxel_extent
+        elif isinstance(extent, str):
+            if extent == 'match':
+                extent = self.__voxel_extent
+            else:
+                raise RuntimeError("Deformable3DImage.__init__(): extent string {} not implemented!".format(extent))
+
+        self.__affine = affine
+        if extent is not None:
+            self.__affine = extent_transformation4d(self.__voxel_extent, extent)
 
         self.__extent = extent
+        self.__affine_inv = torch.inverse(self.__affine)
 
-        voxel_points = nel2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
+        voxel_points = voxels2points_affine(self.__voxel_extent.fill_count(self.__shape), self.__shape, self.__affine)
 
         self.__bitmap = bitmap
         super().__init__(voxel_points, label=label)
 
     @classmethod
-    def load_from_file(cls, filename, origin='lower', extent=None, device=None):
+    def load_from_file(cls, filename, origin='lower', extent=None, device=None, useaffine=True):
         img = nib.load(filename)
-        return cls(torch.tensor(img.get_fdata(), device=device), affine=torch.tensor(img.affine), extent=extent)
+
+        if extent is not None:
+            useaffine = False
+
+        affine = None
+        if useaffine:
+            affine = torch.tensor(img.affine, dtype=torch.get_default_dtype())
+
+        return cls(torch.tensor(img.get_fdata(), device=device), affine=affine, extent=extent)
 
     @property
     def geometry(self):
@@ -392,6 +405,10 @@ class Deformable3DImage(DeformablePoints):
         return self.__affine
 
     @property
+    def affine_inv(self):
+        return self.__affine_inv
+
+    @property
     def _has_backward(self):
         return True
 
@@ -403,22 +420,34 @@ class Deformable3DImage(DeformablePoints):
 
     output = property(__set_output, __get_output)
 
+    def apply_affine(self, affine):
+        self.__affine = self.__affine @ affine
+        self.__inv_affine = torch.inverse(self.__affine)
+
+        voxel_points = voxels2points_affine(self.__voxel_extent.fill_count(self.__shape), self.__shape, self.__affine)
+        super().__init__(voxel_points, label=self.silent_module.label)
+
     def save_to_file(self, filename):
-        nib.save(self.__bitmap, filename)
+        nib.save(nib.Nifti1Image(self.__bitmap.cpu().numpy(), self.__affine.cpu()), filename)
 
     def _backward_module(self):
-        voxel_grid = nel2points(self.__voxel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
+        voxel_grid = voxels2points_affine(self.__voxel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__affine)
         return SilentLandmarks(3, voxel_grid.shape[0], gd=voxel_grid)
 
     def _to_deformed(self, gd):
         if self.__output == 'bitmap':
-            return (deformed_intensities3d(gd, self.__bitmap, self.__extent), )
+            return (deformed_intensities3d(gd, self.__bitmap, self.__affine_inv), )
         elif self.__output == 'points':
-            deformed_bitmap = deformed_intensities3d(gd, self.__bitmap, self.__extent)
+            deformed_bitmap = deformed_intensities3d(gd, self.__bitmap, self.__affine_inv)
             return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
         else:
             raise ValueError()
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__bitmap = self.__bitmap.to(device=device)
+        self.__affine = self.__affine.to(device=device)
+        self.__affine_inv = self.__affine_inv.to(device=device)
 
 def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
     """

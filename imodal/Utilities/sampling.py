@@ -3,8 +3,7 @@ import math
 import matplotlib.image
 import torch
 
-from imodal.Kernels import K_xy
-from imodal.Utilities.usefulfunctions import grid2vec, points2pixels, points2nel
+from imodal.Utilities.usefulfunctions import points2pixels, points2voxels_affine
 from imodal.Utilities.aabb import AABB
 
 
@@ -137,13 +136,13 @@ def deformed_intensities(deformed_points, intensities, extent):
             intensities[u2, v2] * fu * fv).view(intensities.shape)
 
 
-def deformed_intensities3d(deformed_points, intensities, extent):
+def deformed_intensities3d(deformed_points, intensities, affine):
     """
     Sample a 3D image from a tensor of deformed points.
     Taken and adapted from https://gitlab.icm-institute.org/aramislab/deformetrica/blob/master/numpy/core/observations/deformable_objects/image.py
     """
 
-    uvw = points2nel(deformed_points, intensities.shape, extent)
+    uvw = points2voxels_affine(deformed_points, intensities.shape, affine)
 
     u, v, w = uvw[:, 0], uvw[:, 1], uvw[:, 2]
     u1 = torch.floor(uvw[:, 0]).long()

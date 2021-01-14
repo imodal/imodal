@@ -17,6 +17,24 @@ def vec2grid(vec, *args):
     return tuple((vec.t()[i].view(args).contiguous()).contiguous() for i in range(len(args)))
 
 
+def linear_transform(points, A):
+    """ Applies a linear transformation to a point tensor.
+
+    Parameters
+    ----------
+    points : torch.Tensor
+        A :math:`N\\times d` tensor that will be transformed.
+    A : torch.Tensor
+        A :math:`d\\times d` matrix that represent the linear transformation.
+
+    Returns
+    -------
+    torch.Tensor
+        The transformed points.
+    """
+    return torch.bmm(A.repeat(points.shape[0], 1, 1), points.unsqueeze(2)).view_as(points)
+
+
 def rot2d(theta):
     """ Returns a 2D rotation matrix. """
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
@@ -87,20 +105,39 @@ def rot3d_z_vec(thetas):
                         torch.stack([zeros, zeros, ones], dim=1)], dim=2).transpose(1, 2)
 
 
-def translation_matrix3d(translation, dtype=None):
+def translation_matrix4d(translation, dtype=None):
     return torch.tensor([[1., 0., 0., translation[0]],
                          [0., 1., 0., translation[1]],
                          [0., 0., 1., translation[2]],
                          [0., 0., 0., 1.]], dtype=dtype)
 
 
+def scale_matrix4d(scales, dtype=None):
+    return torch.tensor([[scales[0], 0., 0., 0.],
+                         [0., scales[1], 0., 0.],
+                         [0., 0., scales[2], 0.],
+                         [0., 0., 0., 1.]], dtype=dtype)
+
+
 def rigid_deformation3d(angles, translation):
     rot = torch.eye(4)
     rot[0:3, 0:3] = rot3d_x(angles[0]) @ rot3d_y(angles[1]) @ rot3d_z(angles[2])
-    return translation_matrix3d(translation) @ rot
+    return translation_matrix4d(translation) @ rot
+
+
+def extent_transformation4d(extent0, extent1):
+    scales = [length1/length0 for length0, length1 in zip(extent0.shape, extent1.shape)]
+    translations = [min1 - min0 for min0, min1 in zip(extent0.kmin, extent1.kmin)]
+
+    print(scales)
+    print(translations)
+    
+
+    return scale_matrix4d(scales) @ translation_matrix4d(translations)
 
 
 def points2pixels(points, frame_shape, frame_extent, toindices=False):
+    """ Transform points to pixel space. """
     scale_u, scale_v = (frame_shape[1]-1)/frame_extent.width, (frame_shape[0]-1)/frame_extent.height
     u1, v1 = scale_u*(points[:, 0] - frame_extent.xmin), scale_v*(points[:, 1] - frame_extent.ymin)
 
@@ -112,6 +149,7 @@ def points2pixels(points, frame_shape, frame_extent, toindices=False):
 
 
 def pixels2points(pixels, frame_shape, frame_extent):
+    """ Transform points from pixel space onto an uniformly mapped square space defined by an extent. """
     scale_x, scale_y = frame_extent.width/(frame_shape[1]-1), frame_extent.height/(frame_shape[0]-1)
 
     x, y = scale_x*pixels[:, 1] + frame_extent.xmin, scale_y*pixels[:, 0] + frame_extent.ymin
@@ -121,26 +159,36 @@ def pixels2points(pixels, frame_shape, frame_extent):
 
 def points2nel(points, frame_shape, frame_extent, toindices=False):
     scales = [(shape-1)/extent_shape for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
-    # print("points2nel: {}".format(scales))
 
     uv = [scale*(points[:, i] - extent_min) for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
 
     if toindices:
         uv = [torch.floor(u).long() for u in uv]
 
-    # print("points2nel uv: {}".format(uv))
-
     return torch.stack(uv, dim=1)
 
 
 def nel2points(nels, frame_shape, frame_extent):
     scales = [extent_shape/(shape-1) for shape, extent_shape in zip(frame_shape, frame_extent.shape)]
-    # print("nel2points: {}".format(scales))
 
     xy = [scale*nels[:, i] + extent_min for scale, extent_min, i in zip(scales, frame_extent.kmin, range(frame_extent.dim))]
-    # print("nel2points xy: {}".format(xy))
 
     return torch.stack(xy, dim=1)
+
+
+def voxels2points_affine(voxels, cube_shape, affine):
+    points = linear_transform(torch.cat([voxels, torch.ones(voxels.shape[0], 1, device=voxels.device)], dim=1), affine)[:, 0:3]
+    
+    return points
+
+
+def points2voxels_affine(points, cube_shape, affine, toindices=False):
+    pixels = linear_transform(torch.cat([points, torch.ones(points.shape[0], 1, device=points.device)], dim=1), affine)[:, 0:3]
+
+    if toindices:
+        pixels = pixels.floor().long()
+
+    return pixels
 
 
 def flatten_tensor_list(l, out_list=None):
@@ -189,8 +237,6 @@ def shared_tensors_property(tensors, prop):
 
     if len(tensors) == 0:
         return None
-
-    # print(list(prop(tensor) for tensor in tensors))
 
     first = prop(tensors[0])
     all_same = (list(prop(tensor) for tensor in tensors).count(first) == len(tensors))
