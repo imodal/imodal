@@ -37,6 +37,10 @@ class GlobalTranslation(DeformationModule):
     def manifold(self):
         return self.__manifold
 
+    @property
+    def device(self):
+        return self.__manifold.device
+
     def __get_controls(self):
         return self.__controls
 

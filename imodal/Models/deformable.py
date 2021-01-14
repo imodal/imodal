@@ -19,6 +19,13 @@ class Deformable:
     def __init__(self):
         pass
 
+    def to_device(self, device):
+        self.__device = device
+
+    @property
+    def device(self):
+        return self.__device
+
     @property
     def geometry(self):
         """
@@ -64,6 +71,10 @@ class DeformableGrid:
     @property
     def _has_backward(self):
         return False
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__silent_module.to_(device=device)
 
     def _to_deformed(self, gd):
         return (gd,)
@@ -139,6 +150,10 @@ class DeformablePoints(Deformable):
     def _has_backward(self):
         return False
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__silent_module.to_(device=device)
+
     def save_to_file(self, filename, **kwargs):
         file_extension = os.path.split(filename)[1]
         if file_extension == '.csv':
@@ -211,6 +226,10 @@ class DeformableMesh(DeformablePoints):
     @property
     def geometry(self):
         return (self.silent_module.manifold.gd, self.__triangles)
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__triangles = self.__triangles.to(device=device)
 
     def _to_deformed(self, gd):
         return (gd, self.__triangles)
@@ -299,6 +318,10 @@ class DeformableImage(DeformablePoints):
         self.__output = output
 
     output = property(__set_output, __get_output)
+
+    def to_device(self, device):
+        super().to_device(device)
+        self.__bitmap = self.__bitmap.to(device=device)
 
     def _backward_module(self):
         pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
@@ -420,6 +443,12 @@ class Deformable3DImage(DeformablePoints):
 
     output = property(__set_output, __get_output)
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__bitmap = self.__bitmap.to(device=device)
+        self.__affine = self.__affine.to(device=device)
+        self.__affine_inv = self.__affine_inv.to(device=device)
+
     def apply_affine(self, affine):
         self.__affine = self.__affine @ affine
         self.__inv_affine = torch.inverse(self.__affine)
@@ -443,11 +472,6 @@ class Deformable3DImage(DeformablePoints):
         else:
             raise ValueError()
 
-    def to_device(self, device):
-        super().to_device(device)
-        self.__bitmap = self.__bitmap.to(device=device)
-        self.__affine = self.__affine.to(device=device)
-        self.__affine_inv = self.__affine_inv.to(device=device)
 
 def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
     """

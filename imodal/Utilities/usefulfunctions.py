@@ -129,10 +129,6 @@ def extent_transformation4d(extent0, extent1):
     scales = [length1/length0 for length0, length1 in zip(extent0.shape, extent1.shape)]
     translations = [min1 - min0 for min0, min1 in zip(extent0.kmin, extent1.kmin)]
 
-    print(scales)
-    print(translations)
-    
-
     return scale_matrix4d(scales) @ translation_matrix4d(translations)
 
 

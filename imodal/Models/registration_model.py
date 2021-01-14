@@ -91,6 +91,13 @@ class RegistrationModel(BaseModel):
     def deformables(self):
         return self.__deformables
 
+    def to_device(self, device):
+        self.__init_manifold.to_(device=device)
+        [deformable.to_device(device) for deformable in self.__deformables]
+        [module.to_(device=device) for module in self.__modules]
+
+        self._compute_parameters()
+
     def __str__(self):
         outstr = "Registration model\n"
         outstr += "=================\n"
