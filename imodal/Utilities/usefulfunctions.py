@@ -36,7 +36,7 @@ def linear_transform(points, A):
 
 
 def apply_linear_transform_3d(points, A):
-    points = torch.cat([points, torch.ones(points.shape[0], 1)], dim=1)
+    points = torch.cat([points.to(dtype=torch.get_default_dtype())global_translation, torch.ones(points.shape[0], 1)], dim=1)
     return linear_transform(points, A)[:, 0:3]
 
 
