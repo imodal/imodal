@@ -35,6 +35,11 @@ def linear_transform(points, A):
     return torch.bmm(A.repeat(points.shape[0], 1, 1), points.unsqueeze(2)).view_as(points)
 
 
+def apply_linear_transform_3d(points, A):
+    points = torch.cat([points, torch.ones(points.shape[0], 1)], dim=1)
+    return linear_transform(points, A)[:, 0:3]
+
+
 def rot2d(theta):
     """ Returns a 2D rotation matrix. """
     return torch.tensor([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])

@@ -12,7 +12,7 @@ import nibabel as nib
 from imodal.HamiltonianDynamic import Hamiltonian, shoot
 from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from imodal.Manifolds import Landmarks
-from imodal.Utilities import deformed_intensities, deformed_intensities3d, AABB, load_greyscale_image, pixels2points, voxels2points_affine, extent_transformation4d
+from imodal.Utilities import deformed_intensities, deformed_intensities3d, AABB, load_greyscale_image, pixels2points, voxels2points_affine, extent_transformation4d, apply_linear_transform_3d
 
 
 class Deformable:
@@ -450,11 +450,8 @@ class Deformable3DImage(DeformablePoints):
         self.__affine_inv = self.__affine_inv.to(device=device)
 
     def apply_affine(self, affine):
-        self.__affine = self.__affine @ affine
-        self.__inv_affine = torch.inverse(self.__affine)
-
-        voxel_points = voxels2points_affine(self.__voxel_extent.fill_count(self.__shape), self.__shape, self.__affine)
-        super().__init__(voxel_points, label=self.silent_module.label)
+        self.silent_module.manifold.gd = apply_linear_transform_3d(self.silent_module.manifold.gd, affine)
+        self.__bitmap = deformed_intensities3d(self.silent_module.manifold.gd, self.__bitmap, self.__affine_inv)
 
     def save_to_file(self, filename):
         nib.save(nib.Nifti1Image(self.__bitmap.cpu().numpy(), self.__affine.cpu()), filename)

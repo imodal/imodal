@@ -110,6 +110,11 @@ def load_and_sample_greyscale(filename, threshold=0., centered=False, normalise_
     return sample_from_greyscale(image, threshold, centered, normalise_weights)
 
 
+def mask_to_indices(mask):
+    indices = torch.meshgrid([torch.arange(size) for size in mask.shape])
+    return torch.stack([indice[mask] for indice in indices]).T
+
+
 def deformed_intensities(deformed_points, intensities, extent):
     """
     Sample an image from a tensor of deformed points.
@@ -177,7 +182,7 @@ def interpolate_image(image, size=None, scale_factor=None, mode='nearest', align
     """
     Simple wrapper around torch.nn.functional.interpolate() for 2D images.
     """
-    
+
     interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size, scale_factor, mode, align_corners, recompute_scale_factor)
     return interpolated.view(interpolated.shape[2:])
 

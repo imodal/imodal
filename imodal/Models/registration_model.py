@@ -170,7 +170,7 @@ class RegistrationModel(BaseModel):
         # Call precompute callback if available
         precompute_cost = None
         if self.precompute_callback is not None:
-            precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
+            precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters, self.deformables)
 
             if precompute_cost is not None:
                 costs['precompute'] = precompute_cost
@@ -194,7 +194,7 @@ class RegistrationModel(BaseModel):
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
         return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
-    def compute_deformed(self, solver, it, costs=None, intermediates=None):
+    def compute_deformed(self, solver, it, t1=1., costs=None, intermediates=None):
         """ Compute the deformed source.
 
         Parameters
@@ -219,5 +219,5 @@ class RegistrationModel(BaseModel):
         for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
             deformable.silent_module.manifold.fill(deformable_manifold)
 
-        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, costs=costs, intermediates=intermediates)
+        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, t1=t1, costs=costs, intermediates=intermediates)
 
