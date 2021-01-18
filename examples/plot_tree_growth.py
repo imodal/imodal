@@ -26,6 +26,12 @@ device = 'cuda:2'
 torch.set_default_dtype(torch.float64)
 
 imodal.Utilities.set_compute_backend('keops')
+show_plot = False
+def show(outputname):
+    if show_plot:
+        plt.show()
+    else:
+        plt.savefig(outputname, dpi=300)
 
 ###############################################################################
 # Load source and target images, along with the source curve.
@@ -58,7 +64,7 @@ plt.plot(source_shape[shape_is_trunk, 0].numpy(), source_shape[shape_is_trunk, 1
 plt.plot(source_shape[shape_is_crown, 0].numpy(), source_shape[shape_is_crown, 1].numpy(), lw=2., color='green')
 plt.subplot(1, 2, 2)
 plt.imshow(target_image, cmap='gray', origin='lower', extent=extent.totuple())
-plt.show()
+show("source_target.png")
 
 
 ###############################################################################
@@ -108,7 +114,7 @@ plt.imshow(source_image, cmap='gray', origin='lower', extent=extent.totuple())
 plt.plot(source_shape[:, 0].numpy(), source_shape[:, 1].numpy(), lw=2.)
 plt.plot(implicit1_points[implicit1_trunk_points, 0].numpy(), implicit1_points[implicit1_trunk_points, 1], '.')
 plt.plot(implicit1_points[implicit1_crown_points, 0].numpy(), implicit1_points[implicit1_crown_points, 1], '.')
-plt.show()
+show("growth_points.png")
 
 
 ###############################################################################
@@ -122,7 +128,7 @@ for i in range(4):
     plt.xlim(0., 1.)
     plt.ylim(0., 1.)
     plt.axis('off')
-    plt.show()
+    show("growth_dir_{}.png".format(i))
 
 
 ###############################################################################
@@ -182,9 +188,9 @@ shoot_solver = 'euler'
 shoot_it = 10
 
 costs = {}
-fitter = imodal.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
-#fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
-fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([target_image_deformable], 300, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
+#fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
@@ -196,7 +202,6 @@ start = time.perf_counter()
 with torch.autograd.no_grad():
     deformed_image = model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)[0][0].detach()
 print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
-pts = model.init_manifold[1].gd[0].detach()
 
 
 ###############################################################################
@@ -211,7 +216,7 @@ plt.imshow(deformed_image.cpu(), extent=extent.totuple(), origin='lower')
 
 plt.subplot(1, 3, 3)
 plt.imshow(target_image, extent=extent.totuple(), origin='lower')
-plt.show()
+show("deformed.png")
 
 
 ###############################################################################
@@ -221,7 +226,7 @@ plt.show()
 def generate_implicit1_controls(table):
     outcontrols = []
     for control in intermediates['controls']:
-        outcontrols.append(control[1]*torch.tensor(table, dtype=torch.get_default_dtype()))
+        outcontrols.append(control[1].cpu()*torch.tensor(table, dtype=torch.get_default_dtype()))
 
     return outcontrols
 
@@ -230,7 +235,7 @@ def generate_controls(implicit1_table, trans):
     outcontrols = []
     implicit1_controls = generate_implicit1_controls(implicit1_table)
     for control, implicit1_control in zip(intermediates['controls'], implicit1_controls):
-        outcontrols.append([implicit1_control, control[2]*torch.tensor(trans)])
+        outcontrols.append([implicit1_control, control[2].cpu()*torch.tensor(trans)])
 
     return outcontrols
 
@@ -243,9 +248,9 @@ grid_resolution = [16, 16]
 
 
 def compute_intermediate_deformed(it, controls, t1, intermediates=None):
-    implicit1_cotan_points = model.init_manifold[1].cotan[0]
-    implicit1_cotan_r = model.init_manifold[1].cotan[1]
-    silent_cotan = model.init_manifold[0].cotan
+    implicit1_cotan_points = model.init_manifold[1].cotan[0].cpu()
+    implicit1_cotan_r = model.init_manifold[1].cotan[1].cpu()
+    silent_cotan = model.init_manifold[0].cotan.cpu()
 
     implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=100., gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points.clone(), implicit1_cotan_r.clone()), coeff=0.1)
     global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=1.)
@@ -270,7 +275,7 @@ def compute_intermediate_deformed(it, controls, t1, intermediates=None):
 # Functions to generate the deformation trajectory given a set of controls.
 #
 
-def generate_images(table, trans):
+def generate_images(table, trans, outputfilename):
     incontrols = generate_controls(table, trans)
     intermediates_shape = {}
     deformed = compute_intermediate_deformed(10, incontrols, 1., intermediates=intermediates_shape)
@@ -294,25 +299,26 @@ def generate_images(table, trans):
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.axis('off')
-        plt.show()
+        show(outputfilename+str(i)+".png")
+        plt.clf()
 
 
 ###############################################################################
 # Generate trajectory of the total optimized deformation.
 #
 
-generate_images([True, True, True, True], True)
+generate_images([True, True, True, True], True, "deformed_all")
 
 ###############################################################################
 # Generate trajectory following vertical elongation of the trunk.
 #
 
-generate_images([False, True, False, False], False)
+generate_images([False, True, False, False], False, "deformed_trunk_vertical")
 
 ###############################################################################
 # Generate trajectory following horizontal elongation of the crown.
 #
 
-generate_images([False, False, True, False], False)
+generate_images([False, False, True, False], False, "deformed_crown_horizontal")
 
 
