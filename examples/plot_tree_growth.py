@@ -32,6 +32,7 @@ def show(outputname):
         plt.show()
     else:
         plt.savefig(outputname, dpi=300)
+        plt.clf()
 
 ###############################################################################
 # Load source and target images, along with the source curve.
@@ -142,7 +143,8 @@ for i in range(4):
 # Create and initialize the global translation module.
 #
 
-global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=1.)
+global_translation_coeff = 1.
+global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=global_translation_coeff)
 
 
 ###############################################################################
@@ -150,7 +152,10 @@ global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=1.)
 #
 
 sigma1 = 2./implicit1_density**(1/2)
-implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c, nu=100., gd=(implicit1_points, implicit1_r), coeff=0.1)
+print(sigma1)
+implicit1_coeff = 0.1
+implicit1_nu = 100.
+implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c, nu=implicit1_nu, gd=(implicit1_points, implicit1_r), coeff=implicit1_coeff)
 
 
 ###############################################################################
@@ -158,7 +163,8 @@ implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[
 #
 
 sigma0 = 0.1
-translations = imodal.DeformationModules.ImplicitModule0(2, source_shape.shape[0], sigma0, nu=0.1, gd=source_shape, coeff=500.)
+translations_coeff = 500.
+translations = imodal.DeformationModules.ImplicitModule0(2, source_shape.shape[0], sigma0, nu=0.1, gd=source_shape, coeff=translations_coeff)
 
 
 ###############################################################################
@@ -190,7 +196,6 @@ shoot_it = 10
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 fitter.fit([target_image_deformable], 300, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
-#fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
@@ -202,6 +207,9 @@ start = time.perf_counter()
 with torch.autograd.no_grad():
     deformed_image = model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)[0][0].detach()
 print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
+
+
+torch.save(intermediates, "tree_growth_intermediates.pt")
 
 
 ###############################################################################
@@ -235,7 +243,7 @@ def generate_controls(implicit1_table, trans):
     outcontrols = []
     implicit1_controls = generate_implicit1_controls(implicit1_table)
     for control, implicit1_control in zip(intermediates['controls'], implicit1_controls):
-        outcontrols.append([implicit1_control, control[2].cpu()*torch.tensor(trans)])
+        outcontrols.append([implicit1_control, control[2].cpu()*torch.tensor(trans, dtype=torch.get_default_dtype())])
 
     return outcontrols
 
@@ -248,21 +256,21 @@ grid_resolution = [16, 16]
 
 
 def compute_intermediate_deformed(it, controls, t1, intermediates=None):
-    implicit1_cotan_points = model.init_manifold[1].cotan[0].cpu()
-    implicit1_cotan_r = model.init_manifold[1].cotan[1].cpu()
-    silent_cotan = model.init_manifold[0].cotan.cpu()
+    implicit1_cotan_points = model.init_manifold[1].cotan[0].cpu().detach().clone()
+    implicit1_cotan_r = model.init_manifold[1].cotan[1].cpu().detach().clone()
+    silent_cotan = model.init_manifold[0].cotan.cpu().detach().clone()
 
-    implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=100., gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points.clone(), implicit1_cotan_r.clone()), coeff=0.1)
-    global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=1.)
+    implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=implicit1_nu, gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points, implicit1_cotan_r), coeff=implicit1_coeff)
+    global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=global_translation_coeff)
 
     incontrols = []
     for control in controls:
         incontrols.append([control[0], control[1]])
 
     source_deformable = imodal.Models.DeformableImage(source_image.clone(), output='bitmap', extent=extent)
-    source_deformable.silent_module.manifold.cotan = silent_cotan.clone()
+    source_deformable.silent_module.manifold.cotan = silent_cotan
 
-    grid_deformable = imodal.Models.DeformableGrid(extent, [32, 32])
+    grid_deformable = imodal.Models.DeformableGrid(extent, grid_resolution)
 
     costs = {}
     with torch.autograd.no_grad():
@@ -280,7 +288,7 @@ def generate_images(table, trans, outputfilename):
     intermediates_shape = {}
     deformed = compute_intermediate_deformed(10, incontrols, 1., intermediates=intermediates_shape)
 
-    trajectory_grid = [imodal.Utilities.vec2grid(state[1].gd, 32, 32) for state in intermediates_shape['states']]
+    trajectory_grid = [imodal.Utilities.vec2grid(state[1].gd, grid_resolution[0], grid_resolution[1]) for state in intermediates_shape['states']]
 
     trajectory = [source_image]
     t = torch.linspace(0., 1., 11)
@@ -295,12 +303,11 @@ def generate_images(table, trans, outputfilename):
     for i, deformed in enumerate(trajectory):
         _, ax = plt.subplots()
         plt.imshow(deformed, origin='lower', extent=extent, cmap='gray')
-        imodal.Utilities.plot_grid(ax, trajectory_grid[i][0], trajectory_grid[i][1], color='blue', lw=0.5)
+        imodal.Utilities.plot_grid(ax, trajectory_grid[i][0], trajectory_grid[i][1], color='xkcd:light blue', lw=0.5)
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.axis('off')
         show(outputfilename+str(i)+".png")
-        plt.clf()
 
 
 ###############################################################################
