@@ -28,8 +28,8 @@ import imodal
 # We load the data and plot them.
 #
 
-source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
 target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_x.png", origin='lower')
 
 # Smoothing
 sig_smooth = 0.
@@ -49,7 +49,7 @@ source_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.U
 
 target_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
 
-center = extent_length*torch.tensor([[0.2, 0.3]])
+center = extent_length*torch.tensor([[0.5, 0.5]])
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
@@ -73,7 +73,7 @@ plt.show()
 # computations using `requires_grad_()`.
 #
 
-rotation = imodal.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
+rotation = imodal.DeformationModules.LocalRotation(2, 2.*extent_length, gd=center)
 
 
 ###############################################################################
@@ -81,10 +81,8 @@ rotation = imodal.DeformationModules.LocalRotation(2, extent_length*0.8, gd=cent
 # rotation center.
 #
 
-source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap',
-                                              extent='match')
-target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap',
-                                              extent='match')
+source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap', extent='match', backward=False)
+target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap', extent='match', backward=False)
 
 source_dots_deformable = imodal.Models.DeformablePoints(source_dots)
 target_dots_deformable = imodal.Models.DeformablePoints(target_dots)
