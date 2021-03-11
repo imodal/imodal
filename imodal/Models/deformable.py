@@ -7,8 +7,6 @@ import torch
 from numpy import loadtxt, savetxt
 import meshio
 
-import nibabel as nib
-
 from imodal.HamiltonianDynamic import Hamiltonian, shoot
 from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
 from imodal.Manifolds import Landmarks
