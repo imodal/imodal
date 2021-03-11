@@ -67,13 +67,14 @@ class RegistrationModel(BaseModel):
     def fit_gd(self):
         return self.__fit_gd
 
-    @property
-    def init_manifold(self):
+    def __get_init_manifold(self):
         return self.__init_manifold
 
-    @property
-    def init_parameters(self):
-        return self.__init_parameters
+    def fill_init_manifold(self, init_manifold):
+        self.__init_manifold = init_manifold
+        self._compute_parameters()
+
+    init_manifold = property(__get_init_manifold, fill_init_manifold)
 
     @property
     def init_other_parameters(self):

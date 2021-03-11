@@ -249,6 +249,9 @@ def export_mesh(filename, points, triangles):
     meshio.write_points_cells(filename, points.numpy(), [('triangle', triangles.numpy())])
 
 
+def export_mesh_points(filename, points):
+    meshio.write_points_cells(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())])
+
 def export_implicit1_growth(filename, points, growth):
     assert growth.shape[2] == 1
 

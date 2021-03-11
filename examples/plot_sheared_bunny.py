@@ -28,8 +28,8 @@ device = 'cuda:2'
 #
 
 data_folder = "../data/"
-source_mesh = meshio.read(data_folder+"bunny_source.ply")
-target_mesh = meshio.read(data_folder+"bunny_shear_ear.ply")
+source_mesh = meshio.read(data_folder+"bunny.ply")
+target_mesh = meshio.read(data_folder+"bunny_shear.ply")
 
 source_points = torch.tensor(source_mesh.points, dtype=torch.get_default_dtype())
 target_points = torch.tensor(target_mesh.points, dtype=torch.get_default_dtype())
@@ -87,7 +87,9 @@ global_translation = imodal.DeformationModules.GlobalTranslation(3, coeff=10.)
 # Create and initialize the growth module.
 #
 
-sigma1 = 2./implicit1_density**(1/3)
+# sigma1 = 2.5/implicit1_density**(1/3)
+sigma1 = 5./implicit1_density**(1/3)
+print(sigma1)
 
 implicit1 = imodal.DeformationModules.ImplicitModule1(3, implicit1_points.shape[0], sigma1, implicit1_c, nu=1000., gd=(implicit1_points, implicit1_r), coeff=0.001)
 
@@ -98,12 +100,14 @@ print("{} points for the implicit module of order 1.".format(implicit1_points.sh
 # Create and initialize the local translations module.
 #
 
-implicit0_density = 0.2
-sigma0 = 3./implicit0_density**(1/3)
+implicit0_density = 0.25
+sigma0 = 2./implicit0_density**(1/3)
 
-implicit0_points = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_convex_hull, aabb_source, implicit0_density, scatter=1.4*source_points)
+print(sigma0)
 
-implicit0 = imodal.DeformationModules.ImplicitModule0(3, implicit0_points.shape[0], sigma0, nu=1., gd=implicit0_points, coeff=100.)
+implicit0_points = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_convex_hull, aabb_source, implicit0_density, scatter=1.8*source_points)
+
+implicit0 = imodal.DeformationModules.ImplicitModule0(3, implicit0_points.shape[0], sigma0, nu=1., gd=implicit0_points, coeff=1000.)
 
 print("{} points for the implicit module of order 0.".format(implicit0_points.shape[0]))
 
@@ -168,7 +172,7 @@ shoot_it = 10
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 
-fitter.fit(deformable_target, 1500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 500})
+fitter.fit(deformable_target, 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 500})
 
 
 ###############################################################################
@@ -184,9 +188,13 @@ print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
 
 basis = compute_basis(angles.detach()).cpu()
 C = compute_growth(growth_constants.detach()).cpu()
+print(growth_constants.detach().cpu())
 
 imodal.Utilities.export_mesh("results_implicit_bunny/source.ply", source_points.cpu(), source_triangles)
 imodal.Utilities.export_mesh("results_implicit_bunny/target.ply", target_points.cpu(), target_triangles)
+imodal.Utilities.export_implicit1_growth("results_implicit_bunny/growth.vtk", implicit1_points, C)
+imodal.Utilities.export_point_basis("results_implicit_bunny/basis.vtk", implicit1_points, basis)
+imodal.Utilities.export_mesh_points("results_implicit_bunny/implicit0_points.vtk", implicit0_points)
 
 for i, inter in enumerate(intermediates['states']):
     imodal.Utilities.export_mesh("results_implicit_bunny/{}.ply".format(i), inter[0].gd.cpu(), source_triangles)
