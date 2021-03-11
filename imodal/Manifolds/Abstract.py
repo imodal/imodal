@@ -36,7 +36,7 @@ class BaseManifold:
     dtype = property(__get_dtype, __set_dtype)
 
     def to_(self, *argv, **kwargs):
-        """Performs manifold dtype or/and device conversion. A torch.dtype and torch.device are inferred from the arguments of self.to(*argv, **kwargs)."""
+        """Performs manifold dtype or/and device conversion. A :py:class:`torch.dtype` and :py:class:`torch.device` are inferred from the arguments."""
         for arg in argv:
             if isinstance(arg, str):
                 self.__set_device(torch.device(arg))
@@ -253,8 +253,10 @@ class Manifold(BaseManifold):
 
     def clone(self, requires_grad=None):
         """Returns a copy of the manifold. Detaches the computation graph.
+
         Parameters
         ----------
+
         requires_grad : bool, default=None
             Set to True to record futher operations on the manifold tensors. Set
             to None to not change the requires_grad setting.

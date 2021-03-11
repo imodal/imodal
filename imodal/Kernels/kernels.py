@@ -1,5 +1,4 @@
 import torch
-from pykeops.torch import Formula, kernel_formulas
 
 
 def scal(x, y):
@@ -47,12 +46,4 @@ def gauss_kernel(x, k, sigma):
         return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1) + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
         raise NotImplementedError("gauss_kernel(): k >= 3 not supported!")
-
-
-# Adds the RBF kernel used by Implicitmodules into PyKeOps
-kernel_formulas['gaussian2'] = Formula(
-    formula_sum="Exp( -(WeightedSqDist({G},{X},{Y})*IntInv(2)))",
-    routine_sum=lambda gxmy2=None, **kwargs: (-gxmy2/2.).exp(),
-    formula_log="(-(WeightedSqDist({G},{X},{Y}))*IntInv(2))",
-    routine_log=lambda gxmy2=None, **kwargs: -gxmy2/2.)
 

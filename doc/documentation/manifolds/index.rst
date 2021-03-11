@@ -4,6 +4,6 @@ Manifolds
 .. toctree::
    landmarks
    landmarksdirection
-   stiefel
+   normalframe
    compound
 

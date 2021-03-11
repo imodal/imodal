@@ -1,25 +1,7 @@
 import torch
 import math
 
-from imodal.Utilities import rot2d
-
-
-def linear_transform(points, A):
-    """ Applies a linear transformation to a point tensor.
-
-    Parameters
-    ----------
-    points : torch.Tensor
-        A :math:`N\\times d` tensor that will be transformed.
-    A : torch.Tensor
-        A :math:`d\\times d` matrix that represent the linear transformation.
-
-    Returns
-    -------
-    torch.Tensor
-        The transformed points.
-    """
-    return torch.bmm(A.repeat(points.shape[0], 1, 1), points.unsqueeze(2)).view_as(points)
+from imodal.Utilities import rot2d, linear_transform
 
 
 def generate_unit_square(points_per_side, dtype=None):

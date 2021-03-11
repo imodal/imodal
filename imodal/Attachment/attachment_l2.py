@@ -2,6 +2,7 @@ import torch
 
 from imodal.Attachment import Attachment
 from imodal.Utilities import interpolate_image
+from imodal.Kernels import gauss_kernel
 
 
 class L2NormAttachment(Attachment):
@@ -36,19 +37,8 @@ class L2NormAttachment(Attachment):
         return torch.dist(source, target)**2.
 
     def __loss_fft(self, source, target):
-        source_fft = torch.log(torch.abs((torch.fft(torch.stack([source, torch.zeros_like(source)], dim=2), 2, **self.__kwargs)))+1.)
-        target_fft = torch.log(torch.abs((torch.fft(torch.stack([target, torch.zeros_like(target)], dim=2), 2, **self.__kwargs)))+1.)
-
-        # import matplotlib.pyplot as plt
-        # plt.subplot(2, 2, 1)
-        # plt.imshow(source_fft[:, :, 0])
-        # plt.subplot(2, 2, 2)
-        # plt.imshow(target_fft[:, :, 0])
-        # plt.subplot(2, 2, 3)
-        # plt.imshow(source_fft[:, :, 1])
-        # plt.subplot(2, 2, 4)
-        # plt.imshow(target_fft[:, :, 1])
-        # plt.show()
+        source_fft = torch.fft(torch.stack([source, torch.zeros_like(source)], dim=len(source.shape)), len(source.shape), **self.__kwargs)
+        target_fft = torch.fft(torch.stack([target, torch.zeros_like(target)], dim=len(target.shape)), len(target.shape), **self.__kwargs)
 
         return self.__loss_l2(source_fft[:, :, 0], target_fft[:, :, 0]) + \
             self.__loss_l2(source_fft[:, :, 1], target_fft[:, :, 1])
@@ -57,7 +47,17 @@ class L2NormAttachment(Attachment):
         pass
 
     def __loss_smooth(self, source, target):
-        pass
+        if 'bandwidth' not in self.__kwargs:
+            raise RuntimeError("L2NormAttachment.__loss_smooth(): bandwidth parameter not specified!")
+
+        bandwidth = self.__kwargs['bandwidth']
+
+        smoothed_source = gauss_kernel(source, 0, bandwidth)
+        smoothed_target = gauss_kernel(target, 0, bandwidth)
+
+        print(smoothed_source.shape)
+
+        return self.__loss_l2(smoothed_source, smoothed_target)
 
     def __scale_function(self, source, target):
         if self.__scale:

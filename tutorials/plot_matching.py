@@ -2,12 +2,11 @@
 Simple matching
 ===============
 
-In this tutorial we will introduce matching of shapes.
-
+In this tutorial we will introduce matching of shapes. We will register a circle onto a square using LDDMM deformation.
 """
 
 ###############################################################################
-# We first need to import the good stuff.
+# Import relevant modules.
 #
 
 import sys
@@ -22,8 +21,8 @@ import imodal
 
 
 ###############################################################################
-# First, we need to generate our source and target.
-# We will match a sphere onto a square.
+# First, we need to generate our source (ciclre) and target (square).
+#
 
 nb_points_source = 50
 radius = 1.
@@ -38,7 +37,8 @@ nb_points_source = source.shape[0]
 
 
 ###############################################################################
-# Plotting
+# Plot of the source and target.
+#
 
 plt.subplot(1, 2, 1)
 plt.title("Source")
@@ -54,14 +54,16 @@ plt.show()
 
 
 ###############################################################################
-# Deformation modules
+# Deformation module we use for our deformation model. We use a local
+# translation module for LDDMM deformation.
+#
 
 sigma_translation = 0.1
 translation = imodal.DeformationModules.Translations(2, nb_points_source, sigma_translation, gd=source)
 
 
 ###############################################################################
-# Creating the model
+# Creating the model.
 
 source_deformable = imodal.Models.DeformablePoints(source)
 target_deformable = imodal.Models.DeformablePoints(target)
@@ -82,26 +84,16 @@ fitter.fit(target_deformable, 2, costs=costs, options={'line_search_fn': 'strong
 
 
 ###############################################################################
-# Plot total cost evolution
+# Compute the final deformed source.
 #
-
-# plt.title("Total cost evolution")
-# plt.xlabel("Iteration")
-# plt.ylabel("Cost")
-# plt.grid(True)
-# plt.plot(range(len(costs['total'])), costs['total'], color='black', lw=0.7)
-# plt.show()
-
-
-###############################################################################
-# Computing deformed source
 
 with torch.autograd.no_grad():
     deformed = model.compute_deformed(shoot_solver, shoot_it)[0][0]
 
 
 ###############################################################################
-# Displaying result
+# Display result. Matching is perfect.
+#
 
 plt.plot(source[:, 0], source[:, 1], '--', color='grey')
 plt.plot(target[:, 0], target[:, 1], '-', color='black')
