@@ -182,6 +182,6 @@ def interpolate_image(image, size=None, scale_factor=None, mode='nearest', align
     Simple wrapper around torch.nn.functional.interpolate() for 2D images.
     """
 
-    interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size, scale_factor, mode, align_corners, recompute_scale_factor)
+    interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size=size, scale_factor=scale_factor, mode=mode, align_corners=align_corners)
     return interpolated.view(interpolated.shape[2:])
 

@@ -97,7 +97,6 @@ shoot_it = 10
 costs = {}
 fitter = imodal.Models.Fitter(atlas, optimizer='torch_lbfgs')
 
-# with torch.autograd.detect_anomaly():
 fitter.fit(deformable_peanuts, 20, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
