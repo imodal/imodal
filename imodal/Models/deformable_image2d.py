@@ -9,7 +9,7 @@ class DeformableImage(DeformablePoints):
     """
     2D bitmap deformable object.
     """
-    def __init__(self, bitmap, output='bitmap', backward=False, extent=None, label=None, interpolation='nearest'):
+    def __init__(self, bitmap, output='bitmap', backward=True, extent=None, label=None, interpolation='nearest'):
         """
         Parameters
         ----------
