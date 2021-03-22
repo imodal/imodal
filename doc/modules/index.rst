@@ -75,6 +75,8 @@ It is possible to estimate the parameters of the deformation modules with a key-
 Implemented deformation modules
 ===============================
 
+There are two categories of deformation modules: the *explicit* ones where the field generator is explicitly given in the definition, and the *implicit* ones
+
 Explicit deformation modules
 ===============================
 
@@ -108,7 +110,7 @@ Let :math:`P` be an fixed integer, the deformation modules generating a sum of :
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This module is implemented in the class **Translations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space) and and integer :math:`p` (number of local translations).
+This module is implemented in the class **Translations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space) and an integer :math:`P` (number of local translations).
 
 
 
@@ -118,7 +120,7 @@ Constrained local translations
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This deformation module builds also sum of local translations but imposes some links between them to constrain the generated field. Let :math:`N` be an integer and two functions :math:`f : (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`,  :math:`g: (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`, we define the corrsponding deformation module by
+This deformation module builds also sum of local translations but imposes some links between them to constrain the generated field. Let :math:`N` be an integer and two functions :math:`f : (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`,  :math:`g: (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`, we define the corresponding deformation module by
 
 
 *  :math:`\mathcal O = (\mathbb R^d)^N`
@@ -136,7 +138,7 @@ This deformation module builds also sum of local translations but imposes some l
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This module is implemented in the class **LocalConstrainedTranslations** which is initialized 
+This module is implemented in the class **LocalConstrainedTranslations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points for the geometrical descriptor) and two functions :math:`f\_support`, :math:`f\_vectors` implementing respectively the functions :math:`f` and :math:`g`.
 
 
 Silent
@@ -145,33 +147,101 @@ Silent
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+This module generates a null vector field: when it is combined with other ones, it does not contribute to the generated vector field but its geometrical descriptors are deformed by it. Let :math:`\mathcal S` be a shape space, the slient deformation module induced by :math:`\mathcal S`is defined by:
+
+
+*  :math:`\mathcal O = \mathcal S`
+
+*  :math:`H = \{ 0 \}`
+
+*  :math:`\zeta: (q,h)  \in \mathcal O \times H \mapsto 0`
+
+*  :math:`\xi: (q,v)  \in \mathcal O \times C^\ell (\mathbb R^d, \mathbb R^d) \mapsto  \xi_q (v)` (defined by the shape space :math:`\mathcal S`)
+
+*  :math:`c: (q,h)  \in \mathcal O \times H \mapsto  0`
+
+
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+The silent module induced by a *landmark shape space* is implemented in the class **Silent**. It is initialized by an integer :math:`d` (dimension of the ambient space) and an integer :math:`N` (number of points for the geometrical descriptor).
 
 
 Implicit deformation modules
 ===============================
 
+In many cases, the deformation prior may not be given in the form of an explicit type of vector field but more in some properties that the vector fields should satisfy. In order to address this problem, we define implicit deformation modules, where the field generator :math:`\zeta`is defined as the solution of a minimization problem:
+
+:math:`\zeta_q (h) = argmin \{ |v|_V^2 + \frac{1}{\nu}|S_q (v) - A_q (h)|^2 \}` with :
+
+- :math:`V` a RKHS of vector field, 
+- :math:`\nu` is a positive scalar
+- :math:`S_q : V \to Y` a linear surjective constraint operator on vector fields that takes values in the space of constraints :math:`Y` (vector space of finite dimension)
+- :math:`A_q : H \to Y` is a linear operator which defines the value that one wants to observe. 
+
+The space of geometrical descriptors :math:`\mathcal O` and controls :math:`H` will be specific to each type of implicit deformation module, we implemented two case: order 0 and oreder 1. The cost of the deformation module is then given by :math:`c_q (h) =|\zeta_q (h)|_V^2 +  \frac{1}{\nu}|S_q (\zeta_q (h)) - A_q (h)|^2`.
+
+From this definition, it is possible to compute the *explicit* expression for the field generator :math:`\zeta_q (h) = KS_q^*\lambda` with :math:`\lambda=(S_qKS_q^*+\nu I)^{-1}A_q(h)` and :math:`K` the kernel of the RKHS :math:`V`.
+
+
 Order 0
 -------
+
+In this first example, the geometrical descriptor :math:`q` is made of points and the constraint operator :math:`S_q` returns the values of the input vector field on these points.
 
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+
+Let :math:`K_\sigma` be a scalar Gaussian kernel with :math:`\sigma >0`, :math:`V` be the corresponding RKHS, :math:`P` be an fixed integer and :math:`\nu >0`. We define:
+
+
+*  :math:`\mathcal O = (\mathbb R^d)^P`
+
+*  :math:`H = (\mathbb R^d)^P`
+
+* :math:`Y = (\mathbb R^d)^P`
+
+* :math:`S_q: v \in V \mapsto (v(x_1), \dots, v(x_P))` with :math:`q = (x_1, \dots, x_P)`
+
+* :math:`A_q : h \in H \mapsto (K_q + \nu Id ) h`
+
+The field generator is then given by :math:`\zeta: (q,h)  \in \mathcal O \times H \mapsto  \sum_{i=1}^P K(x_i, \cdot) h_i  \in C^\ell (\mathbb R^d, \mathbb R^d)` where :math:`q = (x_1, \dots, x_P)` and :math:`h = (h_1, \dots, h_P)`. Then this **implicit deformation module of order 0** is a *regularized version* of the Local translations one.
+
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+This module is implemented in the class **ImplicitModule0** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`P` (number of local translations) and a scalar :math:`\nu >0`.
 
 
 Order 1
 -------
+The intuitive idea behind this module is to be able to incorporate objects related elastic properties in the deformation model. More specifically, we constrain the local changes of lengths induced by the action of the vector field at some specified locations :math:`x_i` and along some specified directions attached to the object. 
+
 
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
+Constraining such local changes of lengths amounts to constraining the infinitesimal strain tensor :math:`\epsilon_{x_i}(v) \doteq \frac{D v (x_i) + Dv (x_i)^\ast}{2}` which is a symmetric tensor capturing the local metric changes (expansion or dilation along given directions). We define the constraints at each point :math:`x_i` by a choice of eigen vectors :math:`R_i`and eigen values :math:`\alpha_i` of :math:`\epsilon_{x_i}(v)`. The eigen vectors correspond to *geometric variables* (directions) attached to the object and are then part of the *geometrical descriptor*. The choice of the eigen values :math:`\alpha_i` for each :math:`i` is the way to define the imposed deformation structure. Then, structural relations among the different :math:`\alpha_i` s can be captured saying that :math:`\alpha_i = \alpha_i (h)` where :math:`h` is a control parameter. The operator :math:`C : h \in H \mapsto (\alpha_1 (h), \dots, \alpha_N (h) ) \in (\mathbb R^d)^N` is called the **growth factor**.  
+
+
+Let :math:`K_\sigma` be a scalar Gaussian kernel with :math:`\sigma >0`, :math:`V` be the corresponding RKHS, :math:`N` be an fixed integer, :math:`p` be an fixed integer, :math:`\nu >0` and :math:`N` linear operators :math:`\alpha_i : \mathbb R^p \mapsto \mathbb R^d`. The corresponding **implicit deformation module of order 1** is defined by:
+
+
+*  :math:`\mathcal O = \{ q = ( (x_i, R_i) )_{1 \leq i \leq N} \in (\mathbb R^d \times SO_d)^N \}`
+
+*  :math:`H = \mathbb R^p`
+
+* :math:`Y = S (\mathbb R^d)^N`
+
+* :math:`S_q: v \in V \mapsto (\epsilon_{x_1}(v), \dots, \epsilon_{x_N}(v))` with :math:`q = ( (x_i, R_i) )_{1 \leq i \leq N}`
+
+* :math:`A_q : h \in H \mapsto (R_1 D_1(h) R_1^T, \dots, R_N D_N(h) R_N^T)` with :math:`q = ( (x_i, R_i) )_{1 \leq i \leq N}` and for each :math:`i` :math:`D_i (h) = diag (\alpha_i (h) )` (diagonal matrix that depends linearly on the control :math:`h`).
+
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
+This module is implemented in the class **ImplicitModule1** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points on which the constraints are imposed), , an integer :math:`p` (dimension of the control), a scalar :math:`\nu >0` and a tensor :math:`C` of size :math:`N \times d \times p` (implementing the growth factor).
 
 
 
