@@ -6,6 +6,8 @@ In this example, we will fit a cross onto the same cross, but rotated. We will t
 
 """
 
+assert False
+
 ###############################################################################
 # Import relevant modules.
 #

@@ -10,6 +10,8 @@ Acropetal Leaf Growth Model Using Implicit Modules
 # Import relevant Python modules.
 #
 
+assert False
+
 import sys
 sys.path.append("../")
 import math

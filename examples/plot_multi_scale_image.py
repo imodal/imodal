@@ -104,7 +104,7 @@ def plot_points(points, sigmas):
 
 scales = [0.02]
 
-scale_points, scale_sigmas, deformed_image = model(scales, 20)
+scale_points, scale_sigmas, deformed_image = model(scales, 50)
 
 
 ###############################################################################
@@ -139,7 +139,7 @@ plt.show()
 
 scales = [0.2]
 
-scale_points, scale_sigmas, deformed_image = model(scales, 20)
+scale_points, scale_sigmas, deformed_image = model(scales, 50)
 
 
 ###############################################################################
@@ -174,7 +174,7 @@ plt.show()
 
 scales = [0.2, 0.02]
 
-scale_points, scale_sigmas, deformed_image = model(scales, 20)
+scale_points, scale_sigmas, deformed_image = model(scales, 50)
 
 
 ###############################################################################

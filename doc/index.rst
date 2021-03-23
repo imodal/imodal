@@ -46,11 +46,16 @@ Table of content
 
 .. toctree::
    :maxdepth: 2
-   :caption: Deformation modules
+   :caption: Understanding IMODAL
 
    modules/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Using IMODAL
    _auto_tutorials/index
-   _auto_examples/index
+   ..
+      _auto_examples/index
 
 .. toctree::
    :maxdepth: 3
@@ -59,9 +64,10 @@ Table of content
    documentation/index
 
 ..
-   .. toctree::
-      :maxdepth: 2
-      :caption: Tutorial
+   ..
+      .. toctree::
+	 :maxdepth: 2
+	 :caption: Tutorial
 
-      _auto_examples/index
+	 _auto_examples/index
 

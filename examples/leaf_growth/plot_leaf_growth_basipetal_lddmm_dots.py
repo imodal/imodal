@@ -8,6 +8,8 @@ Basipetal Leaf Growth Model using LDDMM
 # Import relevant Pythons modules.
 #
 
+assert False
+
 import sys
 sys.path.append("../../")
 import math

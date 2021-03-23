@@ -8,6 +8,8 @@ optimise model parameters.
 The dataset consists of peanuts that haven't been built using diffeomorphisms.
 """
 
+assert False
+
 ###############################################################################
 # Import relevant Python modules.
 #

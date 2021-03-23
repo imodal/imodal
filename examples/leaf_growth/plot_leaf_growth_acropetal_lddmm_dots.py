@@ -7,6 +7,8 @@ Acropetal Leaf Growth Model Using LDDMM and Dots Data
 # Import relevant Python module.
 #
 
+assert False
+
 import sys
 sys.path.append("../../")
 import math

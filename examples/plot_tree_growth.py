@@ -10,7 +10,6 @@ Image registration with an implicit module of order 1. Segmentations given by th
 # Import relevant modules.
 #
 
-
 import time
 import pickle
 import sys
@@ -21,9 +20,12 @@ import torch
 
 import imodal
 
-device = 'cuda:0'
+device = 'cuda:2'
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
+
+import pykeops
+print("PyKeops version={}".format(pykeops.__version__))
 
 
 ###############################################################################
@@ -147,7 +149,7 @@ sigma1 = 2./implicit1_density**(1/2)
 implicit1_coeff = 0.1
 implicit1_nu = 100.
 implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c, nu=implicit1_nu, gd=(implicit1_points, implicit1_r), coeff=implicit1_coeff)
-implicit1.eps = 1e-1
+implicit1.eps = 1e-2
 
 
 ###############################################################################

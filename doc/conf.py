@@ -57,10 +57,10 @@ extensions = [
 from sphinx_gallery.sorting import FileNameSortKey
 sphinx_gallery_conf = {
     # path to your examples scripts
-    # 'examples_dirs': ["../examples", "../tutorials"],
+    #'examples_dirs': ["../examples", "../tutorials"],
     'examples_dirs': ["../tutorials"],
     # path where to save gallery generated examples
-    # 'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
+    #'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
     'gallery_dirs': ["./_auto_tutorials"],
     'within_subsection_order': FileNameSortKey
 }

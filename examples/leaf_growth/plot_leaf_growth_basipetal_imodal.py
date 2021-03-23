@@ -11,6 +11,8 @@ Basipetal Leaf Growth Model using Implicit Modules
 # Import relevant Pythons modules.
 #
 
+assert False
+
 import sys
 sys.path.append("../../")
 import math

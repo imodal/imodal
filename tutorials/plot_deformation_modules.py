@@ -1,6 +1,6 @@
 """
-Deformation modules
-===================
+Modular Large Deformations
+==========================
 
 In this tutorial we will see how to create and use deformation modules.
 
@@ -8,6 +8,9 @@ Using a local translation module, we will displace a line represented by a silen
 """
 
 ###############################################################################
+# Initialisation
+# --------------
+#
 # Import relevant modules.
 #
 
@@ -48,7 +51,7 @@ plt.show()
 
 
 ###############################################################################
-# We now create the silent module representing the points that will get
+# Create the silent module representing the points that will get
 # displaced.
 #
 
@@ -59,7 +62,7 @@ silent.manifold.fill_cotan_zeros(False)
 
 
 ###############################################################################
-# We now create the local translation module that will deform the ambiant space.
+# Create the local translation module that will deform the ambiant space.
 #
 
 translation = imodal.DeformationModules.Translations(
@@ -68,7 +71,10 @@ translation = imodal.DeformationModules.Translations(
 
 
 ###############################################################################
-# Shooting. Solves the shooting ODE using 5 steps of RK4.
+# Deformation
+# -----------
+#
+# Numericaly solve the shooting ODE using 5 steps of RK4.
 #
 
 solver = 'rk4'
@@ -81,6 +87,9 @@ imodal.HamiltonianDynamic.shoot(
 
 
 ###############################################################################
+# Results
+# -------
+#
 # Plot each step of the deformation. We see how both points of the local
 # translations transport its local ambiant space and thus the silent points.
 #
