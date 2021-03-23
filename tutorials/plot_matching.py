@@ -38,10 +38,10 @@ target = imodal.Utilities.generate_unit_square(nb_points_square_side)
 target = imodal.Utilities.linear_transform(target, imodal.Utilities.rot2d(math.pi/18.))
 
 
-
 plt.figure(figsize=[4., 4.])
-plt.plot(source[:, 0], source[:, 1], 'black')
-plt.plot(target[:, 0], target[:, 1], 'red')
+
+imodal.Utilities.plot_closed_shape(source, color='black')
+imodal.Utilities.plot_closed_shape(target, color='red')
 
 plt.axis('equal')
 
@@ -126,10 +126,10 @@ for count, i in enumerate(display_index):
 
     deformed_i = intermediates['states'][i][0].gd
 
-    plt.plot(source[:, 0], source[:, 1], 'black',)
-    plt.plot(target[:, 0], target[:, 1], 'red',)
+    imodal.Utilities.plot_closed_shape(source, color='black')
+    imodal.Utilities.plot_closed_shape(target, color='red')
 
-    plt.plot(deformed_i[:, 0], deformed_i[:, 1], 'blue')
+    imodal.Utilities.plot_closed_shape(deformed_i, color='blue')
     plt.axis('equal')
     plt.axis('off')
 
@@ -189,10 +189,10 @@ for count, i in enumerate(display_index):
     grid_x, grid_y = deformation_grid.togrid()
 
     imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue')
-    plt.plot(source[:, 0], source[:, 1], 'black',)
-    plt.plot(target[:, 0], target[:, 1], 'red',)
+    imodal.Utilities.plot_closed_shape(source, color='black')
+    imodal.Utilities.plot_closed_shape(target, color='red')
 
-    plt.plot(deformed_i[:, 0], deformed_i[:, 1], 'blue')
+    imodal.Utilities.plot_closed_shape(deformed_i, color='blue')
     plt.axis('equal')
     plt.axis('off')
 
