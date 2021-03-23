@@ -6,7 +6,6 @@ from imodal.DeformationModules.Abstract import DeformationModule, create_deforma
 from imodal.Kernels.kernels import K_xx
 from imodal.Manifolds import Landmarks
 from imodal.StructuredFields import StructuredField_0
-from imodal.Utilities import get_compute_backend
 
 
 class ImplicitModule0Base(DeformationModule):
@@ -146,6 +145,12 @@ class ImplicitModule0_KeOps(ImplicitModule0Base):
     def to_(self, *args, **kwargs):
         super().to_(*args, **kwargs)
         self.__keops_invsigmasq = self.__keops_invsigmasq.to(*args, **kwargs)
+
+        if 'device' in kwargs:
+            if kwargs['device'].split(":")[0].lower() == "cuda":
+                self.__keops_backend = 'GPU'
+            elif kwargs['device'].split(":")[0].lower() == "cpu":
+                self.__keops_backend = 'CPU'
 
     def cost(self):
         return (0.5 * self.coeff * self.reduction_cost(self.manifold.gd, self.manifold.gd, self.controls, self.controls, self.__keops_invsigmasq, backend=self.__keops_backend)).sum() + (self.nu*self.controls**2).sum()

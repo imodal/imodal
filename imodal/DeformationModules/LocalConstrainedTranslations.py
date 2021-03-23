@@ -211,12 +211,11 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
     tetra = torch.tensor([[1., 1., 1.], [1., -1., -1.], [-1., 1., -1.], [-1., -1., 1.]], device=gd.device, dtype=gd.dtype)
 
     def f_vectors_3d(gd):
-        vec = gd[0]
+        vec = gd[1] - gd[0]
         return torch.cross(tetra, vec.repeat(4, 1))
 
     def f_support_3d(gd):
-        return torch.zeros(3, device=gd.device).repeat(4, 1) + sigma/3. * tetra
-
+        return gd[0].repeat(4, 1) + sigma/3. * tetra
 
     f_vectors = f_vectors_2d
     f_support = f_support_2d
@@ -225,7 +224,7 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
     if dim == 3:
         f_vectors = f_vectors_3d
         f_support = f_support_3d
-        pts_count = 1
+        pts_count = 2
 
     return LocalConstrainedTranslations(dim, pts_count, sigma, "Local rotation", f_support, f_vectors, coeff=coeff, gd=gd, tan=tan, cotan=cotan, label=label, backend=backend)
 

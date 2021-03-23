@@ -1,29 +1,40 @@
 
 =============================
-Modular Deformation Framework
+IMODAL
 =============================
 
-Welcome to the modular deformation framework documentation. This library serves as the reference implementation of the modular deformation mathematical framework. This also includes implicite modules.
+-----------------------------
+Implicit Modular Deformations Analysis Library
+-----------------------------
 
-This documentation is still a work in progress! Not every features/functions/class are yet documented.
+IMODAL is a python librairy allowing to register shapes (curves, meshes, images) with **structured large deformations**. The structures are incorporated via **deformation modules** which generate vector fields of particular, chosen types. They can be defined *explicitly* (generating local scalings or rotations for instance) or *implicitly* from constraints. In addition, it is possible to combine them so that a complex structure can be easily defined as the superimposition of simple ones. Trajectories of such modular vector fields can then be integrated to build *modular large deformations*. Their parameters can be optimized to register observed shapes and analyzed.
 
-The project is hosted `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
 
-Presentation of the implicitModule library.
+**METTRE FIGURES**
 
-Current features are:
 
-- Matching of 2D, 3D points clouds, 3D meshes, images
-- Atlas with hypertemplate
-- Learning of any model parameters
-- Full GPU support
-- Full KeOps support for all kernel computations
+IMODAL provides:
 
-Links
+- Registration of points clouds, curves, meshes and images
+- Atlas computation with hypertemplate
+- Estimation of the model parameters
+- tools to speed up and reduce the memory footprint ( such as GPU and KeOps support)
 
-Authors
 
-List of related publications.
+Authors:
+
+- Benjamin Charlier
+- Leander Lacroix
+- Barbara Gris
+- Alain Trouvé
+
+Related publications:
+
+- `A sub-Riemannian modular framework for diffeomorphism based analysis of shape ensembles <https://hal.archives-ouvertes.fr/hal-01321142v2>`_, B. Gris, S. Durrleman and A. Trouvé, SIAM Journal of Imaging Sciences, 2018.
+- `IMODAL: creating learnable user-defined deformation models`_, B. Charlier, L. Lacroix, B. Gris, A. Trouvé, CVPR, 2021.
+
+The project can be downloaded `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
+
 
 Table of content
 ================
@@ -31,16 +42,20 @@ Table of content
 .. toctree::
    :maxdepth: 2
 
-   introduction/implicitmodules
    introduction/installation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Implicit Modules
+   :caption: Understanding IMODAL
 
    modules/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Using IMODAL
    _auto_tutorials/index
-   _auto_examples/index
+   ..
+      _auto_examples/index
 
 .. toctree::
    :maxdepth: 3
@@ -49,9 +64,10 @@ Table of content
    documentation/index
 
 ..
-   .. toctree::
-      :maxdepth: 2
-      :caption: Tutorial
+   ..
+      .. toctree::
+	 :maxdepth: 2
+	 :caption: Tutorial
 
-      _auto_examples/index
+	 _auto_examples/index
 

@@ -1,16 +1,15 @@
 """
-Fitting some crosses
-====================
+Fitting an image and points
+===========================
 
-In this example, we will fit a cross onto the same cross, but rotated. We will
-take advantage of this knowledge and use a rotation deformation module. We will
-also add some noise on the initial center guess to show how to fit the geometrical
-descriptors.
+In this example, we will fit a cross onto the same cross, but rotated. We will take advantage of this knowledge and use a rotation deformation module. We will also add some noise on the initial center guess to show how to fit the geometrical descriptors. In addition to images, we add points at the extremity of each branch that will also get matched in order to illustrate multi deformables matching. This also helps the fitting process by adding more information to the model.
 
 """
 
+assert False
+
 ###############################################################################
-# We first need to import
+# Import relevant modules.
 #
 
 import sys
@@ -25,17 +24,16 @@ import scipy.ndimage
 import imodal
 
 ###############################################################################
-# We load the data and plot them.
+# Load image data and generate dots.
 #
 
-source_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+_30.png", origin='lower')
-target_image = imodal.Utilities.load_greyscale_image("/home/leander/diffeo/implicitmodules/data/images/cross_+.png", origin='lower')
+source_image = imodal.Utilities.load_greyscale_image("../data/images/cross_+_30.png", origin='lower')
+target_image = imodal.Utilities.load_greyscale_image("../data/images/cross_+.png", origin='lower')
 
 # Smoothing
 sig_smooth = 0.
 source_image = torch.tensor(scipy.ndimage.gaussian_filter(source_image, sig_smooth))
 target_image = torch.tensor(scipy.ndimage.gaussian_filter(target_image, sig_smooth))
-
 
 extent_length = 31.
 extent = imodal.Utilities.AABB(0., extent_length, 0., extent_length)
@@ -49,7 +47,12 @@ source_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.U
 
 target_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
 
-center = extent_length*torch.tensor([[0.2, 0.3]])
+center = extent_length*torch.tensor([[0.5, 0.5]])
+
+
+###############################################################################
+# Plot everything.
+#
 
 plt.subplot(1, 2, 1)
 plt.title("Source image")
@@ -69,22 +72,17 @@ plt.show()
 # so we use a local rotation deformation module, with an imprecise center
 # position to simulate data aquisition noise.
 #
-# Since we will optimize the rotation center, we flag it as requiring gradient
-# computations using `requires_grad_()`.
-#
 
-rotation = imodal.DeformationModules.LocalRotation(2, extent_length*0.8, gd=center)
+rotation = imodal.DeformationModules.LocalRotation(2, 2.*extent_length, gd=center)
 
 
 ###############################################################################
-# We create the model. We set `True` for `fit_gd` so that it also optimize the
+# Create the model by setting `True` for `fit_gd` so that it also optimize the
 # rotation center.
 #
 
-source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap',
-                                              extent='match')
-target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap',
-                                              extent='match')
+source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap', extent='match', backward=True)
+target_deformable = imodal.Models.DeformableImage(target_image, output='bitmap', extent='match', backward=True)
 
 source_dots_deformable = imodal.Models.DeformablePoints(source_dots)
 target_dots_deformable = imodal.Models.DeformablePoints(target_dots)
@@ -95,7 +93,7 @@ model = imodal.Models.RegistrationModel([source_deformable, source_dots_deformab
 
 
 ###############################################################################
-# We fit the model.
+# Fit the model.
 #
 
 shoot_solver = 'rk4'
@@ -109,7 +107,7 @@ fitter.fit([target_deformable, target_dots_deformable], max_it, costs=costs, opt
 
 
 ###############################################################################
-# Plot total cost evolution
+# Plot total cost evolution.
 #
 
 total_costs = [sum(cost) for cost in list(map(list, zip(*costs.values())))]
@@ -123,7 +121,7 @@ plt.show()
 
 
 ###############################################################################
-# we compute the deformed source and plot it.
+# Compute the final deformed source and plot it. Fitting is very good.
 #
 
 with torch.autograd.no_grad():
@@ -155,3 +153,4 @@ plt.imshow(target_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
 
 plt.show()
+

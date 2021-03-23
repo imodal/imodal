@@ -49,8 +49,8 @@ class Fitter:
 
         # Initial cost
         if costs is not None or disp:
-            with torch.autograd.no_grad():
-                cost_0 = self.__model.evaluate(target, shoot_solver, shoot_it)
+            #with torch.autograd.no_grad():
+            cost_0 = self.__model.evaluate(target, shoot_solver, shoot_it)
 
             if costs is not None:
                 append_in_dict_of_list(costs, cost_0)

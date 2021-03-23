@@ -116,7 +116,6 @@ class OptimizerScipy(BaseOptimizer):
 
         if grad:
             # print([param for param in self.__parameters_to_list(model.parameters)])
-            print([param.grad for param in self.__parameters_to_list(model.parameters)])
             tensors = [param.grad.data.flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]
         else:
             tensors = [param.detach().flatten().cpu().numpy() for param in self.__parameters_to_list(model.parameters)]

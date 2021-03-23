@@ -159,7 +159,7 @@ class AABB:
     @property
     def ymin(self):
         return self.__kmin[1]
-    
+
     @property
     def ymax(self):
         return self.__kmax[1]
@@ -204,12 +204,12 @@ class AABB:
     @property
     def area(self):
         assert self.__dim == 2
-        return (self.xmax - self.xmin) * (self.ymax - self.ymin)
+        return abs(self.xmax - self.xmin) * abs(self.ymax - self.ymin)
 
     @property
     def volume(self):
-        assert self.__dim == 2
-        Return (self.xmax - self.xmin) * (self.ymax - self.ymin) * (self.zmax - self.zmin)
+        assert self.__dim == 3
+        return abs(self.xmax - self.xmin) * abs(self.ymax - self.ymin) * abs(self.zmax - self.zmin)
 
     def fill_random(self, N, dtype=None, device=None):
         """ Fill the AABB with :math:'N' Poisson distributed points.
@@ -242,7 +242,7 @@ class AABB:
         assert isinstance(counts, int) or (isinstance(counts, Iterable) and len(counts) == self.__dim)
 
         if isinstance(counts, int):
-            spacing = [counts]*self.__dim
+            counts = [counts]*self.__dim
 
         grids = torch.meshgrid([torch.linspace(kmin, kmax, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
         return grid2vec(*grids)

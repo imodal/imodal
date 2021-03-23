@@ -1,6 +1,9 @@
-Models and Fitting Algorithm
-============================
+Models and Fitting Algorithms
+=============================
 
-The interface of the models and fitting algorithmes are still unstable. Documentation will be provided once they are stable enough. However, we include a large amount of exemples that document their parameters and behaviour.
-
-
+.. toctree::
+   fitter
+   optimizer
+   deformable
+   registrationmodel
+   atlasmodel

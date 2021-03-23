@@ -1,4 +1,5 @@
 from imodal.Models.deformable import *
+from imodal.Models.deformable_image2d import DeformableImage
 from imodal.Models.models import BaseModel
 from imodal.Models.registration_model import RegistrationModel
 from imodal.Models.atlas import AtlasModel

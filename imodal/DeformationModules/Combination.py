@@ -29,7 +29,7 @@ class CompoundModule(DeformationModule, Iterable):
         outstr += "Modules=\n"
         for module in self.__modules:
             outstr += "*"*20
-            outstr += str(modules) + "\n"
+            outstr += str(module) + "\n"
         outstr += "*"*20
         return outstr
 
@@ -67,10 +67,6 @@ class CompoundModule(DeformationModule, Iterable):
     @property
     def dim(self):
         return self.__modules[0].dim # Dirty
-
-    @property
-    def label(self):
-        return [module.label for module in self.__modules]
 
     def __get_controls(self):
         return [m.controls for m in self.__modules]

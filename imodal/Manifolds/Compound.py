@@ -11,6 +11,8 @@ class CompoundManifold(BaseManifold):
         super().__init__(device, dtype)
 
     def to_(self, *argv, **kwargs):
+        """
+        """
         [manifold.to_(*argv, **kwargs) for manifold in self.__manifolds]
 
     def _to_device(self, device):
@@ -63,7 +65,7 @@ class CompoundManifold(BaseManifold):
         return l
 
     def roll_gd(self, l):
-        """Unflattens the list into one suitable for fill_gd() or all *_gd() numerical operations."""
+        """ Unflattens the list into one suitable for fill_gd() or all \*_gd() numerical operations. """
         out = []
         for man in self.__manifolds:
             out.append(man.roll_gd(l))

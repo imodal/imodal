@@ -443,7 +443,7 @@ def winding_order(point, shape, side):
     point : torch.Tensor
         Point tensor of dimension (2) around which the winding order will be computed.
     shape : torch.Tensor
-    Shape tensor of dimension (:math:`N`), with :math:`N` number of vertices, from which the winding order will be computed.
+        Shape tensor of dimension (:math:`N`), with :math:`N` number of vertices, from which the winding order will be computed.
     side : int, either +1 or -1
         Set to +1/-1 if shape is defined CCW/CW.
 

@@ -3,8 +3,7 @@ import math
 import matplotlib.image
 import torch
 
-from imodal.Kernels import K_xy
-from imodal.Utilities.usefulfunctions import grid2vec, points2pixels
+from imodal.Utilities.usefulfunctions import points2pixels, points2voxels_affine
 from imodal.Utilities.aabb import AABB
 
 
@@ -38,8 +37,8 @@ def load_greyscale_image(filename, origin='lower', dtype=None, device=None):
     image = matplotlib.image.imread(filename)
     if(image.ndim == 2):
         return _set_origin(torch.tensor(1. - image, dtype=dtype, device=device), origin)
-    elif(image.ndim ==3):
-        return _set_origin(torch.tensor(1. - image[:,:,0], dtype=dtype, device=device), origin)
+    elif(image.ndim == 3):
+        return _set_origin(torch.tensor(1. - image[:, :, 0], dtype=dtype, device=device), origin)
     else:
         raise NotImplementedError
 
@@ -53,9 +52,9 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
     image : torch.Tensor
         Tensor of shape [width, height] representing the image from which we will sample the points.
     threshold : float
-        Minimum pixel value (i.e. point weight) 
+        Minimum pixel value (i.e. point weight).
     centered : bool, default=False
-        If true, center the sampled points such that mean 
+        If true, center the sampled points.
     normalise_weights : bool, default=False
         If true, normalise weight values, such that :math:'\alpha_i = \frac{\alpha_i}{\sum_k \alpha_k}'
     normalise_position : bool, default=True
@@ -105,10 +104,14 @@ def sample_from_greyscale(image, threshold, centered=False, normalise_weights=Fa
 
 def load_and_sample_greyscale(filename, threshold=0., centered=False, normalise_weights=True):
     """Load a greyscale and sample points from it."""
-    
     image = load_greyscale_image(filename)
 
     return sample_from_greyscale(image, threshold, centered, normalise_weights)
+
+
+def mask_to_indices(mask):
+    indices = torch.meshgrid([torch.arange(size) for size in mask.shape])
+    return torch.stack([indice[mask] for indice in indices]).T
 
 
 def deformed_intensities(deformed_points, intensities, extent):
@@ -137,11 +140,48 @@ def deformed_intensities(deformed_points, intensities, extent):
             intensities[u2, v2] * fu * fv).view(intensities.shape)
 
 
+def deformed_intensities3d(deformed_points, intensities, affine):
+    """
+    Sample a 3D image from a tensor of deformed points.
+    Taken and adapted from https://gitlab.icm-institute.org/aramislab/deformetrica/blob/master/numpy/core/observations/deformable_objects/image.py
+    """
+
+    uvw = points2voxels_affine(deformed_points, intensities.shape, affine)
+
+    u, v, w = uvw[:, 0], uvw[:, 1], uvw[:, 2]
+    u1 = torch.floor(uvw[:, 0]).long()
+    v1 = torch.floor(uvw[:, 1]).long()
+    w1 = torch.floor(uvw[:, 2]).long()
+
+    u1 = torch.clamp(u1, 0, int(intensities.shape[0]) - 1)
+    v1 = torch.clamp(v1, 0, int(intensities.shape[1]) - 1)
+    w1 = torch.clamp(w1, 0, int(intensities.shape[2]) - 1)
+    u2 = torch.clamp(u1 + 1, 0, int(intensities.shape[0]) - 1)
+    v2 = torch.clamp(v1 + 1, 0, int(intensities.shape[1]) - 1)
+    w2 = torch.clamp(w1 + 1, 0, int(intensities.shape[2]) - 1)
+
+    fu = u - u1.type(torch.get_default_dtype())
+    fv = v - v1.type(torch.get_default_dtype())
+    fw = w - w1.type(torch.get_default_dtype())
+    gu = (u1 + 1).type(torch.get_default_dtype()) - u
+    gv = (v1 + 1).type(torch.get_default_dtype()) - v
+    gw = (w1 + 1).type(torch.get_default_dtype()) - w
+
+    return (intensities[u1, v1, w1] * gu * gv * gw +
+            intensities[u1, v1, w2] * gu * gv * fw +
+            intensities[u1, v2, w1] * gu * fv * gw +
+            intensities[u1, v2, w2] * gu * fv * fw +
+            intensities[u2, v1, w1] * fu * gv * gw +
+            intensities[u2, v1, w2] * fu * gv * fw +
+            intensities[u2, v2, w1] * fu * fv * gw +
+            intensities[u2, v2, w2] * fu * fv * fw).view(intensities.shape)
+
+
 def interpolate_image(image, size=None, scale_factor=None, mode='nearest', align_corners=None, recompute_scale_factor=None):
     """
     Simple wrapper around torch.nn.functional.interpolate() for 2D images.
     """
-    
-    interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size, scale_factor, mode, align_corners, recompute_scale_factor)
+
+    interpolated = torch.nn.functional.interpolate(image.view((1, 1) + image.shape), size=size, scale_factor=scale_factor, mode=mode, align_corners=align_corners)
     return interpolated.view(interpolated.shape[2:])
 

@@ -1,7 +1,5 @@
 from collections import Iterable, OrderedDict
 
-import torch
-
 from imodal.DeformationModules import CompoundModule
 from imodal.Manifolds import CompoundManifold
 from imodal.Models import BaseModel, deformables_compute_deformed
@@ -67,13 +65,14 @@ class RegistrationModel(BaseModel):
     def fit_gd(self):
         return self.__fit_gd
 
-    @property
-    def init_manifold(self):
+    def __get_init_manifold(self):
         return self.__init_manifold
 
-    @property
-    def init_parameters(self):
-        return self.__init_parameters
+    def fill_init_manifold(self, init_manifold):
+        self.__init_manifold = init_manifold
+        self._compute_parameters()
+
+    init_manifold = property(__get_init_manifold, fill_init_manifold)
 
     @property
     def init_other_parameters(self):
@@ -91,6 +90,20 @@ class RegistrationModel(BaseModel):
     def deformables(self):
         return self.__deformables
 
+    def to_device(self, device):
+        self.__init_manifold.to_(device=device)
+        [deformable.to_device(device) for deformable in self.__deformables]
+        [module.to_(device=device) for module in self.__modules]
+
+        self._compute_parameters()
+
+    def to_device(self, device):
+        [deformation_module.to_(device=device) for deformation_module in self.__deformation_modules]
+        [deformable.to_device(device) for deformable in self.__deformables]
+        [manifold.to_(device=device) for manifold in self.__init_manifold]
+
+        self._compute_parameters()
+
     def __str__(self):
         outstr = "Registration model\n"
         outstr += "=================\n"
@@ -103,7 +116,7 @@ class RegistrationModel(BaseModel):
         outstr += "Modules\n"
         outstr += "=======\n"
         for module in self.modules[1:]:
-            outstr += ( "\n" + str(module))
+            outstr += ("\n" + str(module))
         return outstr
 
     def _compute_parameters(self):
@@ -163,7 +176,7 @@ class RegistrationModel(BaseModel):
         # Call precompute callback if available
         precompute_cost = None
         if self.precompute_callback is not None:
-            precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters)
+            precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters, self.deformables)
 
             if precompute_cost is not None:
                 costs['precompute'] = precompute_cost
@@ -187,7 +200,7 @@ class RegistrationModel(BaseModel):
     def _compute_attachment_cost(self, deformed_sources, targets, deformation_costs=None):
         return sum([attachment(deformed_source, target.geometry) for attachment, deformed_source, target in zip(self.__attachments, deformed_sources, targets)])
 
-    def compute_deformed(self, solver, it, costs=None, intermediates=None):
+    def compute_deformed(self, solver, it, t1=1., costs=None, intermediates=None):
         """ Compute the deformed source.
 
         Parameters
@@ -212,5 +225,5 @@ class RegistrationModel(BaseModel):
         for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
             deformable.silent_module.manifold.fill(deformable_manifold)
 
-        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, costs=costs, intermediates=intermediates)
+        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, t1=t1, costs=costs, intermediates=intermediates)
 

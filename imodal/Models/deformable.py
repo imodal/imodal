@@ -8,14 +8,20 @@ from numpy import loadtxt, savetxt
 import meshio
 
 from imodal.HamiltonianDynamic import Hamiltonian, shoot
-from imodal.DeformationModules import SilentBase, CompoundModule, SilentLandmarks, DeformationGrid
+from imodal.DeformationModules import SilentBase, CompoundModule, DeformationGrid
 from imodal.Manifolds import Landmarks
-from imodal.Utilities import deformed_intensities, AABB, load_greyscale_image, pixels2points
 
 
 class Deformable:
     def __init__(self):
         pass
+
+    def to_device(self, device):
+        self.__device = device
+
+    @property
+    def device(self):
+        return self.__device
 
     @property
     def geometry(self):
@@ -63,6 +69,10 @@ class DeformableGrid:
     def _has_backward(self):
         return False
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__silent_module.to_(device=device)
+
     def _to_deformed(self, gd):
         return (gd,)
 
@@ -78,7 +88,6 @@ class DeformablePoints(Deformable):
     @property
     def silent_module(self):
         return self.__silent_module
-
 
     @classmethod
     def load_from_file(cls, filename, dtype=None, **kwargs):
@@ -138,6 +147,10 @@ class DeformablePoints(Deformable):
     def _has_backward(self):
         return False
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__silent_module.to_(device=device)
+
     def save_to_file(self, filename, **kwargs):
         file_extension = os.path.split(filename)[1]
         if file_extension == '.csv':
@@ -145,7 +158,7 @@ class DeformablePoints(Deformable):
         elif file_extension == '.pickle' or file_extension == '.pkl':
             return self.save_to_pickle(filename, **kwargs)
         elif file_extension in meshio.extension_to_filetype.keys():
-            return cls.save_to_mesh(filename, **kwargs)
+            return self.save_to_mesh(filename, **kwargs)
         else:
             raise RuntimeError("DeformablePoints.load_from_file(): could not load file {filename}, unrecognised file extension!".format(filename=filename))
 
@@ -211,102 +224,12 @@ class DeformableMesh(DeformablePoints):
     def geometry(self):
         return (self.silent_module.manifold.gd, self.__triangles)
 
+    def to_device(self, device):
+        super().to_device(device)
+        self.__triangles = self.__triangles.to(device=device)
+
     def _to_deformed(self, gd):
         return (gd, self.__triangles)
-
-
-class DeformableImage(DeformablePoints):
-    """
-    2D bitmap deformable object.
-    """
-    def __init__(self, bitmap, output='bitmap', extent=None, label=None):
-        """
-        Parameters
-        ----------
-        bitmap : torch.Tensor
-            2 dimensional tensor representing the image to deform.
-        output: str, default='bitmap'
-            Representation used by the deformable.
-        extent: imodal.Utilities.AABB, default=None
-            Extent on the 2D plane on which the image is set.
-        """
-        assert isinstance(extent, AABB) or extent is None or isinstance(extent, str)
-        assert output == 'bitmap' or output == 'points'
-
-        self.__shape = bitmap.shape
-        self.__output = output
-
-        self.__pixel_extent = AABB(0., self.__shape[1]-1, 0., self.__shape[0]-1)
-
-        if extent is None:
-            extent = AABB(0., 1., 0., 1.)
-        elif isinstance(extent, str) and extent == 'match':
-            extent = self.__pixel_extent
-
-        self.__extent = extent
-
-        pixel_points = pixels2points(self.__extent.fill_count(self.__shape), self.__shape, self.__extent)
-
-        self.__bitmap = bitmap
-        super().__init__(pixel_points, label=label)
-
-    @classmethod
-    def load_from_file(cls, filename, origin='lower', device=None):
-        return cls(load_greyscale_image(filename, origin=origin, device=device))
-
-    @classmethod
-    def load_from_pickle(cls, filename, origin='lower', device=None):
-        pass
-
-    @property
-    def geometry(self):
-        if self.__output == 'bitmap':
-            return (self.bitmap,)
-        elif self.__output == 'points':
-            return (self.silent_module.manifold.gd, self.__bitmap.flatten()/torch.sum(self.__bitmap))
-        else:
-            raise ValueError()
-
-    @property
-    def shape(self):
-        return self.__shape
-
-    @property
-    def extent(self):
-        return self.__extent
-
-    @property
-    def points(self):
-        return self.silent_module.manifold.gd
-
-    @property
-    def bitmap(self):
-        return self.__bitmap
-
-    @property
-    def _has_backward(self):
-        return True
-
-    def __set_output(self):
-        return self.__output
-
-    def __get_output(self, output):
-        self.__output = output
-
-    output = property(__set_output, __get_output)
-
-    def _backward_module(self):
-        pixel_grid = pixels2points(self.__pixel_extent.fill_count(self.__shape, device=self.silent_module.device), self.__shape, self.__extent)
-        return SilentLandmarks(2, pixel_grid.shape[0], gd=pixel_grid)
-
-    def _to_deformed(self, gd):
-        if self.__output == 'bitmap':
-            return (deformed_intensities(gd, self.__bitmap, self.__extent), )
-        elif self.__output == 'points':
-            deformed_bitmap = deformed_intensities(gd, self.__bitmap, self.__extent)
-            return (gd, deformed_bitmap.flatten()/torch.sum(deformed_bitmap))
-        else:
-            raise ValueError()
 
 
 def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
