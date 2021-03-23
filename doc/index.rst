@@ -34,8 +34,8 @@ IMODAL provides:
 Authors:
 
 - Benjamin Charlier
-- Leander Lacroix
 - Barbara Gris
+- Leander Lacroix
 - Alain Trouvé
 
 Related publications:

@@ -138,7 +138,7 @@ This deformation module builds also sum of local translations but imposes some l
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This module is implemented in the class **LocalConstrainedTranslations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points for the geometrical descriptor) and two functions :math:`f\_support`, :math:`f\_vectors` implementing respectively the functions :math:`f` and :math:`g`.
+This module is implemented in the class **LocalConstrainedTranslations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points for the geometrical descriptor) and two functions :math:`f\_support`, :math:`f\_vectors` implementing respectively the functions :math:`f` and :math:`g`.  Two particular deformation modules generating  local constrained translations are implemented: **LocalScaling** (generating one local scaling) and **LocalRotation** (generating one local rotation). They are initialized by  **LocalConstrainedTranslations** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space). Their geometrical descriptor is made of one point.
 
 
 Silent
