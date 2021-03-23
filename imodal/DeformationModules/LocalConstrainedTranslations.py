@@ -208,13 +208,16 @@ def LocalRotation(dim, sigma, coeff=1., gd=None, tan=None, cotan=None, label=Non
     def f_support_2d(gd):
         return gd.repeat(3, 1) + sigma/3. * torch.tensor([[math.cos(2.*math.pi/3.*i), math.sin(2.*math.pi/3.*i)] for i in range(3)], device=gd.device, dtype=gd.dtype)
 
-    tetra = torch.tensor([[1., 1., 1.], [1., -1., -1.], [-1., 1., -1.], [-1., -1., 1.]], device=gd.device, dtype=gd.dtype)
-
+    
     def f_vectors_3d(gd):
+        tetra = torch.tensor([[1., 1., 1.], [1., -1., -1.], [-1., 1., -1.], [-1., -1., 1.]], device=gd.device, dtype=gd.dtype)
+
         vec = gd[1] - gd[0]
         return torch.cross(tetra, vec.repeat(4, 1))
 
     def f_support_3d(gd):
+        tetra = torch.tensor([[1., 1., 1.], [1., -1., -1.], [-1., 1., -1.], [-1., -1., 1.]], device=gd.device, dtype=gd.dtype)
+
         return gd[0].repeat(4, 1) + sigma/3. * tetra
 
     f_vectors = f_vectors_2d
