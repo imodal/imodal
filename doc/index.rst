@@ -41,7 +41,7 @@ Authors:
 Related publications:
 
 - `A sub-Riemannian modular framework for diffeomorphism based analysis of shape ensembles <https://hal.archives-ouvertes.fr/hal-01321142v2>`_, B. Gris, S. Durrleman and A. Trouvé, SIAM Journal of Imaging Sciences, 2018.
-- `IMODAL: creating learnable user-defined deformation models`_, B. Charlier, L. Lacroix, B. Gris, A. Trouvé, CVPR, 2021.
+- `IMODAL: creating learnable user-defined deformation models`_, B. Charlier, B. Gris, L. Lacroix, A. Trouvé, CVPR, 2021.
 
 The project can be downloaded `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
 
