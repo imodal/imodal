@@ -74,7 +74,7 @@ Given a couple of source and target shapes :math:`(f_S, f_T)` in a shape space :
 Implementation
 --------------
 
-The class **RegistrationModel** is the keystone allowing to perform a registration using a chosen deformation model. It is initialized with lists of **Deformable**, **Attachment** (defining the attachment functions for these data) and **DeformationModules**. A **Deformable** is a class implementing the notion of geometric data: it gathers point clouds, meshes and images. To each element of the Deformable list, is associated an **Attachment** implementing a distance between to Deformables of the same class. Several Attachments are implemented such euclidean distance for point clouds, the varifold distance for curves or meshes and  :math:`L^2` distance for images. The class **RegistrationModel** allows to compute the shooting equation, the initial value of geometrical descriptor and momentum being stored in the attribute **init_manifold**. It also enables to compute the registration function with the **evaluate** method which takes as input a list of **Deformable** targets.
+The class **RegistrationModel** is the keystone allowing to perform a registration using a chosen deformation model. It is initialized with lists of **Deformable**, **Attachment** (defining the attachment functions for these data) and **DeformationModules**. A **Deformable** is a class implementing the notion of geometric data: it gathers point clouds, meshes and images. To each element of the Deformable list, is associated an **Attachment** implementing a distance between to Deformables of the same class. Several Attachments are implemented such euclidean distance for point clouds, the varifold distance for curves or meshes and  :math:`L^2` distance for images. The class **RegistrationModel** allows to compute the shooting equation with the method **compute_deformed**, the initial value of geometrical descriptor and momentum being stored in the attribute **init_manifold**. It also enables to compute the registration function with the **evaluate** method which takes as input a list of **Deformable** targets.
 In order to minimize this functional, a **Fitter** class is created from **RegistrationModel** and runs the optimisation. It interfaces most PyTorch and Scipy optimizers along with a gradient descent with linear search optimization algorithm.
 It is possible to estimate the parameters of the deformation modules with a key-word **other_parameters** in **RegistrationModel**. It is also possible to add a callback function that is evaluated before model evaluation. This allows us to estimate some parameters of the model as functions of meta-parameters which can be estimated. 
 
@@ -122,20 +122,20 @@ This module is implemented in the class **Translations** which is initialized by
 
 
 
-Constrained local translations
+Local constrained translations
 ------------------------------
 
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-This deformation module builds also sum of local translations but imposes some links between them to constrain the generated field. Let :math:`N` be an integer and two functions :math:`f : (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`,  :math:`g: (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`, we define the corresponding deformation module by
+This deformation module builds also sum of local translations but imposes some links between them to constrain the generated field. Let :math:`N` be an integer and :math:`f : (\mathbb R^d)^N \mapsto (\mathbb R^d)^P`,  :math:`g: (\mathbb R^d)^N \mapsto (\mathbb R^d)^P` two functions, we define the corresponding deformation module by
 
 
 *  :math:`\mathcal O = (\mathbb R^d)^N`
 
 *  :math:`H = \mathbb R`
 
-*  :math:`\zeta: (q,h)  \in \mathcal O \times H \mapsto  h \sum_{i=1}^P K(f(q)_i, \cdot) g(x)_i  \in C^\ell (\mathbb R^d, \mathbb R^d)` where :math:`f(q) =  = (f(q)_1, \dots, f(q)_P)` and :math:`g(q) =  = (g(q)_1, \dots, g(q)_P)`
+*  :math:`\zeta: (q,h)  \in \mathcal O \times H \mapsto  h \sum_{i=1}^P K(f(q)_i, \cdot) g(x)_i  \in C^\ell (\mathbb R^d, \mathbb R^d)` where :math:`f(q) =  (f(q)_1, \dots, f(q)_P)` and :math:`g(q) =  (g(q)_1, \dots, g(q)_P)`
 
 *  :math:`\xi: (q,v)  \in \mathcal O \times C^\ell (\mathbb R^d, \mathbb R^d) \mapsto  (v(x_1), \dots, v(x_P)) \in T_q \mathcal O` where :math:`q = (x_1, \dots, x_N)`
 
@@ -175,6 +175,30 @@ Implementation
 The silent module induced by a *landmark shape space* is implemented in the class **Silent**. It is initialized by an integer :math:`d` (dimension of the ambient space) and an integer :math:`N` (number of points for the geometrical descriptor).
 
 
+
+Compound deformation module
+---------------------------
+
+Mathematical definition
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This module :math:`(\mathcal O, H, \zeta, \xi, c)` is built from a collection of :math:`1 \leq i \leq N` deformation modules :math:`M^i = (\mathcal O^i, H^i, \zeta^i, \xi^i, c^i)` and is defined by:
+
+* :math:`\mathcal O = \prod_{i=1}^N \mathcal O^i`
+
+* :math:`H = \prod_{i=1}^N H^i`
+
+* :math:`\zeta: ( q,h) \in \mathcal O \times H \mapsto \sum_i \zeta^i_{q^i} h^i`, :math:`\xi : (q,v) \in  \mathcal O \times C^\ell (\mathbb R^d, \mathbb R^d) \mapsto (\xi_q^1 (v), \dots, \xi_q^1 (v) )`
+
+* :math:`c:  ( q,h) \in \mathcal O \times H \mapsto \sum_i c^i_{q^i} h^i` with :math:`q= (q_1, \dots, q_N)`, :math:`h=(h_1, \dots, h_N)`.
+
+
+Implementation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+The combination of deformation modules is implemented in the class **CompoundModule** initialized by a list of **DeformationModule**.
+
 Implicit deformation modules
 ============================
 
@@ -185,7 +209,7 @@ In many cases, the deformation prior may not be given in the form of an explicit
 with
 
 - :math:`V` a RKHS of vector field, 
-- :math:`\nu` is a positive scalar
+- :math:`\nu` a positive scalar
 - :math:`S_q : V \to Y` a linear surjective constraint operator on vector fields that takes values in the space of constraints :math:`Y` (vector space of finite dimension)
 - :math:`A_q : H \to Y` is a linear operator which defines the value that one wants to observe. 
 
@@ -231,7 +255,8 @@ The intuitive idea behind this module is to be able to incorporate objects relat
 
 Mathematical definition
 ^^^^^^^^^^^^^^^^^^^^^^^
-Constraining such local changes of lengths amounts to constraining the infinitesimal strain tensor :math:`\epsilon_{x_i}(v) \doteq \frac{D v (x_i) + Dv (x_i)^\ast}{2}` which is a symmetric tensor capturing the local metric changes (expansion or dilation along given directions). We define the constraints at each point :math:`x_i` by a choice of eigen vectors :math:`R_i`and eigen values :math:`\alpha_i` of :math:`\epsilon_{x_i}(v)`. The eigen vectors correspond to *geometric variables* (directions) attached to the object and are then part of the *geometrical descriptor*. The choice of the eigen values :math:`\alpha_i` for each :math:`i` is the way to define the imposed deformation structure. Then, structural relations among the different :math:`\alpha_i` s can be captured saying that :math:`\alpha_i = \alpha_i (h)` where :math:`h` is a control parameter. The operator :math:`C : h \in H \mapsto (\alpha_1 (h), \dots, \alpha_N (h) ) \in (\mathbb R^d)^N` is called the **growth factor**.  
+
+Constraining such local changes of lengths amounts to constraining the infinitesimal strain tensor :math:`\epsilon_{x_i}(v) \doteq \frac{D v (x_i) + Dv (x_i)^\ast}{2}` which is a symmetric tensor capturing the local metric changes (expansion or dilation along given directions). We constrain at each point :math:`x_i` this infinitesimal strain tensor to be equal to the *growth factor* defined by a choice of eigenvectors :math:`R_i` and eigenvalues :math:`\alpha_i`. The eigenvectors correspond to *geometric variables* (directions) attached to the object and are then part of the *geometrical descriptor*. The choice of the eigenvalues :math:`\alpha_i` for each :math:`i` is the way to define the imposed deformation structure. Structural relations among the different :math:`\alpha_i` s can be captured saying that :math:`\alpha_i = \alpha_i (h)` where :math:`h` is a control parameter. The operator :math:`C : h \in H \mapsto (\alpha_1 (h), \dots, \alpha_N (h) ) \in (\mathbb R^d)^N` is called the *growth model operator*.  
 
 
 Let :math:`K_\sigma` be a scalar Gaussian kernel with :math:`\sigma >0`, :math:`V` be the corresponding RKHS, :math:`N` be an fixed integer, :math:`p` be an fixed integer, :math:`\nu >0` and :math:`N` linear operators :math:`\alpha_i : \mathbb R^p \mapsto \mathbb R^d`. The corresponding **implicit deformation module of order 1** is defined by:
@@ -245,13 +270,13 @@ Let :math:`K_\sigma` be a scalar Gaussian kernel with :math:`\sigma >0`, :math:`
 
 * :math:`S_q: v \in V \mapsto (\epsilon_{x_1}(v), \dots, \epsilon_{x_N}(v))` with :math:`q = ( (x_i, R_i) )_{1 \leq i \leq N}`
 
-* :math:`A_q : h \in H \mapsto (R_1 D_1(h) R_1^T, \dots, R_N D_N(h) R_N^T)` with :math:`q = ( (x_i, R_i) )_{1 \leq i \leq N}` and for each :math:`i` :math:`D_i (h) = diag (\alpha_i (h) )` (diagonal matrix that depends linearly on the control :math:`h`).
+* :math:`A_q : h \in H \mapsto (R_1 D_1(h) R_1^T, \dots, R_N D_N(h) R_N^T)` with :math:`q = ( (x_i, R_i) )_{1 \leq i \leq N}` and for each :math:`i` :math:`D_i (h) = diag (\alpha_i (h) )` (diagonal matrix).
 
 
 Implementation
 ^^^^^^^^^^^^^^
 
-This module is implemented in the class **ImplicitModule1** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points on which the constraints are imposed), , an integer :math:`p` (dimension of the control), a scalar :math:`\nu >0` and a tensor :math:`C` of size :math:`N \times d \times p` (implementing the growth factor).
+This module is implemented in the class **ImplicitModule1** which is initialized by a scalar :math:`\sigma` (scale of the scalar Gaussian kernel), an integer :math:`d` (dimension of the ambient space), an integer :math:`N` (number of points on which the constraints are imposed), an integer :math:`p` (dimension of the control), a scalar :math:`\nu >0` and a **growth model tensor** :math:`C` of size :math:`N \times d \times p` (implementing the growth model operator).
 
 
 

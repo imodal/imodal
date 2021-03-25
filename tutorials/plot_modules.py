@@ -172,14 +172,21 @@ plt.show()
 
 
 ###############################################################################
-# We define the parameters: the scale of gaussian kernel **sigma**, the dimension of the ambiant space **d**, the number of points on which the constraints are imposed **N** and the dimension of the control **p**.
+# We define the first parameters: the scale of gaussian kernel **sigma**, the dimension of the ambiant space **d** and the dimension of the control **p**.
 #
 
 sigma = 0.3
 d = 2
-N = imodal.Utilities.generate_unit_square(10).shape[0]
 p = 1
 nu = 0.001
+
+
+###############################################################################
+# We also need to specify the number of points **N** on which the constraints are imposed. We will initially define these constraints on a regular grid **grid_points** and then retrieve the number of points.
+#
+
+positions = torch.load("../data/unit_square_points.pt")
+N = positions.shape[0]
 
 
 ###############################################################################
@@ -214,7 +221,6 @@ implicit = imodal.DeformationModules.ImplicitModule1(d, N, sigma, C_directionals
 # Then, we choose the controls **controls** made of one scalar.
 #
 
-positions = imodal.Utilities.generate_unit_square(10)
 rot = torch.stack([imodal.Utilities.rot2d(0.)]*positions.shape[0], axis=0)
 gd = (positions, rot)
 
@@ -279,7 +285,6 @@ plt.show()
 #
 
 
-positions = imodal.Utilities.generate_unit_square(10)
 rot = torch.stack([imodal.Utilities.rot2d(0.5 * math.pi)]*positions.shape[0], axis=0)
 gd=(positions, rot)
 
@@ -526,7 +531,7 @@ sigma_implicit = 0.5
 N_implicit = N
 p_implicit = 1
 nu_implicit = 0.001
-positions = imodal.Utilities.generate_unit_square(10)
+
 rot = torch.stack([imodal.Utilities.rot2d(0.)]*positions.shape[0], axis=0)
 C_non_unif = torch.zeros([N, d, p])
 C_non_unif[:, 1, 0] = positions[:,0] + 1.
