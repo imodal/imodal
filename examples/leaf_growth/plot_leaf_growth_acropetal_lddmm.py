@@ -54,9 +54,9 @@ plt.show()
 
 # Build AABB (Axis Aligned Bounding Box) around the source shape and uniformly
 # sample points for the growth module.
-points_density = 0.05
+points_density = 0.005
 
-points_lddmm = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source.scale(1.3), points_density, shape=1.3*shape_source)
+points_lddmm = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source.scale(1.3), points_density, shape=2.*shape_source)
 
 
 ###############################################################################
@@ -79,9 +79,9 @@ plt.show()
 # Create and initialize implicit module of order 0.
 #
 
-nu = 0.1
-scale_lddmm = 5./points_density**(1/2)
-lddmm = imodal.DeformationModules.ImplicitModule0(2, points_lddmm.shape[0], scale_lddmm, nu=nu, gd=points_lddmm)
+scale_lddmm = 4./points_density**(1/2)
+#scale_lddmm = 10.
+lddmm = imodal.DeformationModules.Translations(2, points_lddmm.shape[0], scale_lddmm, gd=points_lddmm)
 
 
 ###############################################################################
@@ -98,9 +98,8 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
     [lddmm],
-    [imodal.Attachment.VarifoldAttachment(2, [20, 100., 250.])],
-    lam=200.)
-
+    [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
+    lam=10.)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -163,7 +162,7 @@ silent_shape = copy.copy(modules[0])
 lddmm = copy.copy(modules[1])
 
 # Define the deformation grid.
-square_size = 2.5
+square_size = 1.
 lddmm_grid_resolution = [math.floor(aabb_source.width/square_size),
                          math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, lddmm_grid_resolution)

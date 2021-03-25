@@ -164,11 +164,10 @@ deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source, deformable_dots_source],
     [global_translation, growth, small_scale_translations],
-    [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.]),
+    [imodal.Attachment.VarifoldAttachment(2, [50., 300.]),
      imodal.Attachment.EuclideanPointwiseDistanceAttachment(100.)],
     lam=200., other_parameters={'abcd': {'params': [abcd]}},
     precompute_callback=callback_compute_c)
-
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -324,8 +323,8 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
 refit_model = imodal.Models.RegistrationModel([deformable_shape_source],
                 [global_translation, growth, small_scale_translation],
-                [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.])],
-                lam=100.)
+                [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
+                lam=200.)
 
 
 ###############################################################################
