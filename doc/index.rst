@@ -3,9 +3,9 @@
 IMODAL
 =============================
 
------------------------------
+----------------------------------------------
 Implicit Modular Deformations Analysis Library
------------------------------
+----------------------------------------------
 
 IMODAL is a python librairy allowing to register shapes (curves, meshes, images) with **structured large deformations**. The structures are incorporated via **deformation modules** which generate vector fields of particular, chosen types. They can be defined *explicitly* (generating local scalings or rotations for instance) or *implicitly* from constraints. In addition, it is possible to combine them so that a complex structure can be easily defined as the superimposition of simple ones. Trajectories of such modular vector fields can then be integrated to build *modular large deformations*. Their parameters can be optimized to register observed shapes and analyzed.
 
@@ -41,7 +41,7 @@ Authors:
 Related publications:
 
 - `A sub-Riemannian modular framework for diffeomorphism based analysis of shape ensembles <https://hal.archives-ouvertes.fr/hal-01321142v2>`_, B. Gris, S. Durrleman and A. Trouvé, SIAM Journal of Imaging Sciences, 2018.
-- `IMODAL: creating learnable user-defined deformation models`_, B. Charlier, L. Lacroix, B. Gris, A. Trouvé, CVPR, 2021.
+- `IMODAL: creating learnable user-defined deformation models <https://google.com>`_, B. Charlier, L. Lacroix, B. Gris, A. Trouvé, CVPR, 2021.
 
 The project can be downloaded `here <https://plmlab.math.cnrs.fr/gris/implicitmodules>`_.
 
@@ -63,9 +63,9 @@ Table of content
 .. toctree::
    :maxdepth: 2
    :caption: Using IMODAL
+
    _auto_tutorials/index
-   ..
-      _auto_examples/index
+   _auto_examples/index
 
 .. toctree::
    :maxdepth: 3
@@ -73,11 +73,4 @@ Table of content
 
    documentation/index
 
-..
-   ..
-      .. toctree::
-	 :maxdepth: 2
-	 :caption: Tutorial
-
-	 _auto_examples/index
 
