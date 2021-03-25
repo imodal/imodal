@@ -74,7 +74,7 @@ plt.show()
 
 # Build AABB (Axis Aligned Bounding Box) around the source shape and uniformly
 # sample points for the growth module.
-points_density = 0.1
+points_density = 0.05
 
 points_lddmm = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source.scale(1.3), points_density, shape=1.3*shape_source)
 
@@ -90,8 +90,8 @@ plt.show()
 
 
 ###############################################################################
-# Create the deformation model which only consists of one implicit module of
-# order 0.
+# Create the deformation model which only consists of one Translations deformation
+# module.
 #
 
 
@@ -99,10 +99,9 @@ plt.show()
 # Create and initialize local translations module.
 #
 
-nu = 0.1
-#scale_lddmm = 5./points_density**(1/2)
-scale_lddmm = 10.
-lddmm = imodal.DeformationModules.ImplicitModule0(2, points_lddmm.shape[0], scale_lddmm, nu=nu, gd=points_lddmm)
+
+scale_lddmm = 3./points_density**(1/2)
+lddmm = imodal.DeformationModules.Translations(2, points_lddmm.shape[0], scale_lddmm, gd=points_lddmm)
 
 
 ###############################################################################
@@ -119,7 +118,7 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
     [lddmm],
-    [imodal.Attachment.VarifoldAttachment(2, [10., 50.])],
+    [imodal.Attachment.VarifoldAttachment(2, [20., 120.])],
     lam=10.)
 
 
