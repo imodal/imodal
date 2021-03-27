@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.append("../imodal/")
 
+from sphinx_gallery.sorting import ExplicitOrder, FileNameSortKey
+
 
 # -- Project information -----------------------------------------------------
 
@@ -57,12 +59,13 @@ extensions = [
 from sphinx_gallery.sorting import FileNameSortKey
 sphinx_gallery_conf = {
     # path to your examples scripts
-    #'examples_dirs': ["../examples", "../tutorials"],
-    'examples_dirs': ["../tutorials"],
+    'examples_dirs': ["../examples", "../tutorials"],
+    # 'examples_dirs': ["../tutorials"],
     # path where to save gallery generated examples
-    #'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
-    'gallery_dirs': ["./_auto_tutorials"],
-    'within_subsection_order': FileNameSortKey
+    'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
+    # 'gallery_dirs': ["./_auto_tutorials"],
+    # ),
+    # 'within_subsection_order': FileNameSortKey
 }
 
 # Add any paths that contain templates here, relative to this directory.

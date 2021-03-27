@@ -1,13 +1,16 @@
 """
-Tree Growth using Implicit Modules
-==================================
+Analyzing Differences Between Tree Images
+=========================================
 
 Image registration with an implicit module of order 1. Segmentations given by the data are used to initialize its points.
-
 """
 
+
 ###############################################################################
-# Import relevant modules.
+# Initialization
+# --------------
+#
+# Import relevant Python modules.
 #
 
 import time
@@ -23,9 +26,6 @@ import imodal
 device = 'cuda:2'
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
-
-import pykeops
-print("PyKeops version={}".format(pykeops.__version__))
 
 
 ###############################################################################
@@ -54,16 +54,21 @@ shape_is_trunk = aabb_trunk.is_inside(source_shape)
 shape_is_crown = aabb_crown.is_inside(source_shape)
 
 plt.subplot(1, 2, 1)
+plt.title("Source")
 plt.imshow(source_image, cmap='gray', origin='lower', extent=extent.totuple())
 plt.plot(source_shape[shape_is_trunk, 0].numpy(), source_shape[shape_is_trunk, 1].numpy(), lw=2., color='orange')
 plt.plot(source_shape[shape_is_crown, 0].numpy(), source_shape[shape_is_crown, 1].numpy(), lw=2., color='green')
+plt.axis('off')
+
 plt.subplot(1, 2, 2)
+plt.title("Target")
 plt.imshow(target_image, cmap='gray', origin='lower', extent=extent.totuple())
+plt.axis('off')
 plt.show()
 
 
 ###############################################################################
-# Generating implicit modules of order 1 points and growth factors
+# Generating implicit modules of order 1 points and growth model tensor.
 #
 
 implicit1_density = 500.
@@ -72,7 +77,7 @@ implicit1_density = 500.
 area = lambda x, **kwargs: imodal.Utilities.area_shape(x, **kwargs) | imodal.Utilities.area_polyline_outline(x, **kwargs)
 polyline_width = 0.07
 
-# Generation of the points
+# Generation of the points of the initial geometrical descriptor
 implicit1_points = imodal.Utilities.fill_area_uniform_density(area, imodal.Utilities.AABB(xmin=0., xmax=1., ymin=0., ymax=1.), implicit1_density, shape=source_shape, polyline=source_shape, width=polyline_width)
 
 # Masks that flag points into either the trunk or the crown
@@ -88,7 +93,7 @@ assert implicit1_points[implicit1_trunk_points].shape[0] + implicit1_points[impl
 # Initial normal frames
 implicit1_r = torch.eye(2).repeat(implicit1_points.shape[0], 1, 1)
 
-# Growth factor
+# Growth model tensor
 implicit1_c = torch.zeros(implicit1_points.shape[0], 2, 4)
 
 # Horizontal stretching for the trunk
@@ -102,39 +107,28 @@ implicit1_c[implicit1_crown_points, 1, 3] = 1.
 
 
 ###############################################################################
-# Display growth points.
+# Plot the 4 dimensional growth model tensor.
 #
 
-# plt.imshow(source_image, cmap='gray', origin='lower', extent=extent.totuple())
-# plt.plot(source_shape[:, 0].numpy(), source_shape[:, 1].numpy(), lw=2.)
-# plt.plot(implicit1_points[implicit1_trunk_points, 0].numpy(), implicit1_points[implicit1_trunk_points, 1], '.')
-# plt.plot(implicit1_points[implicit1_crown_points, 0].numpy(), implicit1_points[implicit1_crown_points, 1], '.')
-# show("growth_points.png")
-
-
-###############################################################################
-# Plot the 4 dimensional growth factor.
-#
-
+plt.figure(figsize=[20., 5.])
 for i in range(4):
-    _, ax = plt.subplots()
+    ax = plt.subplot(1, 4, i + 1)
     plt.imshow(source_image, origin='lower', extent=extent, cmap='gray')
     imodal.Utilities.plot_C_ellipses(ax, implicit1_points, implicit1_c, c_index=i, color='blue', scale=0.03)
     plt.xlim(0., 1.)
     plt.ylim(0., 1.)
     plt.axis('off')
-    plt.show()
+
+plt.show()
 
 
 ###############################################################################
-# create the deformation model with a combination of 3 modules : implicit module
-# of order 1 (growth model), implicit module of order 0 (small corrections) and
-# a global translation.
+# Create the deformation model with a combination of 2 modules : a global translation and the implicit module of order 1.
 #
 
 
 ###############################################################################
-# Create and initialize the global translation module.
+# Create and initialize the global translation module **global_translation**.
 #
 
 global_translation_coeff = 1.
@@ -142,7 +136,7 @@ global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=global
 
 
 ###############################################################################
-# Create and initialize the growth module.
+# Create and initialize the implicit module of order 1 **implicit1**.
 #
 
 sigma1 = 2./implicit1_density**(1/2)
@@ -163,6 +157,8 @@ source_image_deformable.to_device(device)
 target_image_deformable.to_device(device)
 
 ###############################################################################
+# Registration
+# ------------
 # Define the registration model.
 #
 
@@ -179,11 +175,15 @@ shoot_solver = 'rk4'
 shoot_it = 10
 
 costs = {}
-fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([target_image_deformable], 300, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
+# fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = imodal.Models.Fitter(model, optimizer='torch_sgd')
+# fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
+fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'lr': 1e-14})
 
 
 ###############################################################################
+# Visualization
+# -------------
 # Compute optimized deformation trajectory.
 #
 
@@ -195,19 +195,26 @@ print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
 
 
 ###############################################################################
-# Display deformed source image against the target.
+# Display deformed source image and target.
 #
 
 plt.subplot(1, 3, 1)
+plt.title("Source")
 plt.imshow(source_image, extent=extent.totuple(), origin='lower')
 
 plt.subplot(1, 3, 2)
+plt.title("Deformed")
 plt.imshow(deformed_image, extent=extent.totuple(), origin='lower')
 
 plt.subplot(1, 3, 3)
+plt.title("Target")
 plt.imshow(target_image, extent=extent.totuple(), origin='lower')
 plt.show()
 
+
+###############################################################################
+# We can follow the action of each part of the total deformation by setting all the controls components to zero but one.
+#
 
 ###############################################################################
 # Functions generating controls to follow one part of the deformation.
@@ -216,7 +223,7 @@ plt.show()
 def generate_implicit1_controls(table):
     outcontrols = []
     for control in deformed_intermediates['controls']:
-        outcontrols.append(control[1].cpu()*torch.tensor(table, dtype=torch.get_default_dtype()))
+        outcontrols.append(control[1]*torch.tensor(table, dtype=torch.get_default_dtype(), device=device))
 
     return outcontrols
 
@@ -225,7 +232,7 @@ def generate_controls(implicit1_table, trans):
     outcontrols = []
     implicit1_controls = generate_implicit1_controls(implicit1_table)
     for control, implicit1_control in zip(deformed_intermediates['controls'], implicit1_controls):
-        outcontrols.append([implicit1_control, control[2].cpu()*torch.tensor(trans, dtype=torch.get_default_dtype())])
+        outcontrols.append([implicit1_control, control[2]*torch.tensor(trans, dtype=torch.get_default_dtype(), device=device)])
 
     return outcontrols
 
@@ -247,18 +254,24 @@ def compute_intermediate_deformed(it, controls, t1, intermediates=None):
     implicit1 = imodal.DeformationModules.ImplicitModule1(2, implicit1_points.shape[0], sigma1, implicit1_c.clone(), nu=implicit1_nu, gd=(implicit1_points.clone(), implicit1_r.clone()), cotan=(implicit1_cotan_points, implicit1_cotan_r), coeff=implicit1_coeff)
     global_translation = imodal.DeformationModules.GlobalTranslation(2, coeff=global_translation_coeff)
 
-    incontrols = []
-    for control in controls:
-        incontrols.append([control[0], control[1]])
+    implicit1.to_(device=device)
+    global_translation.to_(device=device)
 
-    source_deformable = imodal.Models.DeformableImage(source_image.clone(), output='bitmap', extent=extent)
+    # incontrols = []
+    # for control in controls:
+    #     incontrols.append([control[0], control[1]])
+
+    source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap', extent=extent)
     source_deformable.silent_module.manifold.cotan = silent_cotan
 
     grid_deformable = imodal.Models.DeformableGrid(extent, grid_resolution)
 
+    source_deformable.to_device(device)
+    grid_deformable.to_device(device)
+
     costs = {}
     with torch.autograd.no_grad():
-        deformed = imodal.Models.deformables_compute_deformed([source_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=incontrols, t1=t1, intermediates=intermediates, costs=costs)
+        deformed = imodal.Models.deformables_compute_deformed([source_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=controls, t1=t1, intermediates=intermediates, costs=costs)
 
     return deformed[0][0]
 
@@ -276,22 +289,26 @@ def generate_images(table, trans, outputfilename):
 
     trajectory = [source_image]
     t = torch.linspace(0., 1., 11)
+    indices = [0, 3, 7, 10]
     print("Computing trajectories...")
-    for step in range(1, len(t)):
-        print("{}, t={}".format(step, t[step]))
-        deformed = compute_intermediate_deformed(step, incontrols[:step], t[step])
+    for index in indices[1:]:
+        print("{}, t={}".format(index, t[index]))
+        deformed = compute_intermediate_deformed(index, incontrols[:index], t[index])
 
         trajectory.append(deformed)
 
     print("Generating images...")
-    for i, deformed in enumerate(trajectory):
-        _, ax = plt.subplots()
+    plt.figure(figsize=[5.*len(indices), 5.])
+    for deformed, grid, i in zip(trajectory, trajectory_grid, range(len(indices))):
+        ax = plt.subplot(1, len(indices), i + 1)
+
         plt.imshow(deformed.cpu(), origin='lower', extent=extent, cmap='gray')
-        imodal.Utilities.plot_grid(ax, trajectory_grid[i][0].cpu(), trajectory_grid[i][1].cpu(), color='xkcd:light blue', lw=0.5)
+        imodal.Utilities.plot_grid(ax, grid[0].cpu(), grid[1].cpu(), color='xkcd:light blue', lw=0.5)
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.axis('off')
-        plt.show()
+
+    plt.show()
 
 
 ###############################################################################

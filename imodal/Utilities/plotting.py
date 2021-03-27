@@ -4,7 +4,13 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, FancyArrowPatch, Rectangle, PathPatch
 from matplotlib.path import Path
-import math
+
+from imodal.Utilities import close_shape
+
+
+def plot_closed_shape(shape, **kwargs):
+    closed_shape = close_shape(shape)
+    plt.plot(closed_shape[:, 0], closed_shape[:, 1], **kwargs)
 
 
 def plot_grid(ax, gridx, gridy, **kwargs):

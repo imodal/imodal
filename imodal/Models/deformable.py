@@ -50,7 +50,7 @@ class Deformable:
         raise NotImplementedError()
 
 
-class DeformableGrid:
+class DeformableGrid(Deformable):
     def __init__(self, extent, resolution, module_label=None):
         self.__silent_module = DeformationGrid(extent, resolution, label=module_label)
 

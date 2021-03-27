@@ -10,6 +10,7 @@ Sheared bunny
 #
 
 assert False
+
 import sys
 sys.path.append("../")
 
@@ -48,8 +49,7 @@ target_points = scale_factor*(target_points - torch.mean(target_points, dim=0))
 
 
 ###############################################################################
-# Generation of implicit module of order 1: points positions, initial growth
-# factor and normal frames.
+# Setting up the implicit module of order 1 parameters: points positions, growth model tensor and normal frames.
 #
 
 # Defining an AABB around the source
@@ -84,13 +84,22 @@ angles = torch.zeros(implicit1_points.shape[0], 3, requires_grad=True, device=de
 global_translation = imodal.DeformationModules.GlobalTranslation(3, coeff=10.)
 
 
+implicit0_density = 0.4
+sigma0 = 2.5/implicit0_density**(1/3)
+
+implicit0_points = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_convex_hull, aabb_source, implicit0_density, scatter=1.4*source_points)
+
+implicit0 = imodal.DeformationModules.ImplicitModule0(3, implicit0_points.shape[0], sigma0, nu=1., gd=implicit0_points, coeff=100.)
+
+print("{} points for the implicit module of order 0, sigma={}.".format(implicit0_points.shape[0], sigma0))
+
+
 ###############################################################################
 # Create and initialize the growth module.
 #
 
 # sigma1 = 2.5/implicit1_density**(1/3)
-sigma1 = 5./implicit1_density**(1/3)
-print(sigma1)
+sigma1 = 2.5/implicit1_density**(1/3)
 
 implicit1 = imodal.DeformationModules.ImplicitModule1(3, implicit1_points.shape[0], sigma1, implicit1_c, nu=10., gd=(implicit1_points, implicit1_r), coeff=0.001)
 implicit1.eps = 1e-5
@@ -146,19 +155,20 @@ deformable_target.to_device(device)
 sigmas_varifold = [1., 5., 15.]
 attachment = imodal.Attachment.VarifoldAttachment(3, sigmas_varifold)
 
-model = imodal.Models.RegistrationModel(deformable_source, [implicit1, global_translation, rotation], [attachment], fit_gd=None, lam=100., precompute_callback=precompute, other_parameters={'growth': {'params': [angles, growth_constants]}})
+model = imodal.Models.RegistrationModel(deformable_source, [implicit1, global_translation, rotation, implicit0], [attachment], lam=100., precompute_callback=precompute, other_parameters={'growth': {'params': [angles, growth_constants]}}, fit_gd=[False, False, True, False])
 model.to_device(device)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
 #
 
-shoot_solver = 'euler'
+shoot_solver = 'midpoint'
 shoot_it = 10
 costs = {}
-fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+# fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter = imodal.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
 
-fitter.fit(deformable_target, 1000, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 1000})
+fitter.fit(deformable_target, 1000, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 
 
 ###############################################################################
