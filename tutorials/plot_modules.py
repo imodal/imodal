@@ -32,8 +32,8 @@ grid_points = imodal.Utilities.grid2vec(*torch.meshgrid([torch.linspace(-2., 2.,
 
 
 ###############################################################################
-# Sum of Local Translations
-# -------------------------
+# Sum of Local Translations (unstructured)
+# ----------------------------------------
 # We define the parameters, the scale of gaussian kernel **sigma**, **d** the dimension of the ambiant space and **p** the number of local translations (points in the geometrical descriptor).
 #
 

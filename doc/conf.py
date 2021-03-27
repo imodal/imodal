@@ -59,15 +59,12 @@ extensions = [
 from sphinx_gallery.sorting import FileNameSortKey
 sphinx_gallery_conf = {
     # path to your examples scripts
-    #'examples_dirs': ["../examples", "../tutorials"],
-    'examples_dirs': ["../tutorials"],
+    'examples_dirs': ["../examples", "../tutorials"],
+    # 'examples_dirs': ["../tutorials"],
     # path where to save gallery generated examples
-    #'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
-    'gallery_dirs': ["./_auto_tutorials"],
-    'subsection_order': ExplicitOrder(['../tutorials/plot_matching.py'
-                                       '../tutorials/plot_modules.py',
-                                       '../tutorials/plot_meshutils_area.py']
-    ),
+    'gallery_dirs': ["./_auto_examples", "./_auto_tutorials"],
+    # 'gallery_dirs': ["./_auto_tutorials"],
+    # ),
     # 'within_subsection_order': FileNameSortKey
 }
 

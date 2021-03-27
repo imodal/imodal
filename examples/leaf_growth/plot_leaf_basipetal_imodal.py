@@ -4,14 +4,12 @@ Basipetal Leaf Growth Model using Implicit Modules
 
 1.) Curve and dots registration using implicit modules of order 1, learning the growth factor.
 2.) Curve registration using implicit modules of order with learned growth factor.
-
 """
 
-###############################################################################
-# Import relevant Pythons modules.
-#
 
-assert False
+###############################################################################
+# Import relevant Python modules.
+#
 
 import sys
 sys.path.append("../../")
@@ -29,6 +27,9 @@ import imodal
 
 
 ###############################################################################
+# Learning the 
+# --------------
+#
 # We load the data (shape and dots of the source and target leaves), rescale it and center it.
 #
 
@@ -134,7 +135,7 @@ def pol(pos, a, b, c, d):
     return a + b*pos[:, 1]  + c*pos[:, 1]**2 + d*pos[:, 1]**3
 
 # Callback called when evaluating the model to compute the growth factor from parameters.
-def callback_compute_c(init_manifold, modules, parameters):
+def callback_compute_c(init_manifold, modules, parameters, deformables):
     abcd = parameters['abcd']['params'][0]
     a = abcd[0].unsqueeze(1)
     b = abcd[1].unsqueeze(1)
@@ -159,13 +160,15 @@ deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
 
 
 ###############################################################################
+# Registration
+# ------------
 # Define the registration model.
 #
 
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source, deformable_dots_source],
     [global_translation, growth, small_scale_translations],
-    [imodal.Attachment.VarifoldAttachment(2, [20., 120.]),
+    [imodal.Attachment.VarifoldAttachment(2, [20., 120.], backend='torch'),
      imodal.Attachment.EuclideanPointwiseDistanceAttachment(10.)],
     lam=10., other_parameters={'abcd': {'params': [abcd]}},
     precompute_callback=callback_compute_c)
@@ -179,7 +182,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -244,7 +247,7 @@ print("Learned growth constants model parameters:\n {}".format(learned_abcd))
 
 ax = plt.subplot()
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=10.)
+imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=1.)
 plt.axis(aabb_source.squared().totuple())
 plt.axis('equal')
 plt.show()
@@ -325,7 +328,7 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
 refit_model = imodal.Models.RegistrationModel([deformable_shape_source],
                 [global_translation, growth, small_scale_translation],
-                [imodal.Attachment.VarifoldAttachment(2, [20., 120.])],
+                [imodal.Attachment.VarifoldAttachment(2, [20., 120.], backend='torch')],
                 lam=10.)
 
 
@@ -338,7 +341,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -351,9 +354,6 @@ with torch.autograd.no_grad():
     deformed_shape = deformed[0][0]
 deformed_growth = intermediates['states'][-1][2].gd[0]
 deformed_growth_rot = intermediates['states'][-1][2].gd[1]
-global_translation_controls = [control[1] for control in intermediates['controls']]
-growth_controls = [control[2] for control in intermediates['controls']]
-translation_controls = [control[3] for control in intermediates['controls']]
 
 
 ###############################################################################
@@ -389,38 +389,45 @@ plt.show()
 #
 
 modules = imodal.DeformationModules.CompoundModule(copy.copy(refit_model.modules))
-modules.manifold.fill(refit_model.init_manifold.clone())
-silent_shape = copy.copy(modules[0])
-global_translation = copy.copy(modules[1])
+modules.manifold.fill(refit_model.init_manifold)
+
 square_size = 1.
-growth_grid_resolution = [math.floor(aabb_source.width/square_size),
-                          math.floor(aabb_source.height/square_size)]
+grid_resolution = [math.floor(aabb_source.width/square_size),
+                   math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, growth_grid_resolution)
-growth = copy.copy(modules[2])
 
-# Construct the controls we will give for shooting
-controls = [[torch.tensor([]), torch.tensor([]), global_translation_control, growth_control, translation_control] for growth_control, global_translation_control, translation_control in zip(growth_controls, global_translation_controls, translation_controls)]
+controls = [control[1:] for control in intermediates['controls']]
+print(len(controls[0]))
 
-intermediates_growth = {}
+deformable_shape = imodal.Models.DeformablePoints(shape_source)
+deformable_shape.silent_module.manifold.cotan = refit_model.init_manifold[0].cotan
+deformable_grid = imodal.Models.DeformableGrid(aabb_source, grid_resolution)
+
+intermediates = {}
 with torch.autograd.no_grad():
-    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent_shape, deformation_grid, global_translation, growth, small_scale_translation]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_growth)
-
-lddmm_deformed_shape = silent_shape.manifold.gd.detach()
-lddmm_deformed_grid = deformation_grid.togrid()
-lddmm_deformed_translation_dots = small_scale_translation.manifold.gd.detach()
+    imodal.Models.deformables_compute_deformed([deformable_shape, deformable_grid], modules, shoot_solver, shoot_it, intermediates=intermediates, controls=controls)
 
 
 ###############################################################################
-# We now plot the deformation grid.
+# Plot the growth trajectory.
 #
 
-ax = plt.subplot()
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
-plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '.-', color='red')
-plt.plot(lddmm_deformed_shape[:, 0].numpy(), lddmm_deformed_shape[:, 1].numpy())
-imodal.Utilities.plot_grid(ax, lddmm_deformed_grid[0], lddmm_deformed_grid[1], color='xkcd:light blue', lw=0.4)
-plt.axis('equal')
-plt.show()
+indices = [1, 3, 7, 10]
 
+plt.figure(figsize=[5.*len(indices), 5.])
+for i, index in enumerate(indices):
+    state = intermediates['states'][index]
+
+    ax = plt.subplot(1, len(indices), i + 1)
+    plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+    plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+    plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy())
+
+    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
+    plt.axis('equal')
+    plt.axis('off')
+
+plt.show()
 

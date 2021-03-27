@@ -63,6 +63,7 @@ class OptimizerTorch(BaseOptimizer):
 
         last_total_cost = float('inf')
         for i in range(max_iter):
+            print(tol)
             self.__optimizer.step(closure=_evaluate)
 
             post_iteration_callback(self.model, self.__last_costs)

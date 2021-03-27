@@ -2,8 +2,8 @@
 Unstructured Shape Matching
 ===========================
 
-In this tutorial, we register two curves with IMODAL without
-deformation prior. To achieve this, a local translation deformation module is used.
+In this tutorial, we register two curves with IMODAL without deformation prior.
+To achieve this, a local translation deformation module is used.
 """
 
 ###############################################################################

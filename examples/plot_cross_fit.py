@@ -6,8 +6,6 @@ In this example, we will fit a cross onto the same cross, but rotated. We will t
 
 """
 
-assert False
-
 ###############################################################################
 # Import relevant modules.
 #
@@ -47,7 +45,7 @@ source_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.U
 
 target_dots = 0.6*extent_length*imodal.Utilities.linear_transform(dots, imodal.Utilities.rot2d(math.pi/1)) + extent_length*torch.tensor([0.5, 0.5])
 
-center = extent_length*torch.tensor([[0.5, 0.5]])
+center = extent_length*torch.tensor([[0.3, 0.1]])
 
 
 ###############################################################################

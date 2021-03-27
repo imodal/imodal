@@ -56,7 +56,7 @@ class Fitter:
                 append_in_dict_of_list(costs, cost_0)
 
             if disp:
-                print("Starting optimization with method {method}".format(method=self.__optimizer.method_name))
+                print("Starting optimization with method {}, using solver {} with {} iterations.".format(self.__optimizer.method_name, shoot_solver, shoot_it))
                 print("Initial cost={cost}".format(cost=cost_0))
 
         def _post_iteration_callback(model, last_costs):

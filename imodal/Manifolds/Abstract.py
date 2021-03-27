@@ -204,9 +204,9 @@ class Manifold(BaseManifold):
             if device is None:
                 device = torch.device('cpu')
 
-            # Default dtype set to float32 if dtype is not specified.
+            # dtype set to Torch default if dtype is not specified.
             if dtype==None:
-                dtype = torch.float
+                dtype = torch.get_default_dtype()
 
             self.__initialised = False
         # Some tensors (or all) are filled
