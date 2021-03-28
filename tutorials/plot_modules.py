@@ -21,6 +21,8 @@ import matplotlib.pyplot as plt
 
 import imodal
 
+imodal.Utilities.set_compute_backend('torch')
+
 torch.manual_seed(1337)
 
 
@@ -185,7 +187,7 @@ nu = 0.001
 # We also need to specify the number of points **N** on which the constraints are imposed. We will initially define these constraints on a regular grid **grid_points** and then retrieve the number of points.
 #
 
-positions = torch.load("../data/unit_square_points.pt")
+positions = torch.load("../data/unit_square_points.pt").to(dtype=torch.get_default_dtype())
 N = positions.shape[0]
 
 

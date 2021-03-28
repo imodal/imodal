@@ -1,14 +1,12 @@
 """
-Acropetal Leaf Growth Model using LDDMM
-=======================================
+Unstructured Acropetal Leaf Growth Model
+========================================
 
 """
 
 ###############################################################################
 # Import relevant Python modules.
 #
-
-assert False
 
 import sys
 sys.path.append("../../")
@@ -21,6 +19,8 @@ import torch
 import matplotlib.pyplot as plt
 
 import imodal
+
+imodal.Utilities.set_compute_backend('torch')
 
 ###############################################################################
 # We load the data (shape of the source and target leaves).
@@ -58,15 +58,15 @@ plt.show()
 # sample points for the growth module.
 points_density = 0.005
 
-points_lddmm = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source.scale(1.3), points_density, shape=2.*shape_source)
+points_translations = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source.scale(1.3), points_density, shape=2.*shape_source)
 
 
 ###############################################################################
-# Plot points of the LDDMM module.
+# Plot points of the local translations module.
 #
 
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
-plt.plot(points_lddmm[:, 0].numpy(), points_lddmm[:, 1].numpy(), 'o', color='blue')
+plt.plot(points_translations[:, 0].numpy(), points_translations[:, 1].numpy(), 'o', color='blue')
 plt.axis('equal')
 plt.show()
 
@@ -81,9 +81,8 @@ plt.show()
 # Create and initialize implicit module of order 0.
 #
 
-scale_lddmm = 4./points_density**(1/2)
-#scale_lddmm = 10.
-lddmm = imodal.DeformationModules.Translations(2, points_lddmm.shape[0], scale_lddmm, gd=points_lddmm)
+sigma = 4./points_density**(1/2)
+translations = imodal.DeformationModules.Translations(2, points_translations.shape[0], sigma, gd=points_translations)
 
 
 ###############################################################################
@@ -94,12 +93,15 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
 
 ###############################################################################
+# Registration
+# ------------
+#
 # Define the registration model.
 #
 
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
-    [lddmm],
+    [translations],
     [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
     lam=10.)
 
@@ -112,10 +114,13 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
+# Visualization
+# -------------
+#
 # Compute optimized deformation trajectory.
 #
 
@@ -123,8 +128,6 @@ intermediates = {}
 with torch.autograd.no_grad():
     deformed = model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
     deformed_shape = deformed[0][0]
-
-lddmm_controls = [control[1] for control in intermediates['controls']]
 
 
 ###############################################################################
@@ -157,41 +160,84 @@ plt.show()
 # deformation to visualize growth.
 #
 
-# We extract the modules of the models and fill the right manifolds.
-modules = imodal.DeformationModules.CompoundModule(copy.copy(model.modules))
-modules.manifold.fill(model.init_manifold.clone())
-silent_shape = copy.copy(modules[0])
-lddmm = copy.copy(modules[1])
+# Reset the local translations module with the learned initialization manifold.
+translations.manifold.fill(model.init_manifold[1])
 
+aabb_source.scale_(1.2)
 # Define the deformation grid.
 square_size = 1.
-lddmm_grid_resolution = [math.floor(aabb_source.width/square_size),
-                         math.floor(aabb_source.height/square_size)]
-deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, lddmm_grid_resolution)
+grid_resolution = [math.floor(aabb_source.width/square_size),
+                   math.floor(aabb_source.height/square_size)]
 
-# We construct the controls we will give will shooting.
-controls = [[torch.tensor([]), torch.tensor([]), lddmm_control] for lddmm_control in lddmm_controls]
+deformable_source = imodal.Models.DeformablePoints(shape_source)
+deformable_grid = imodal.Models.DeformableGrid(aabb_source, grid_resolution)
+deformable_source.silent_module.manifold.fill_cotan(model.init_manifold[0].cotan)
 
-# Reshoot.
-intermediates_lddmm = {}
+controls = [[control[1]] for control in intermediates['controls']]
+
+# Shoot.
+intermediates = {}
 with torch.autograd.no_grad():
-    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent_shape, deformation_grid, lddmm]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_lddmm)
-
-# Store final deformation.
-shoot_deformed_shape = silent_shape.manifold.gd.detach()
-shoot_deformed_grid = deformation_grid.togrid()
+    imodal.Models.deformables_compute_deformed([deformable_source, deformable_grid], [translations], shoot_solver, shoot_it, controls=controls, intermediates=intermediates)
 
 
 ###############################################################################
-# Plot the deformation grid.
+# Plot the growth trajectory.
 #
+indices = [1, 3, 7, 10]
 
-ax = plt.subplot()
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '.-', color='red')
-plt.plot(shoot_deformed_shape[:, 0].numpy(), shoot_deformed_shape[:, 1].numpy())
-imodal.Utilities.plot_grid(ax, shoot_deformed_grid[0], shoot_deformed_grid[1], color='xkcd:light blue', lw=0.4)
-plt.axis('equal')
+plt.figure(figsize=[4.*len(indices), 4.])
+for i, index in enumerate(indices):
+    state = intermediates['states'][index]
+    ax = plt.subplot(1, len(indices), i + 1)
+    plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+    plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+    plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy())
+
+    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
+    plt.axis('equal')
+    plt.axis('off')
 
 plt.show()
+
+
+# # We extract the modules of the models and fill the right manifolds.
+# modules = imodal.DeformationModules.CompoundModule(copy.copy(model.modules))
+# modules.manifold.fill(model.init_manifold.clone())
+# silent_shape = copy.copy(modules[0])
+# lddmm = copy.copy(modules[1])
+
+# # Define the deformation grid.
+# square_size = 1.
+# lddmm_grid_resolution = [math.floor(aabb_source.width/square_size),
+#                          math.floor(aabb_source.height/square_size)]
+# deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, lddmm_grid_resolution)
+
+# # We construct the controls we will give will shooting.
+# controls = [[torch.tensor([]), torch.tensor([]), lddmm_control] for lddmm_control in lddmm_controls]
+
+# # Reshoot.
+# intermediates_lddmm = {}
+# with torch.autograd.no_grad():
+#     imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent_shape, deformation_grid, lddmm]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_lddmm)
+
+# # Store final deformation.
+# shoot_deformed_shape = silent_shape.manifold.gd.detach()
+# shoot_deformed_grid = deformation_grid.togrid()
+
+
+# ###############################################################################
+# # Plot the deformation grid.
+# #
+
+# ax = plt.subplot()
+# plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
+# plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '.-', color='red')
+# plt.plot(shoot_deformed_shape[:, 0].numpy(), shoot_deformed_shape[:, 1].numpy())
+# imodal.Utilities.plot_grid(ax, shoot_deformed_grid[0], shoot_deformed_grid[1], color='xkcd:light blue', lw=0.4)
+# plt.axis('equal')
+
+# plt.show()
 

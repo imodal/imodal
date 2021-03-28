@@ -25,6 +25,8 @@ torch.set_default_dtype(torch.float64)
 
 import imodal
 
+imodal.Utilities.set_compute_backend('torch')
+
 
 ###############################################################################
 # Learning the 
@@ -397,7 +399,6 @@ grid_resolution = [math.floor(aabb_source.width/square_size),
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, growth_grid_resolution)
 
 controls = [control[1:] for control in intermediates['controls']]
-print(len(controls[0]))
 
 deformable_shape = imodal.Models.DeformablePoints(shape_source)
 deformable_shape.silent_module.manifold.cotan = refit_model.init_manifold[0].cotan
@@ -405,7 +406,7 @@ deformable_grid = imodal.Models.DeformableGrid(aabb_source, grid_resolution)
 
 intermediates = {}
 with torch.autograd.no_grad():
-    imodal.Models.deformables_compute_deformed([deformable_shape, deformable_grid], modules, shoot_solver, shoot_it, intermediates=intermediates, controls=controls)
+    imodal.Models.deformables_compute_deformed([deformable_shape, deformable_grid], modules[1:], shoot_solver, shoot_it, intermediates=intermediates, controls=controls)
 
 
 ###############################################################################

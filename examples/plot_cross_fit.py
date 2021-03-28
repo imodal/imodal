@@ -21,6 +21,8 @@ import scipy.ndimage
 
 import imodal
 
+imodal.Utilities.set_compute_backend('torch')
+
 ###############################################################################
 # Load image data and generate dots.
 #
@@ -138,17 +140,20 @@ plt.title("Source image")
 plt.imshow(source_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(source_dots.numpy()[:, 0], source_dots.numpy()[:, 1], '.')
 plt.plot(center.numpy()[0, 0], center.numpy()[0, 1], 'X')
+plt.axis('off')
 
 plt.subplot(1, 3, 2)
 plt.title("Fitted image")
 plt.imshow(deformed_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(deformed_dots.numpy()[:, 0], deformed_dots.numpy()[:, 1], '.')
 plt.plot(fitted_center.numpy()[0, 0], fitted_center.numpy()[0, 1], 'X')
+plt.axis('off')
 
 plt.subplot(1, 3, 3)
-plt.title("target image")
+plt.title("Target image")
 plt.imshow(target_image.numpy(), origin='lower', extent=extent.totuple())
 plt.plot(target_dots.numpy()[:, 0], target_dots.numpy()[:, 1], '.')
+plt.axis('off')
 
 plt.show()
 

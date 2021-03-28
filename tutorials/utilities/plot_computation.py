@@ -98,3 +98,5 @@ start = time.perf_counter()
 torch_translations(points)
 print("Pytorch backend on GPU, elapsed timed={}".format(time.perf_counter() - start))
 
+imodal.Utilities.set_compute_backend('torch')
+

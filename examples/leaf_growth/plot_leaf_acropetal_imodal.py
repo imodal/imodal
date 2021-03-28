@@ -2,15 +2,14 @@
 Acropetal Leaf Growth Model Using Implicit Modules
 ==================================================
 
-1.) Curve and dots registration using implicit modules of order 1, learning the growth factor.
-2.) Curve registration using implicit modules of order with learned growth factor.
+1. Curve and dots registration using implicit modules of order 1, learning the growth factor.
+2. Curve registration using implicit modules of order with learned growth factor.
 """
 
 ###############################################################################
 # Import relevant Python modules.
 #
 
-assert False
 
 import sys
 sys.path.append("../")
@@ -23,6 +22,8 @@ import torch
 import matplotlib.pyplot as plt
 
 import imodal
+
+imodal.Utilities.set_compute_backend('torch')
 
 
 ###############################################################################
@@ -134,7 +135,7 @@ def pol(pos, a, b, c, d):
 
 
 # Callback called when evaluating the model to compute the growth factor from parameters.
-def callback_compute_c(init_manifold, modules, parameters):
+def callback_compute_c(init_manifold, modules, parameters, deformables):
     abcd = parameters['abcd']['params'][0]
     a = abcd[0].unsqueeze(1)
     b = abcd[1].unsqueeze(1)
@@ -180,7 +181,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 10, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -338,7 +339,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Compute optimized deformation trajectory.

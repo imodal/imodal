@@ -24,6 +24,8 @@ import matplotlib.pyplot as plt
 
 import imodal
 
+imodal.Utilities.set_compute_backend('torch')
+
 
 ###############################################################################
 # First, we generate the **source** (circle) and the **target** (square) and plot them.

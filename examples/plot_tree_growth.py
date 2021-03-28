@@ -23,6 +23,7 @@ import torch
 
 import imodal
 
+
 device = 'cuda:2'
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')

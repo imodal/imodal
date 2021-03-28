@@ -1,6 +1,6 @@
 """
-Unstructured Leaf Growth Model
-==============================
+Unstructured Basipetal Leaf Growth Model
+========================================
 
 """
 
@@ -204,7 +204,7 @@ with torch.autograd.no_grad():
 #
 indices = [1, 3, 7, 10]
 
-plt.figure(figsize=[4.*len(indices), 4.])
+plt.figure(figsize=[10.*len(indices), 40.])
 for i, index in enumerate(indices):
     state = intermediates['states'][index]
     ax = plt.subplot(1, len(indices), i + 1)
@@ -387,7 +387,7 @@ with torch.autograd.no_grad():
 
 indices = [1, 3, 7, 10]
 
-plt.figure(figsize=[4.*len(indices), 4.])
+plt.figure(figsize=[10.*len(indices), 40.])
 for i, index in enumerate(indices):
     state = intermediates['states'][index]
     ax = plt.subplot(1, len(indices), i + 1)
