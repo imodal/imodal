@@ -1,15 +1,15 @@
 # IMODAL
 
-IMODAL is a python librairy allowing to register shapes (curves, meshes, images) with **structured large deformations**. The structures are incorporated via **deformation modules** which generate vector fields of particular, chosen types. They can be defined *explicitly* (generating local scalings or rotations for instance) or *implicitly* from constraints. In addition, it is possible to combine them so that a complex structure can be easily defined as the superimposition of simple ones. Trajectories of such modular vector fields can then be integrated to build *modular large deformations*. Their parameters can be optimized to register observed shapes and analyzed.
+IMODAL is a python library allowing to register shapes (curves, meshes, images) with **structured large deformations**. The structures are incorporated via **deformation modules** which generate vector fields of particular, chosen types. They can be defined *explicitly* (generating local scalings or rotations for instance) or *implicitly* from constraints. In addition, it is possible to combine them so that a complex structure can be easily defined as the superimposition of simple ones. Trajectories of such modular vector fields can then be integrated to build *modular large deformations*. Their parameters can be optimized to register observed shapes and analyzed.
 
 [Link to the project documentation](https://kernel-operations.io/im/).
 
 
 ## IMODAL provides
 
-* Registration of points clouds, curves, meshes and images
-* Atlas computation with hypertemplate
-* Estimation of the model parameters
+* registration of points clouds, curves, meshes and images
+* atlas computation with hypertemplate
+* estimation of the model parameters
 * tools to speed up and reduce the memory footprint ( such as GPU and KeOps support)
 
 ## Authors
