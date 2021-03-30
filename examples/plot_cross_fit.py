@@ -121,7 +121,7 @@ plt.show()
 
 
 ###############################################################################
-# Compute the final deformed source and plot it. Fitting is very good.
+# Compute the final deformed source and plot it.
 #
 
 with torch.autograd.no_grad():

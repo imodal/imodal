@@ -122,7 +122,7 @@ local_rotation = imodal.DeformationModules.LocalRotation(d, sigma)
 #
 
 gd = torch.zeros(1,d)
-controls = torch.rand(1,1) 
+controls = torch.ones(1)
 
 local_scaling.manifold.fill_gd(gd)
 local_rotation.manifold.fill_gd(gd)
@@ -148,17 +148,17 @@ vector_rotation = local_rotation._f_vectors(gd)
 plt.figure(figsize=[8., 4.])
 plt.subplot(1, 2, 1)
 plt.title("Local scaling")
-plt.quiver(grid_points[:, 0], grid_points[:, 1], scaling_field[:, 0], scaling_field[:, 1], scale=1.)
+plt.quiver(grid_points[:, 0], grid_points[:, 1], scaling_field[:, 0], scaling_field[:, 1], scale=8.)
 plt.plot(gd[:, 0], gd[:, 1], 'x', color='blue')
-plt.quiver(support_scaling[:, 0], support_scaling[:, 1], vector_scaling[:, 0], vector_scaling[:, 1], scale=8., color='red', lw=1.5)
+plt.quiver(support_scaling[:, 0], support_scaling[:, 1], vector_scaling[:, 0], vector_scaling[:, 1], scale=10., color='red', lw=1.5)
 plt.axis('equal')
 plt.axis('off')
 
 plt.subplot(1, 2, 2)
 plt.title("Local rotation")
-plt.quiver(grid_points[:, 0], grid_points[:, 1], rotation_field[:, 0], rotation_field[:, 1], scale=1.)
+plt.quiver(grid_points[:, 0], grid_points[:, 1], rotation_field[:, 0], rotation_field[:, 1], scale=8.)
 plt.plot(gd[:, 0], gd[:, 1], 'x', color='blue')
-plt.quiver(support_rotation[:, 0], support_rotation[:, 1], vector_rotation[:, 0], vector_rotation[:, 1], scale=8., color='red', lw=1.5)
+plt.quiver(support_rotation[:, 0], support_rotation[:, 1], vector_rotation[:, 0], vector_rotation[:, 1], scale=10., color='red', lw=1.5)
 plt.axis('equal')
 plt.axis('off')
 
@@ -249,8 +249,8 @@ step = 0.3
 new_grid_points = grid_points + step * implicit_field
 new_positions = positions + step * implicit(positions)
 
-plt.figure(figsize=[16., 4.])
-ax = plt.subplot(1, 4, 1)
+plt.figure(figsize=[8., 8.])
+ax = plt.subplot(2, 2, 1)
 plt.title("Growth factor displayed with arrows")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -258,7 +258,7 @@ imodal.Utilities.plot_C_arrows(ax, positions, C_directionalscaling, R=rot, color
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 2)
+ax = plt.subplot(2, 2, 2)
 plt.title("Growth factor displayed with ellipses")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -266,19 +266,20 @@ imodal.Utilities.plot_C_ellipses(ax, positions, C_directionalscaling, R=rot, col
 plt.axis('equal')
 plt.axis('off')
 
-plt.subplot(1, 4, 3)
+plt.subplot(2, 2, 3)
 plt.title("Generated vector field")
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
 plt.quiver(grid_points[:, 0], grid_points[:, 1], implicit_field[:, 0], implicit_field[:, 1], scale=10., width=.01)
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 4)
+ax = plt.subplot(2, 2, 4)
 plt.title("Infinitesimal deformation")
 plt.plot(new_grid_points[:, 0], new_grid_points[:, 1], '.k', markersize=1)
 plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
 plt.axis('equal')
 plt.axis('off')
+
 plt.show()
 
 
@@ -301,8 +302,8 @@ new_grid_points = grid_points + step * implicit_field
 new_positions = positions + step * implicit(positions)
 
 
-plt.figure(figsize=[16., 4.])
-ax = plt.subplot(1, 4, 1)
+plt.figure(figsize=[8., 8.])
+ax = plt.subplot(2, 2, 1)
 plt.title("Growth factor displayed with arrows")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -310,7 +311,7 @@ imodal.Utilities.plot_C_arrows(ax, positions, C_directionalscaling, R=rot, color
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 2)
+ax = plt.subplot(2, 2, 2)
 plt.title("Growth factor displayed with ellipses")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -318,14 +319,14 @@ imodal.Utilities.plot_C_ellipses(ax, positions, C_directionalscaling, R=rot, col
 plt.axis('equal')
 plt.axis('off')
 
-plt.subplot(1, 4, 3)
+plt.subplot(2, 2, 3)
 plt.title("Generated vector field")
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
 plt.quiver(grid_points[:, 0], grid_points[:, 1], implicit_field[:, 0], implicit_field[:, 1], scale=10., width=.01)
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 4)
+ax = plt.subplot(2, 2, 4)
 plt.title("Infinitesimal deformation")
 plt.plot(new_grid_points[:, 0], new_grid_points[:, 1], '.k', markersize=1)
 plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
@@ -356,8 +357,8 @@ new_grid_points = grid_points + step * implicit_field
 new_positions = positions + step * implicit(positions)
 
 
-plt.figure(figsize=[16., 4.])
-ax = plt.subplot(1, 4, 1)
+plt.figure(figsize=[8., 8.])
+ax = plt.subplot(2, 2, 1)
 plt.title("Growth factor displayed with arrows")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -365,7 +366,7 @@ imodal.Utilities.plot_C_arrows(ax, positions, C_directionalscaling, R=rot, color
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 2)
+ax = plt.subplot(2, 2, 2)
 plt.title("Growth factor displayed with ellipses")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -373,14 +374,14 @@ imodal.Utilities.plot_C_ellipses(ax, positions, C_directionalscaling, R=rot, col
 plt.axis('equal')
 plt.axis('off')
 
-plt.subplot(1, 4, 3)
+plt.subplot(2, 2, 3)
 plt.title("Generated vector field")
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
 plt.quiver(grid_points[:, 0], grid_points[:, 1], implicit_field[:, 0], implicit_field[:, 1], scale=10., width=.01)
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 4)
+ax = plt.subplot(2, 2, 4)
 plt.title("Infinitesimal deformation")
 plt.plot(new_grid_points[:, 0], new_grid_points[:, 1], '.k', markersize=1)
 plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
@@ -418,8 +419,8 @@ new_grid_points = grid_points + step * implicit_field
 new_positions = positions + step * implicit(positions)
 
 
-plt.figure(figsize=[16., 4.])
-ax = plt.subplot(1, 4, 1)
+plt.figure(figsize=[8., 8.])
+ax = plt.subplot(2, 2, 1)
 plt.title("Growth factor displayed with arrows")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -427,7 +428,7 @@ imodal.Utilities.plot_C_arrows(ax, positions, C_anisotropicscaling, R=rot, color
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 2)
+ax = plt.subplot(2, 2, 2)
 plt.title("Growth factor displayed with ellipses")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -435,14 +436,14 @@ imodal.Utilities.plot_C_ellipses(ax, positions, C_anisotropicscaling, R=rot, col
 plt.axis('equal')
 plt.axis('off')
 
-plt.subplot(1, 4, 3)
+plt.subplot(2, 2, 3)
 plt.title("Generated vector field")
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
 plt.quiver(grid_points[:, 0], grid_points[:, 1], implicit_field[:, 0], implicit_field[:, 1], scale=20., width=.01)
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 4)
+ax = plt.subplot(2, 2, 4)
 plt.title("Infinitesimal deformation")
 plt.plot(new_grid_points[:, 0], new_grid_points[:, 1], '.k', markersize=1)
 plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
@@ -487,8 +488,8 @@ new_grid_points = grid_points + step * implicit_field
 new_positions = positions + step * implicit(positions)
 
 
-plt.figure(figsize=[16., 4.])
-ax = plt.subplot(1, 4, 1)
+plt.figure(figsize=[8., 8.])
+ax = plt.subplot(2, 2, 1)
 plt.title("Growth factor displayed with arrows")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -496,7 +497,7 @@ imodal.Utilities.plot_C_arrows(ax, positions, C_non_unif, R=rot, color='blue', s
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 2)
+ax = plt.subplot(2, 2, 2)
 plt.title("Growth factor displayed with ellipses")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
@@ -504,14 +505,14 @@ imodal.Utilities.plot_C_ellipses(ax, positions, C_non_unif, R=rot, color='blue',
 plt.axis('equal')
 plt.axis('off')
 
-plt.subplot(1, 4, 3)
+plt.subplot(2, 2, 3)
 plt.title("Generated vector field")
 plt.plot(positions[:, 0], positions[:, 1], '.', color='blue')
 plt.quiver(grid_points[:, 0], grid_points[:, 1], implicit_field[:, 0], implicit_field[:, 1], scale=20., width=.01)
 plt.axis('equal')
 plt.axis('off')
 
-ax = plt.subplot(1, 4, 4)
+ax = plt.subplot(2, 2, 4)
 plt.title("Infinitesimal deformation")
 plt.plot(new_grid_points[:, 0], new_grid_points[:, 1], '.k', markersize=1)
 plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
@@ -564,7 +565,7 @@ new_positions = positions + step * compound(positions)
 new_gd_translation = gd_translation + step * compound(gd_translation)
 
 
-plt.figure(figsize=[12., 4.])
+fig = plt.figure(figsize=[12., 4.])
 ax = plt.subplot(1, 3, 1)
 plt.title("Growth factor")
 plt.plot(grid_points[:, 0], grid_points[:, 1], '.k', markersize=1)
@@ -590,6 +591,8 @@ plt.plot(new_positions[:, 0], new_positions[:, 1], '.', color='blue')
 plt.plot(new_gd_translation[:,0], new_gd_translation[:,1], 'xb')
 plt.axis('equal')
 plt.axis('off')
+
+fig.tight_layout()
 plt.show()
 
 
@@ -629,8 +632,9 @@ imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent, i
 #
 
 display_index = [0, 3, 5, 7, 9]
+aabb = imodal.Utilities.AABB.build_from_points(grid_points).scale(1.5)
 
-plt.figure(figsize=[20., 4.])
+fig = plt.figure(figsize=[20., 4.])
 for count, i in enumerate(display_index):
     ax = plt.subplot(1, 5, count+1)
     grid_points_t = intermediates['states'][i][0].gd.detach()
@@ -644,7 +648,10 @@ for count, i in enumerate(display_index):
     imodal.Utilities.plot_C_ellipses(ax, positions_t, control_implicit_t*C_non_unif, R=rot_t, color='blue', scale=1.)
     plt.plot(gd_translation_t[:,0], gd_translation_t[:,1], 'xb')
     plt.quiver(gd_translation_t[:,0], gd_translation_t[:,1], control_translation_t[:,0], control_translation_t[:,1], color='green', scale=5., width=.02)
-    plt.axis('equal')
+    # plt.axis('equal')
+    plt.axis(aabb.totuple())
     plt.axis('off')
 
+fig.tight_layout()
+plt.show()
 

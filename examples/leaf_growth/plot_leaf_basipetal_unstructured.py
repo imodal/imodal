@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 import imodal
 
 imodal.Utilities.set_compute_backend('torch')
-torch.set_default_dtype(torch.float64)
 
 
 ###############################################################################
@@ -51,14 +50,9 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
-plt.figure(figsize=(8., 4.))
-plt.subplot(1, 2, 1)
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='blue')
-plt.axis(aabb_target.squared().totuple())
-plt.axis('equal')
-plt.subplot(1, 2, 2)
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='blue')
-plt.axis(aabb_target.squared().totuple())
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+
 plt.axis('equal')
 plt.show()
 
@@ -130,7 +124,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -154,22 +148,24 @@ translations_controls = [control[1] for control in intermediates['controls']]
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-')
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
+
+plt.tight_layout()
 plt.show()
 
 
@@ -202,22 +198,24 @@ with torch.autograd.no_grad():
 ###############################################################################
 # Plot the growth trajectory.
 #
-indices = [1, 3, 7, 10]
+indices = [0, 3, 7, 10]
 
-plt.figure(figsize=[10.*len(indices), 40.])
+plt.figure(figsize=[10.*len(indices), 10.])
 for i, index in enumerate(indices):
     state = intermediates['states'][index]
     ax = plt.subplot(1, len(indices), i + 1)
+    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
+
     plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
     plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
     plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy())
 
-    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
-    grid_x, grid_y = deformable_grid.silent_module.togrid()
-    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
     plt.axis('equal')
     plt.axis('off')
 
+plt.tight_layout()
 plt.show()
 
 
@@ -231,14 +229,12 @@ plt.show()
 # Plot source and target.
 #
 
-plt.subplot(1, 2, 1)
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='blue')
-plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='blue')
-plt.axis(aabb_target.squared().totuple())
-plt.subplot(1, 2, 2)
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='blue')
-plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='blue')
-plt.axis(aabb_target.squared().totuple())
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
+
+plt.axis('equal')
 plt.show()
 
 
@@ -309,7 +305,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -332,23 +328,25 @@ with torch.autograd.no_grad():
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-')
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.axis(aabb_target.totuple())
 plt.axis('equal')
+
+plt.tight_layout()
 plt.show()
 
 
@@ -385,24 +383,26 @@ with torch.autograd.no_grad():
 # Plot the growth trajectory.
 #
 
-indices = [1, 3, 7, 10]
+indices = [0, 3, 7, 10]
 
-plt.figure(figsize=[10.*len(indices), 40.])
+plt.figure(figsize=[10.*len(indices), 10.])
 for i, index in enumerate(indices):
     state = intermediates['states'][index]
     ax = plt.subplot(1, len(indices), i + 1)
+
+    deformable_grid.silent_module.manifold.fill_gd(state[2].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
 
     plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
     plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
     plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy(), color='blue')
     plt.plot(state[1].gd[:, 0].numpy(), state[1].gd[:, 1].numpy(), '.', color='blue')
 
-    deformable_grid.silent_module.manifold.fill_gd(state[2].gd)
-    grid_x, grid_y = deformable_grid.silent_module.togrid()
-    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
     plt.axis('equal')
     plt.axis('off')
 
+plt.tight_layout()
 plt.show()
 
 

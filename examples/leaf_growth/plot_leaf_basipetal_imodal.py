@@ -2,14 +2,15 @@
 Basipetal Leaf Growth Model using Implicit Modules
 ==================================================
 
-1.) Curve and dots registration using implicit modules of order 1, learning the growth factor.
-2.) Curve registration using implicit modules of order with learned growth factor.
+1. Curve and dots registration using implicit modules of order 1, learning the growth model tensor.
+2. Curve registration using implicit modules of order with learned growth model tensor.
 """
-
 
 ###############################################################################
 # Import relevant Python modules.
 #
+
+assert False
 
 import sys
 sys.path.append("../../")
@@ -29,8 +30,8 @@ imodal.Utilities.set_compute_backend('torch')
 
 
 ###############################################################################
-# Learning the 
-# --------------
+# Learning the growth model tensor
+# --------------------------------
 #
 # We load the data (shape and dots of the source and target leaves), rescale it and center it.
 #
@@ -68,8 +69,9 @@ plt.show()
 # module of order 1 (growth module).
 #
 
-# Build AABB (Axis Aligned Bounding Box) around the source shape and uniformly
-# sample points for the growth module.
+# Build AABB (Axis Aligned Bounding Box) around the source shape and uniformly sample points for the growth module.
+#
+
 growth_scale = 30.
 points_density = 0.25
 
@@ -184,7 +186,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -343,7 +345,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -413,22 +415,24 @@ with torch.autograd.no_grad():
 # Plot the growth trajectory.
 #
 
-indices = [1, 3, 7, 10]
+indices = [0, 3, 7, 10]
 
-plt.figure(figsize=[5.*len(indices), 5.])
+fig = plt.figure(figsize=[5.*len(indices), 5.])
 for i, index in enumerate(indices):
     state = intermediates['states'][index]
 
     ax = plt.subplot(1, len(indices), i + 1)
+    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
+
     plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
     plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
     plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy())
 
-    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
-    grid_x, grid_y = deformable_grid.silent_module.togrid()
-    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
     plt.axis('equal')
     plt.axis('off')
 
+fig.tight_layout()
 plt.show()
 

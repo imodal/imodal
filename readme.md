@@ -10,7 +10,7 @@ IMODAL is a python library allowing to register shapes (curves, meshes, images) 
 * registration of points clouds, curves, meshes and images
 * atlas computation with hypertemplate
 * estimation of the model parameters
-* tools to speed up and reduce the memory footprint ( such as GPU and KeOps support)
+* tools to speed up and reduce the memory footprint (such as GPU and KeOps support)
 
 ## Authors
 

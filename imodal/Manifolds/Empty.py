@@ -5,7 +5,10 @@ from imodal.StructuredFields import StructuredField_Null
 
 
 class EmptyManifold(BaseManifold):
-    def __init__(self, dim, device=None, dtype=torch.float):
+    def __init__(self, dim, device=None, dtype=None):
+        if not dtype:
+            dtype = torch.get_default_dtype()
+
         super().__init__(device, dtype)
         self.__dim = dim
 

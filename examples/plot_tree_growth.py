@@ -13,6 +13,8 @@ Image registration with an implicit module of order 1. Segmentations given by th
 # Import relevant Python modules.
 #
 
+assert False
+
 import time
 import pickle
 import sys
@@ -24,7 +26,7 @@ import torch
 import imodal
 
 
-device = 'cuda:2'
+device = 'cuda:1'
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
 
@@ -176,10 +178,8 @@ shoot_solver = 'rk4'
 shoot_it = 10
 
 costs = {}
-# fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter = imodal.Models.Fitter(model, optimizer='torch_sgd')
-# fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 200})
-fitter.fit([target_image_deformable], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'lr': 1e-14})
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
+fitter.fit([target_image_deformable], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe', 'history_size': 500})
 
 
 ###############################################################################
@@ -202,14 +202,18 @@ print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
 plt.subplot(1, 3, 1)
 plt.title("Source")
 plt.imshow(source_image, extent=extent.totuple(), origin='lower')
+plt.axis('off')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed")
 plt.imshow(deformed_image, extent=extent.totuple(), origin='lower')
+plt.axis('off')
 
 plt.subplot(1, 3, 3)
 plt.title("Target")
 plt.imshow(target_image, extent=extent.totuple(), origin='lower')
+plt.axis('off')
+
 plt.show()
 
 
@@ -258,10 +262,6 @@ def compute_intermediate_deformed(it, controls, t1, intermediates=None):
     implicit1.to_(device=device)
     global_translation.to_(device=device)
 
-    # incontrols = []
-    # for control in controls:
-    #     incontrols.append([control[0], control[1]])
-
     source_deformable = imodal.Models.DeformableImage(source_image, output='bitmap', extent=extent)
     source_deformable.silent_module.manifold.cotan = silent_cotan
 
@@ -300,15 +300,17 @@ def generate_images(table, trans, outputfilename):
 
     print("Generating images...")
     plt.figure(figsize=[5.*len(indices), 5.])
-    for deformed, grid, i in zip(trajectory, trajectory_grid, range(len(indices))):
+    for deformed, i in zip(trajectory, range(len(indices))):
         ax = plt.subplot(1, len(indices), i + 1)
 
+        grid = trajectory_grid[indices[i]]
         plt.imshow(deformed.cpu(), origin='lower', extent=extent, cmap='gray')
-        imodal.Utilities.plot_grid(ax, grid[0].cpu(), grid[1].cpu(), color='xkcd:light blue', lw=0.5)
+        imodal.Utilities.plot_grid(ax, grid[0].cpu(), grid[1].cpu(), color='xkcd:light blue', lw=1)
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.axis('off')
 
+    plt.tight_layout()
     plt.show()
 
 

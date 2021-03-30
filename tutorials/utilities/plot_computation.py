@@ -21,7 +21,7 @@ import imodal
 
 
 ###############################################################################
-# Each deformation modules that needs kernel matrix reduction at some point has a plain Pytorch and KeOps implementation.
+# Each deformation modules that needs kernel matrix reduction has a plain Pytorch and KeOps implementation.
 #
 # In order to select once and for all the computation backend one can simply call
 #
@@ -30,7 +30,7 @@ imodal.Utilities.set_compute_backend('keops')
 
 
 ###############################################################################
-# Available compute backend are thus **keops** and **torch**. All subsequently deformation modules will use the specified computation backend.
+# Available compute backend are **keops** and **torch**. All subsequent deformation modules that are created will use the specified computation backend.
 #
 
 d = 2
@@ -44,21 +44,28 @@ print(translations.backend)
 
 ###############################################################################
 # .. warning::
-#   Changing computation backend after initializing modules will not affects settings for already created modules and will have to be initialized again.
+#   Changing computation backend will not affect already created modules and these will have to be initialized again.
 #
 
 
 ###############################################################################
 # It is also possible to explicitely set the compute backend for a deformation module using the **backend** keyword.
+# The varifold attachment also offers a KeOps implementation in 3D (but not in 2D yet).
 #
 
 keops_translations = imodal.DeformationModules.Translations(d, N, sigma, backend='keops')
 
 torch_translations = imodal.DeformationModules.Translations(d, N, sigma, backend='torch')
 
+attachment = imodal.Attachment.VarifoldAttachment(3, [1.], backend='keops')
+
+print(keops_translations.backend)
+print(torch_translations.backend)
+print(attachment)
+
 
 ###############################################################################
-#
+# Moving computation on GPUs can be done. As IMODAL is built on top of Pytorch, the device parameter can either be a string or a torch.device object.
 #
 
 positions = torch.randn(N, d)
@@ -67,13 +74,12 @@ keops_translations.to_(device='cuda')
 
 torch_translations = imodal.DeformationModules.Translations(d, N, sigma, positions.to(device='cuda'), backend='torch')
 
-print(keops_translations.backend)
-print(torch_translations.backend)
+print(keops_translations.device)
+print(torch_translations.device)
 
 
 ###############################################################################
 # .. note::
-#   As IMODAL is built on top of Pytorch, the device parameter can either be a string or a torch.device object.
 #   It is thus possible to select the GPU on which to perform computations by putting **device='cuda:x'** where **x** specify the GPU index (such as given by the **nvidia-smi** command.
 #
 # .. warning::

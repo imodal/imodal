@@ -31,12 +31,17 @@ imodal.Utilities.set_compute_backend('torch')
 # First, we generate the **source** (circle) and the **target** (square) and plot them.
 #
 
-nb_points_source = 50
-radius = 1.
-source = radius*imodal.Utilities.generate_unit_circle(nb_points_source)
+# nb_points_source = 50
+# radius = 1.
+# source = radius*imodal.Utilities.generate_unit_circle(nb_points_source)
+
+nb_points_square_side = 12
+source = imodal.Utilities.generate_unit_square(nb_points_square_side)
+source = imodal.Utilities.linear_transform(source, imodal.Utilities.rot2d(-math.pi/14.))
+
 
 nb_points_square_side = 4
-target = imodal.Utilities.generate_unit_square(nb_points_square_side)
+target = 0.7*imodal.Utilities.generate_unit_square(nb_points_square_side)
 target = imodal.Utilities.linear_transform(target, imodal.Utilities.rot2d(math.pi/18.))
 
 
@@ -65,8 +70,12 @@ target_deformable = imodal.Models.DeformablePoints(target)
 # kernel scale (**sigma_translation**). We initialize its geometrical descriptor (**gd**) with the source points.
 #
 
-sigma_translation = 0.1
-translation = imodal.DeformationModules.Translations(2, source.shape[0], sigma_translation, gd=source)
+sigma_translation = 1.
+# sigma_translation1 = 0.1
+# sigma_translation2 = 0.2
+translation = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation, nu=1e-4, gd=source)
+# translation1 = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation1, gd=source, nu=0.1)
+# translation2 = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation2, gd=source, nu=0.1)
 
 
 ###############################################################################
@@ -86,7 +95,7 @@ attachment = imodal.Attachment.VarifoldAttachment(2, sigma_varifold, backend='to
 # The **lam** parameter is the weight of the attachment term of the total energy to minimize.
 #
 
-model = imodal.Models.RegistrationModel(source_deformable, translation, attachment, lam=100.)
+model = imodal.Models.RegistrationModel(source_deformable, [translation], attachment, lam=100.)
 
 
 ###############################################################################
@@ -155,7 +164,7 @@ modules.manifold.fill(model.init_manifold.clone())
 #
 
 aabb = imodal.Utilities.AABB.build_from_points(source).scale(1.3)
-square_size = 0.1
+square_size = 0.05
 grid_resolution = [math.floor(aabb.width/square_size),
                    math.floor(aabb.height/square_size)]
 

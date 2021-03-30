@@ -2,14 +2,13 @@
 Acropetal Leaf Growth Model Using Implicit Modules
 ==================================================
 
-1. Curve and dots registration using implicit modules of order 1, learning the growth factor.
-2. Curve registration using implicit modules of order with learned growth factor.
+1. Curve and dots registration using implicit modules of order 1, learning the growth model tensor.
+2. Curve registration using implicit modules of order with learned growth model tensor.
 """
 
 ###############################################################################
 # Import relevant Python modules.
 #
-
 
 import sys
 sys.path.append("../")
@@ -27,6 +26,9 @@ imodal.Utilities.set_compute_backend('torch')
 
 
 ###############################################################################
+# Learning the growth model tensor
+# --------------------------------
+#
 # We load the data (shape and dots of the source and target leaves).
 #
 
@@ -126,15 +128,15 @@ small_scale_translations = imodal.DeformationModules.ImplicitModule0(2, points_s
 
 
 ###############################################################################
-# Define our growth factor model.
+# Define our growth model tensor.
 #
 
-# The polynomial model for our growth factor.
+# The polynomial model for our growth model tensor.
 def pol(pos, a, b, c, d):
     return a + b*pos[:, 1]  + c*pos[:, 1]**2 + d*pos[:, 1]**3
 
 
-# Callback called when evaluating the model to compute the growth factor from parameters.
+# Callback called when evaluating the model to compute the growth model tensor from parameters.
 def callback_compute_c(init_manifold, modules, parameters, deformables):
     abcd = parameters['abcd']['params'][0]
     a = abcd[0].unsqueeze(1)
@@ -144,7 +146,7 @@ def callback_compute_c(init_manifold, modules, parameters, deformables):
     modules[3].C = pol(init_manifold[3].gd[0], a, b, c, d).transpose(0, 1).unsqueeze(2)
 
 
-# Initial parameters of our growth factor model.
+# Initial parameters of our growth model tensor.
 abcd = torch.zeros(4, 2)
 abcd[0] = 0.1 * torch.ones(2)
 abcd.requires_grad_()
@@ -181,7 +183,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -228,7 +230,7 @@ plt.show()
 
 
 ###############################################################################
-# Evaluate learned growth factor.
+# Evaluate estimated growth factor.
 #
 learned_abcd = abcd.detach()
 learned_C = pol(model.init_manifold[3].gd[0].detach(),
@@ -240,12 +242,12 @@ print("Learned growth constants model parameters:\n {}".format(learned_abcd))
 
 
 ###############################################################################
-# Plot learned growth factor.
+# Plot estimated growth factor.
 #
 
 ax = plt.subplot()
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=10.)
+imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=5.)
 plt.axis(aabb_source.squared().totuple())
 plt.axis('equal')
 plt.show()
@@ -302,7 +304,8 @@ plt.show()
 
 
 ###############################################################################
-# Perform curve registration using the previously learned growth factor.
+# Perform curve registration using the previously learned growth factor
+# --------------------------------------------------------------------
 #
 
 
@@ -389,36 +392,47 @@ plt.show()
 #
 
 modules = imodal.DeformationModules.CompoundModule(copy.copy(refit_model.modules))
-modules.manifold.fill(refit_model.init_manifold.clone())
-silent_shape = copy.copy(modules[0])
-global_translation = copy.copy(modules[1])
-square_size = 1.
-growth_grid_resolution = [math.floor(aabb_source.width/square_size),
-                          math.floor(aabb_source.height/square_size)]
+modules.manifold.fill(refit_model.init_manifold)
+
+square_size = 2.5
+grid_resolution = [math.floor(aabb_source.width/square_size),
+                   math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, growth_grid_resolution)
-growth = copy.copy(modules[2])
 
-# Construct the controls we will give for shooting
-controls = [[torch.tensor([]), torch.tensor([]), global_translation_control, growth_control, translation_control] for growth_control, global_translation_control, translation_control in zip(growth_controls, global_translation_controls, translation_controls)]
+controls = [control[1:] for control in intermediates['controls']]
 
-intermediates_growth = {}
+deformable_shape = imodal.Models.DeformablePoints(shape_source)
+deformable_shape.silent_module.manifold.cotan = refit_model.init_manifold[0].cotan
+deformable_grid = imodal.Models.DeformableGrid(aabb_source, grid_resolution)
+
+intermediates = {}
 with torch.autograd.no_grad():
-    imodal.HamiltonianDynamic.shoot(imodal.HamiltonianDynamic.Hamiltonian([silent_shape, deformation_grid, global_translation, growth, small_scale_translation]), shoot_solver, shoot_it, controls=controls, intermediates=intermediates_growth)
-
-lddmm_deformed_shape = silent_shape.manifold.gd.detach()
-lddmm_deformed_grid = deformation_grid.togrid()
-lddmm_deformed_translation_dots = small_scale_translation.manifold.gd.detach()
+    imodal.Models.deformables_compute_deformed([deformable_shape, deformable_grid], modules[1:], shoot_solver, shoot_it, intermediates=intermediates, controls=controls)
 
 
 ###############################################################################
-# We now plot the deformation grid.
+# Plot the growth trajectory.
 #
-ax = plt.subplot()
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '--', color='black')
-plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '.-', color='red')
-plt.plot(lddmm_deformed_shape[:, 0].numpy(), lddmm_deformed_shape[:, 1].numpy())
-imodal.Utilities.plot_grid(ax, lddmm_deformed_grid[0], lddmm_deformed_grid[1], color='xkcd:light blue', lw=0.4)
-plt.axis('equal')
+
+indices = [0, 3, 7, 10]
+
+fig = plt.figure(figsize=[5.*len(indices), 5.])
+for i, index in enumerate(indices):
+    state = intermediates['states'][index]
+
+    ax = plt.subplot(1, len(indices), i + 1)
+    deformable_grid.silent_module.manifold.fill_gd(state[1].gd)
+    grid_x, grid_y = deformable_grid.silent_module.togrid()
+    imodal.Utilities.plot_grid(ax, grid_x, grid_y, color='xkcd:light blue', lw=0.4)
+
+    plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+    plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+    plt.plot(state[0].gd[:, 0].numpy(), state[0].gd[:, 1].numpy())
+
+    plt.axis('equal')
+    plt.axis('off')
+
+fig.tight_layout()
 plt.show()
+
 
