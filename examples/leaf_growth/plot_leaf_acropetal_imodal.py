@@ -49,14 +49,13 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
-plt.subplot(1, 2, 1)
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='blue')
-plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='blue')
-plt.axis(aabb_target.squared().totuple())
-plt.subplot(1, 2, 2)
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='blue')
-plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='blue')
-plt.axis(aabb_target.squared().totuple())
+plt.title("Source and target")
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
+
+plt.axis('equal')
 plt.show()
 
 
@@ -207,38 +206,37 @@ growth_controls = [control[3] for control in intermediates['controls']]
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-plt.plot(points_growth[:, 0].numpy(), points_growth[:, 1].numpy(), '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.')
-plt.axis(aabb_target.totuple())
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-')
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
+plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.', color='blue')
 plt.axis('equal')
 plt.show()
 
 
 ###############################################################################
-# Evaluate estimated growth factor.
+# Evaluate estimated growth model tensor.
 #
+
 learned_abcd = abcd.detach()
 learned_C = pol(model.init_manifold[3].gd[0].detach(),
                 learned_abcd[0].unsqueeze(1),
                 learned_abcd[1].unsqueeze(1),
                 learned_abcd[2].unsqueeze(1),
                 learned_abcd[3].unsqueeze(1)).transpose(0, 1).unsqueeze(2).detach()
-print("Learned growth constants model parameters:\n {}".format(learned_abcd))
+print("Learned growth model tensor parameters:\n {}".format(learned_abcd))
 
 
 ###############################################################################
@@ -247,7 +245,7 @@ print("Learned growth constants model parameters:\n {}".format(learned_abcd))
 
 ax = plt.subplot()
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=5.)
+imodal.Utilities.plot_C_ellipses(ax, points_growth, learned_C, R=deformed_growth_rot, scale=1.)
 plt.axis(aabb_source.squared().totuple())
 plt.axis('equal')
 plt.show()
@@ -342,7 +340,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 1, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Compute optimized deformation trajectory.
@@ -365,24 +363,20 @@ translation_controls = [control[3] for control in intermediates['controls']]
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-plt.plot(points_growth[:, 0].numpy(), points_growth[:, 1].numpy(), '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.axis(aabb_target.totuple())
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-')
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.axis('equal')
+
 plt.show()
 
 
@@ -394,7 +388,7 @@ plt.show()
 modules = imodal.DeformationModules.CompoundModule(copy.copy(refit_model.modules))
 modules.manifold.fill(refit_model.init_manifold)
 
-square_size = 2.5
+square_size = 1
 grid_resolution = [math.floor(aabb_source.width/square_size),
                    math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, growth_grid_resolution)

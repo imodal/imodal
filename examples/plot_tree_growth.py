@@ -13,8 +13,6 @@ Image registration with an implicit module of order 1. Segmentations given by th
 # Import relevant Python modules.
 #
 
-assert False
-
 import time
 import pickle
 import sys

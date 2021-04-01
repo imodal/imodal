@@ -10,8 +10,6 @@ Basipetal Leaf Growth Model using Implicit Modules
 # Import relevant Python modules.
 #
 
-assert False
-
 import sys
 sys.path.append("../../")
 import math
@@ -52,14 +50,12 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
-plt.subplot(1, 2, 1)
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='blue')
-plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='blue')
-plt.axis('equal')
+plt.title("Source and target")
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
 
-plt.subplot(1, 2, 2)
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='blue')
-plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='blue')
 plt.axis('equal')
 plt.show()
 
@@ -131,7 +127,7 @@ small_scale_translations = imodal.DeformationModules.ImplicitModule0(2, points_s
 
 
 ###############################################################################
-# Define our growth factor model.
+# Define our growth model tensor function.
 #
 
 # The polynomial model for our growth factor.
@@ -147,7 +143,7 @@ def callback_compute_c(init_manifold, modules, parameters, deformables):
     d = abcd[3].unsqueeze(1)
     modules[3].C = pol(init_manifold[3].gd[0], a, b, c, d).transpose(0, 1).unsqueeze(2)
 
-# Initial parameters of our growth factor model.
+# Initial values of our growth model tensor parameters
 abcd = torch.zeros(4, 2)
 abcd[0] = 0.1 * torch.ones(2)
 abcd.requires_grad_()
@@ -198,6 +194,7 @@ with torch.autograd.no_grad():
     deformed = model.compute_deformed(shoot_solver, shoot_it, intermediates=intermediates)
     deformed_shape = deformed[0][0]
     deformed_dots = deformed[1][0]
+
 deformed_growth = intermediates['states'][-1][3].gd[0]
 deformed_growth_rot = intermediates['states'][-1][3].gd[1]
 global_translation_controls = [control[2] for control in intermediates['controls']]
@@ -210,30 +207,29 @@ growth_controls = [control[3] for control in intermediates['controls']]
 
 plt.subplot(1, 3, 1)
 plt.title("Source")
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-')
-plt.plot(points_growth[:, 0].numpy(), points_growth[:, 1].numpy(), '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.')
-plt.axis(aabb_target.totuple())
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-')
-plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-')
-plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.')
-plt.axis(aabb_target.totuple())
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
+plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
 plt.axis('equal')
+
 plt.show()
 
 
 ###############################################################################
-# Evaluate learned growth factor.
+# Evaluate estimated growth model tensor.
 #
 
 learned_abcd = abcd.detach()
@@ -242,11 +238,11 @@ learned_C = pol(model.init_manifold[3].gd[0].detach(),
                 learned_abcd[1].unsqueeze(1),
                 learned_abcd[2].unsqueeze(1),
                 learned_abcd[3].unsqueeze(1)).transpose(0, 1).unsqueeze(2).detach()
-print("Learned growth constants model parameters:\n {}".format(learned_abcd))
+print("Estimated growth model tensor parameters:\n {}".format(learned_abcd))
 
 
 ###############################################################################
-# Plot learned growth factor.
+# Plot estimated growth factor.
 #
 
 ax = plt.subplot()
@@ -276,7 +272,7 @@ growth_grid_resolution = [math.floor(aabb_source.width/square_size),
                           math.floor(aabb_source.height/square_size)]
 deformation_grid = imodal.DeformationModules.DeformationGrid(aabb_source, growth_grid_resolution)
 
-# We construct the controls we will give will shooting.
+# We construct the controls we will give while shooting.
 controls = [[torch.tensor([]), torch.tensor([]), torch.tensor([]), global_translation_control, growth_control] for growth_control, global_translation_control in zip(growth_controls, global_translation_controls)]
 
 # Reshoot.

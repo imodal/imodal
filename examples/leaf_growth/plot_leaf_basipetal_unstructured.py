@@ -50,6 +50,7 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
+plt.title("Source and target")
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
 
@@ -229,6 +230,7 @@ plt.show()
 # Plot source and target.
 #
 
+plt.title("Source and target")
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
 plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
@@ -329,21 +331,21 @@ with torch.autograd.no_grad():
 plt.subplot(1, 3, 1)
 plt.title("Source")
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), '-', color='black')
-plt.axis(aabb_target.totuple())
+plt.plot(dots_source[:, 0].numpy(), dots_source[:, 1].numpy(), '.', color='black')
 plt.axis('equal')
 
 plt.subplot(1, 3, 2)
 plt.title("Deformed source")
 plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
 plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
-plt.axis(aabb_target.totuple())
 plt.axis('equal')
 
 plt.subplot(1, 3, 3)
 plt.title("Deformed source and target")
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
+plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
 plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
-plt.axis(aabb_target.totuple())
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
 plt.axis('equal')
 
 plt.tight_layout()

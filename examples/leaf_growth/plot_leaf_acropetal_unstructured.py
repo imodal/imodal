@@ -41,7 +41,7 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 # Plot source and target.
 #
 
-plt.title("Target and target")
+plt.title("Source and target")
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='black')
 plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='red')
 
@@ -114,7 +114,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 10, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -165,7 +165,7 @@ translations.manifold.fill(model.init_manifold[1])
 
 aabb_source.scale_(1.2)
 # Define the deformation grid.
-square_size = 2.5
+square_size = 1
 grid_resolution = [math.floor(aabb_source.width/square_size),
                    math.floor(aabb_source.height/square_size)]
 
