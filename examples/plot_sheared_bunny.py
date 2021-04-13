@@ -9,7 +9,6 @@ Sheared bunny
 # Important relevant Python modules.
 #
 
-assert False
 
 import sys
 sys.path.append("../")
@@ -22,12 +21,19 @@ import imodal
 
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
-device = 'cuda:2'
-# device = 'cpu'
+#device = 'cuda:2'
+device = 'cpu'
+
+print(sys.path)
+
+import pykeops
+print(pykeops.config.bin_folder)
+
 
 ###############################################################################
 # Load source and target data.
 #
+
 
 data_folder = "../data/"
 source_mesh = meshio.read(data_folder+"bunny.ply")

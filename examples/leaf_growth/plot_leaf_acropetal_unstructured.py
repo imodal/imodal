@@ -42,8 +42,8 @@ aabb_target = imodal.Utilities.AABB.build_from_points(shape_target)
 #
 
 plt.title("Source and target")
-plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='black')
-plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='red')
+plt.plot(shape_source[:, 0].numpy(), shape_source[:, 1].numpy(), color='black')
+plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), color='red')
 
 plt.axis('equal')
 plt.show()
