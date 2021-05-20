@@ -21,8 +21,8 @@ import imodal
 
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('keops')
-#device = 'cuda:2'
-device = 'cpu'
+device = 'cuda:2'
+#device = 'cpu'
 
 print(sys.path)
 
@@ -168,11 +168,10 @@ model.to_device(device)
 # Fitting using Torch LBFGS optimizer.
 #
 
-shoot_solver = 'midpoint'
+shoot_solver = 'rk4'
 shoot_it = 10
 costs = {}
-# fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter = imodal.Models.Fitter(model, optimizer='scipy_l-bfgs-b')
+fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
 
 fitter.fit(deformable_target, 1000, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it})
 

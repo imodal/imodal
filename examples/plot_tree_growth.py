@@ -197,6 +197,7 @@ print("Elapsed={elapsed}".format(elapsed=time.perf_counter()-start))
 # Display deformed source image and target.
 #
 
+plt.figure(figsize=[15., 5.])
 plt.subplot(1, 3, 1)
 plt.title("Source")
 plt.imshow(source_image, extent=extent.totuple(), origin='lower')
@@ -270,7 +271,7 @@ def compute_intermediate_deformed(it, controls, t1, intermediates=None):
 
     costs = {}
     with torch.autograd.no_grad():
-        deformed = imodal.Models.deformables_compute_deformed([source_deformable, grid_deformable], [implicit1, global_translation], 'euler', it, controls=controls, t1=t1, intermediates=intermediates, costs=costs)
+        deformed = imodal.Models.deformables_compute_deformed([source_deformable, grid_deformable], [implicit1, global_translation], shoot_solver, it, controls=controls, t1=t1, intermediates=intermediates, costs=costs)
 
     return deformed[0][0]
 

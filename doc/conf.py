@@ -66,7 +66,9 @@ sphinx_gallery_conf = {
     # 'gallery_dirs': ["./_auto_tutorials"],
     # ),
     # 'within_subsection_order': FileNameSortKey
+    # 'filename_pattern': "plot_sheared_bunny.py"
 }
+
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
