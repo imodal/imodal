@@ -82,6 +82,7 @@ plt.show()
 #
 
 sigma = 4./points_density**(1/2)
+print(sigma)
 translations = imodal.DeformationModules.Translations(2, points_translations.shape[0], sigma, gd=points_translations)
 
 
@@ -102,8 +103,9 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
     [translations],
-    [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
-    lam=10.)
+    [imodal.Attachment.VarifoldAttachment(2, [30., 100., 250.])],
+    # [imodal.Attachment.VarifoldAttachment(2, [300.])],
+    lam=1e5)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -114,7 +116,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################

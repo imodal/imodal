@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import imodal
 
 imodal.Utilities.set_compute_backend('torch')
-
+torch.set_default_dtype(torch.float64)
 
 ###############################################################################
 # We load the data
@@ -125,7 +125,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 2, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################

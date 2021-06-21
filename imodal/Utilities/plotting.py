@@ -109,7 +109,7 @@ def plot_C_ellipses(ax, pos, C, R=None, c_index=0, scale=1., **kwargs):
         e = Ellipse(xy=pos[i], width=abs(C_i[0].item()), height=abs(C_i[1].item()), angle=angle[i].item(), **kwargs)
         a = 0.5*(1+torch.sign(C_i[0])).item()
         b = 0.5*(1+torch.sign(C_i[1])).item()
-        e.set_facecolor((0.5-0.25*(a+b), 0, 0.5+0.25*(a+b)))
+        # e.set_facecolor((0.5-0.25*(a+b), 0, 0.5+0.25*(a+b)))
         ax.add_artist(e)
         # ax.add_artist(Ellipse(xy=pos[i], width=abs(C_i[0].item()), height=abs(C_i[1].item()), angle=angle[i].item(), **kwargs))
 

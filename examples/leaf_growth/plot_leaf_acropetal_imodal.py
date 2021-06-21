@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 
 import imodal
 
+torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('torch')
 
 
@@ -168,9 +169,9 @@ deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source, deformable_dots_source],
     [global_translation, growth, small_scale_translations],
-    [imodal.Attachment.VarifoldAttachment(2, [50., 300.]),
-     imodal.Attachment.EuclideanPointwiseDistanceAttachment(100.)],
-    lam=200., other_parameters={'abcd': {'params': [abcd]}},
+    [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.]),
+     imodal.Attachment.EuclideanPointwiseDistanceAttachment(10.)],
+    lam=1e5, other_parameters={'abcd': {'params': [abcd]}},
     precompute_callback=callback_compute_c)
 
 ###############################################################################
@@ -182,7 +183,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target, deformable_dots_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target, deformable_dots_target], 200, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
@@ -221,7 +222,8 @@ plt.title("Deformed source and target")
 plt.plot(shape_target[:, 0].numpy(), shape_target[:, 1].numpy(), '-', color='red')
 plt.plot(dots_target[:, 0].numpy(), dots_target[:, 1].numpy(), '.', color='red')
 plt.plot(deformed_shape[:, 0], deformed_shape[:, 1], '-', color='blue')
-plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.', color='blue')
+plt.plot(deformed_dots[:, 0], deformed_dots[:, 1], '.', color='blue')
+# plt.plot(deformed_growth[:, 0], deformed_growth[:, 1], '.', color='blue')
 plt.axis('equal')
 plt.show()
 
@@ -327,8 +329,8 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
 refit_model = imodal.Models.RegistrationModel([deformable_shape_source],
                 [global_translation, growth, small_scale_translation],
-                [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
-                lam=200.)
+                [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.])],
+                lam=1e5)
 
 
 ###############################################################################
@@ -340,7 +342,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 200, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Compute optimized deformation trajectory.
