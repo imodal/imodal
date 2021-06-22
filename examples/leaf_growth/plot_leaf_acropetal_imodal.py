@@ -71,7 +71,7 @@ points_density = 0.05
 
 aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
 
-points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, points_density, shape=shape_source)
+points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, points_density, shape=1.5*shape_source)
 
 # Initial normal frames for the growth module.
 rot_growth = torch.stack([imodal.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
@@ -169,9 +169,9 @@ deformable_dots_target = imodal.Models.DeformablePoints(dots_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source, deformable_dots_source],
     [global_translation, growth, small_scale_translations],
-    [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.]),
-     imodal.Attachment.EuclideanPointwiseDistanceAttachment(10.)],
-    lam=1e5, other_parameters={'abcd': {'params': [abcd]}},
+    [imodal.Attachment.VarifoldAttachment(2, [50., 300.]),
+     imodal.Attachment.EuclideanPointwiseDistanceAttachment(100.)],
+    lam=200., other_parameters={'abcd': {'params': [abcd]}},
     precompute_callback=callback_compute_c)
 
 ###############################################################################
@@ -329,8 +329,8 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 
 refit_model = imodal.Models.RegistrationModel([deformable_shape_source],
                 [global_translation, growth, small_scale_translation],
-                [imodal.Attachment.VarifoldAttachment(2, [20., 100., 250.])],
-                lam=1e5)
+                [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
+                lam=100)
 
 
 ###############################################################################
@@ -342,7 +342,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 200, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Compute optimized deformation trajectory.
