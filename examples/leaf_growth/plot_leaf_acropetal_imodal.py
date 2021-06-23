@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 import imodal
 
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 imodal.Utilities.set_compute_backend('torch')
 ###############################################################################
 # Learning the growth model tensor

@@ -31,9 +31,6 @@ imodal.Utilities.set_compute_backend('torch')
 # First, we generate the **source** (circle) and the **target** (square) and plot them.
 #
 
-# nb_points_source = 50
-# radius = 1.
-# source = radius*imodal.Utilities.generate_unit_circle(nb_points_source)
 
 nb_points_square_side = 12
 source = imodal.Utilities.generate_unit_square(nb_points_square_side)
@@ -71,11 +68,7 @@ target_deformable = imodal.Models.DeformablePoints(target)
 #
 
 sigma_translation = 1.
-# sigma_translation1 = 0.1
-# sigma_translation2 = 0.2
 translation = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation, nu=1e-4, gd=source)
-# translation1 = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation1, gd=source, nu=0.1)
-# translation2 = imodal.DeformationModules.ImplicitModule0(2, source.shape[0], sigma_translation2, gd=source, nu=0.1)
 
 
 ###############################################################################
@@ -192,7 +185,6 @@ display_index = [0, 3, 7, 10]
 plt.figure(figsize=[3.*len(display_index), 3.])
 for count, i in enumerate(display_index):
     ax = plt.subplot(1, len(display_index), 1+count)
-    # ax.set_title("t={}".format(i/10.))
 
     deformed_i = intermediates_grid['states'][i][0].gd
 

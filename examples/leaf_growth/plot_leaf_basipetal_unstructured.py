@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import imodal
 
 imodal.Utilities.set_compute_backend('torch')
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 ###############################################################################
 # We load the data
