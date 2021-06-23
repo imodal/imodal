@@ -11,7 +11,7 @@ Acropetal Leaf Growth Model Using Implicit Modules
 #
 
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 import math
 import copy
 import pickle
@@ -24,8 +24,6 @@ import imodal
 
 torch.set_default_dtype(torch.float64)
 imodal.Utilities.set_compute_backend('torch')
-
-
 ###############################################################################
 # Learning the growth model tensor
 # --------------------------------
@@ -72,6 +70,8 @@ points_density = 0.05
 aabb_source = imodal.Utilities.AABB.build_from_points(shape_source)
 
 points_growth = imodal.Utilities.fill_area_uniform_density(imodal.Utilities.area_shape, aabb_source, points_density, shape=1.5*shape_source)
+points_growth_mask = imodal.Utilities.area_shape(points_growth, shape=1.*shape_source)
+points_growth = points_growth[points_growth_mask]
 
 # Initial normal frames for the growth module.
 rot_growth = torch.stack([imodal.Utilities.rot2d(0.)]*points_growth.shape[0], axis=0)
@@ -342,7 +342,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(refit_model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 100, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 200, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 ###############################################################################
 # Compute optimized deformation trajectory.

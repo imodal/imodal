@@ -15,14 +15,14 @@ import copy
 import pickle
 
 import torch
+print(torch.__version__)
 
 import matplotlib.pyplot as plt
 
 import imodal
 
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 imodal.Utilities.set_compute_backend('torch')
-
 ###############################################################################
 # We load the data (shape of the source and target leaves).
 #
@@ -103,9 +103,8 @@ deformable_shape_target = imodal.Models.DeformablePoints(shape_target)
 model = imodal.Models.RegistrationModel(
     [deformable_shape_source],
     [translations],
-    [imodal.Attachment.VarifoldAttachment(2, [30., 100., 250.])],
-    # [imodal.Attachment.VarifoldAttachment(2, [300.])],
-    lam=1e5)
+    [imodal.Attachment.VarifoldAttachment(2, [50., 300.])],
+    lam=10.)
 
 ###############################################################################
 # Fitting using Torch LBFGS optimizer.
@@ -116,7 +115,7 @@ shoot_it = 10
 
 costs = {}
 fitter = imodal.Models.Fitter(model, optimizer='torch_lbfgs')
-fitter.fit([deformable_shape_target], 500, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
+fitter.fit([deformable_shape_target], 50, costs=costs, options={'shoot_solver': shoot_solver, 'shoot_it': shoot_it, 'line_search_fn': 'strong_wolfe'})
 
 
 ###############################################################################
