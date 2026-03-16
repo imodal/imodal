@@ -1,0 +1,9 @@
+torch
+torchdiffeq
+torchviz
+matplotlib
+geomloss
+scipy
+meshio
+numpy
+pykeops
