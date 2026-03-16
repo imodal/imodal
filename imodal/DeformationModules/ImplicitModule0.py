@@ -9,7 +9,7 @@ from imodal.StructuredFields import StructuredField_0
 
 
 class ImplicitModule0Base(DeformationModule):
-    """Implicit module of order 0. Effectively identical to a local translation module with the added benefit of better numerical behaviour thanks to the `nu` parameters (explain)."""
+    """Implicit module of order 0. Effectively identical to a local translation module with the added benefit of better numerical behaviour thanks to the `nu` parameters."""
 
     def __init__(self, manifold, sigma, nu, coeff, label):
         assert isinstance(manifold, Landmarks)
@@ -58,23 +58,26 @@ class ImplicitModule0Base(DeformationModule):
     def nu(self):
         return self.__nu
 
-    def __get_controls(self):
+    def get_controls(self):
         return self.__controls
 
-    def fill_controls(self, controls):
+    def set_controls(self, controls):
         self.__controls = controls
 
-    def __get_coeff(self):
+    def get_coeff(self):
         return self.__coeff
 
-    def __set_coeff(self, coeff):
+    def set_coeff(self, coeff):
         self.__coeff = coeff
 
-    coeff = property(__get_coeff, __set_coeff)
-    controls = property(__get_controls, fill_controls)
+    coeff = property(get_coeff, set_coeff)
+    controls = property(get_controls, set_controls)
 
     def fill_controls_zero(self):
         self.__controls = torch.zeros_like(self.__manifold.gd, device=self.device)
+
+    def fill_controls(self, controls):
+        self.__controls = controls.clone()
 
     def __call__(self, points, k=0):
         return self.field_generator()(points, k)
@@ -101,15 +104,15 @@ class ImplicitModule0_Torch(ImplicitModule0Base):
         return 'torch'
 
     def cost(self):
-        K_q = K_xx(self.manifold.gd, self.sigma) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
-        m = torch.mm(K_q , self.controls)
+        K_q = K_xx(self.manifold.gd, self.sigma)
+        m = torch.mm(K_q , self.controls) + self.nu * self.controls
         return 0.5 * self.coeff * torch.dot(m.flatten(), self.controls.flatten())
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
         K_q = K_xx(self.manifold.gd, self.sigma) + self.nu * torch.eye(self.manifold.nb_pts, device=self.device)
-        controls, _ = torch.solve(vs(self.manifold.gd), K_q)
-        self.controls = controls/self.coeff
+        controls = torch.linalg.solve(K_q, vs(self.manifold.gd))
+        self.set_controls(controls/self.coeff)
 
 
 class ImplicitModule0_KeOps(ImplicitModule0Base):
@@ -121,43 +124,51 @@ class ImplicitModule0_KeOps(ImplicitModule0Base):
         if str(self.device) != 'cpu':
             self.__keops_backend = 'GPU'
 
-        self.__keops_invsigmasq = torch.tensor([1./sigma/sigma], dtype=manifold.dtype, device=manifold.device)
+        self.__keops_invsigmasq = torch.tensor([0.5/sigma/sigma], dtype=manifold.dtype, device=manifold.device)
 
-        formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*px | py)"
+        formula_cost = "(Exp(-S*SqNorm2(x - y))*px | py)"
         alias_cost = ["x=Vi({dim})".format(dim=self.dim),
                       "y=Vj({dim})".format(dim=self.dim),
                       "px=Vi({dim})".format(dim=self.dim),
                       "py=Vj({dim})".format(dim=self.dim),
                       "S=Pm(1)"]
-        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0, dtype=self.__keops_dtype)
+        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0)
 
-        formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*X"
+        formula_cgc = "Exp(-S*SqNorm2(x - y))*X"
         alias_cgc = ["x=Vi({dim})".format(dim=self.dim),
                      "y=Vj({dim})".format(dim=self.dim),
                      "X=Vj({dim})".format(dim=self.dim),
                      "S=Pm(1)"]
-        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype=self.__keops_dtype)
+        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1)
+
+        self.eps = torch.finfo(manifold.dtype).eps
+
 
     @property
     def backend(self):
         return 'keops'
 
-    def to_(self, *args, **kwargs):
-        super().to_(*args, **kwargs)
-        self.__keops_invsigmasq = self.__keops_invsigmasq.to(*args, **kwargs)
-
-        if 'device' in kwargs:
-            if kwargs['device'].split(":")[0].lower() == "cuda":
-                self.__keops_backend = 'GPU'
-            elif kwargs['device'].split(":")[0].lower() == "cpu":
-                self.__keops_backend = 'CPU'
-
     def cost(self):
-        return (0.5 * self.coeff * self.reduction_cost(self.manifold.gd, self.manifold.gd, self.controls, self.controls, self.__keops_invsigmasq, backend=self.__keops_backend)).sum() + (self.nu*self.controls**2).sum()
+        red_cost = self.reduction_cost(self.manifold.gd,
+                                       self.manifold.gd,
+                                       self.controls,
+                                       self.controls,
+                                       self.__keops_invsigmasq,
+                                       backend=self.__keops_backend).sum()
+        ctrl_cost = (self.controls ** 2).sum()
+        return 0.5 * self.coeff * (red_cost + self.nu * ctrl_cost)
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)(self.manifold.gd)
-        self.fill_controls(self.solve_cgc(self.manifold.gd, self.manifold.gd, vs, self.__keops_invsigmasq, backend=self.__keops_backend, alpha=self.nu).reshape(self.manifold.nb_pts, self.dim)/self.coeff)
+        controls = self.solve_cgc(self.manifold.gd,
+                                  self.manifold.gd,
+                                  vs,
+                                  self.__keops_invsigmasq,
+                                  backend=self.__keops_backend,
+                                  alpha=self.nu,
+                                  eps=self.eps,
+                                 ).reshape(self.manifold.nb_pts, self.dim)
+        self.set_controls(controls / self.coeff)
 
 
 ImplicitModule0 = create_deformation_module_with_backends(ImplicitModule0_Torch.build, ImplicitModule0_KeOps.build)

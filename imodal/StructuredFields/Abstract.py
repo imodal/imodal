@@ -57,7 +57,7 @@ class KernelSupportStructuredField(StructuredField):
     def __init__(self, support, moments, sigma, device, backend):
         assert support.dtype == moments.dtype
         assert support.device == moments.device
-        assert support.shape[1] == moments.shape[1] # Compare dimensions
+        #assert support.shape[1] == moments.shape[1] # Compare dimensions
 
         super().__init__(support.shape[1], support.device, backend)
         self.__support = support

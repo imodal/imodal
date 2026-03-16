@@ -26,14 +26,14 @@ class StructuredField_0(KernelSupportStructuredField):
             kernel_formula = "Exp(-S*SqNorm2(x - y)/IntCst(2))"
             formula = kernel_formula + "*p"
             alias = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "p=Vj("+str(self.dim)+")", "S=Pm(1)"]
-            reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=self._keops_dtype)
+            reduction = Genred(formula, alias, reduction_op='Sum', axis=1)
             return reduction(points, self.support, self.moments, self._keops_sigma, backend=self._keops_backend).reshape(-1, self.dim)
 
         if k == 1:
             kernel_formula = "-S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(x - y)"
             formula = "TensorProd(" + kernel_formula + ", p)"
             alias = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "p=Vj("+str(self.dim)+")", "S=Pm(1)"]
-            reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=self._keops_dtype)
+            reduction = Genred(formula, alias, reduction_op='Sum', axis=1)
             return reduction(points, self.support, self.moments, self._keops_sigma, backend=self._keops_backend).reshape(-1, self.dim, self.dim).transpose(1, 2).contiguous()
 
         else:

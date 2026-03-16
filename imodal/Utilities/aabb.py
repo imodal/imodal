@@ -1,7 +1,7 @@
 import itertools
 import math
 import copy
-from collections import Iterable
+from collections.abc import Iterable
 
 import torch
 import numpy as np
@@ -247,6 +247,18 @@ class AABB:
         grids = torch.meshgrid([torch.linspace(kmin, kmax, count, dtype=dtype, device=device) for kmin, kmax, count in zip(self.__kmin, self.__kmax, counts)])
         return grid2vec(*grids)
 
+    def fill_uniform_spacing_grid(self, spacing, dtype=None, device=None):
+        """ Fill the AABB uniformly.
+        Uses a spacing parameters which represent the length between each points on each axis.
+
+        Returns
+        -------
+        torch.Tensor
+            [:math:'N', dim] shaped tensor with :math:'N' the number of points inside the AABB.
+        """
+        grids = torch.meshgrid([torch.arange(kmin, kmax, step=spacing, dtype=dtype, device=device) for kmin, kmax in zip(self.__kmin, self.__kmax)])
+        return grids
+    
     def fill_uniform_spacing(self, spacing, dtype=None, device=None):
         """ Fill the AABB uniformly.
         Uses a spacing parameters which represent the length between each points on each axis.

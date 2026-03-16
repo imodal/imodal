@@ -66,7 +66,7 @@ class GlobalTranslation(DeformationModule):
         return 0.5 * self.__coeff * torch.dot(self.__controls, self.__controls)
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from StructuredField vs."""
+        """Computes geodesic control."""
         geodesic_controls = torch.zeros_like(self.__controls)
         for i in range(self.__controls.shape[0]):
             cont_i = torch.zeros_like(self.__controls)

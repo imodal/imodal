@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections.abc import Iterable
 
 import torch
 from pykeops.torch import Genred
@@ -11,6 +11,9 @@ from imodal.Kernels import K_xy
 
 class VarifoldAttachmentBase(Attachment):
     def __init__(self, sigmas, weight=1.):
+        """
+        sigmas: list of non negative scalars
+        """
         assert isinstance(sigmas, Iterable)
         super().__init__(weight=weight)
         self.__sigmas = sigmas
@@ -141,7 +144,7 @@ class VarifoldAttachment3D_KeOps(VarifoldAttachment3D):
                      "p=Vj(1)",
                      "S=Pm(1)"]
 
-            self.__K = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(x.dtype).split('.')[1])
+            self.__K = Genred(formula, alias, reduction_op='Sum', axis=1)
             self.__keops_backend = 'CPU'
             if str(x.device) != 'cpu':
                 self.__keops_backend = 'GPU'

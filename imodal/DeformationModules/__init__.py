@@ -8,4 +8,6 @@ from imodal.DeformationModules.GlobalTranslation import GlobalTranslation
 from imodal.DeformationModules.OrientedTranslation import OrientedTranslations
 from imodal.DeformationModules.Linear import LinearDeformation
 from imodal.DeformationModules.LocalConstrainedTranslations import LocalScaling, LocalRotation
+from imodal.DeformationModules.ImplicitDivFree import ImplicitDivFree
+from imodal.DeformationModules.ImplicitARAP import ImplicitARAP
 

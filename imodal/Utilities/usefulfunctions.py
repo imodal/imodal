@@ -1,5 +1,5 @@
 import math
-from collections import Iterable
+from collections.abc import Iterable
 
 from torchviz import make_dot
 import torch
@@ -297,7 +297,7 @@ def export_mesh(filename, points, triangles):
 
 
 def export_mesh_points(filename, points):
-    meshio.write_points_cells(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0]).view(1, -1).numpy())])
+    meshio.write_points_cells(filename, points.numpy(), [('polygon'+str(points.shape[0]), torch.arange(points.shape[0], device=points.device).view(1, -1).numpy())])
 
 def export_implicit1_growth(filename, points, growth):
     assert growth.shape[2] == 1

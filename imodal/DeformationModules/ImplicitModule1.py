@@ -1,18 +1,37 @@
 import torch
-import pickle
 
-from pykeops.torch import Genred, KernelSolve
+from pykeops.torch import Vi, Vj
 
 from imodal.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
-from imodal.Kernels.SKS import eta, compute_sks, A
+from imodal.Kernels.SKS import eta, compute_sks, compute_sks_keops
 from imodal.Manifolds import NormalFrame
 from imodal.StructuredFields import StructuredField_p
 
 
 class ImplicitModule1Base(DeformationModule):
-    """ Implicit module of order 1. """
+    """ 
+    Implicit module of order 1. 
+    
+    the generated field v for 
+         GD $q= ((x_1, R_1), .. , (x_N, R_N))$ 
+         control $h = (h_1, ..., h_r)$
+      satisfies the following soft constraints:
+             - minimal norm
+             - prescribed value for the infinitesimal strain tensors 1/2 ( Dv(x_i) + Dv(x_i)^T) = R_i diag(C[i,:,:] @ h)R_i^T
+      and minimizes :
+       |v|^2_V + 1/nu \sum_i  1/2 | Dv(x_i) + Dv(x_i)^T - R_i diag(C[i,:,:] @ h)R_i^T |^2$
+      
+         
+    """
 
     def __init__(self, manifold, sigma, C, nu, coeff, label):
+        """
+        manifold: Normal Frame manifold of N orthogonal frames (x_i, R_i)
+        sigma : non negative scalar, scale of the scalar Gaussian RKHS V of generated vector fields
+        C : N x d x r with N the number of orthonormal frames, d the dimension of the ambient space and r the dimension of the control space
+        nu : defines coeff 1/nu penalizing the constraint 1/nu\sum_i  1/2 | Dv(x_i) + Dv(x_i)^T - R_i diag(C[i,:,:] @ h)R_i^T |^2
+        """
+        
         assert isinstance(manifold, NormalFrame)
         super().__init__(label)
         self.__manifold = manifold
@@ -122,28 +141,33 @@ class ImplicitModule1Base(DeformationModule):
 class ImplicitModule1_Torch(ImplicitModule1Base):
     def __init__(self, manifold, sigma, C, nu, coeff, label):
         super().__init__(manifold, sigma, C, nu, coeff, label)
+        self.eta = eta(self.dim, device=self.device)       # dim * dim * sym_dim
+        self.u = torch.einsum("rs, nst, mru -> tumn",
+                              torch.eye(self.dim, device=self.device),
+                              self.eta,
+                              self.eta)  # Dimension: sym_dim * sym_dim * dim * dim
 
     @property
     def backend(self):
         return 'torch'
 
     def cost(self):
-        return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
+        return 0.5 * self.coeff * torch.dot(self.__aqh.flatten(), self.__lambdas.view(-1))
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
         d_vx = vs(self.manifold.gd[0], k=1)
 
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
-        S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
+        S = torch.tensordot(S, self.eta, dims=2)
 
         self.__compute_sks()
 
-        tlambdas, _ = torch.solve(S.view(-1, 1), self.__sks)
+        tlambdas = torch.linalg.solve(self.__sks, S.view(-1, 1))
         tlambdas = tlambdas/self.coeff
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
-        c, _ = torch.solve(torch.mm(aq.t(), tlambdas), aqkiaq)
+        c= torch.linalg.solve(aqkiaq, torch.mm(aq.t(), tlambdas))
         self.controls = c.reshape(-1)
         self.__compute_moments()
 
@@ -152,18 +176,28 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
         self.__compute_moments()
 
     def __compute_aqh(self, h):
-        R = self.manifold.gd[1].view(-1, self.manifold.dim, self.manifold.dim)
+        R = self.manifold.gd[1]
 
-        return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.C, h, torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(self.dim, device=self.device))
+        return torch.einsum('nli, nik, k, nui, niv, lvt -> nt',
+                            R,
+                            self.C,
+                            h,
+                            torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1),
+                            torch.transpose(R, 1, 2),
+                            self.eta
+                            )
 
     def __compute_sks(self):
-        self.__sks = compute_sks(self.manifold.gd[0], self.sigma, 1) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
+        self.__sks = compute_sks(self.manifold.gd[0], self.sigma, 1, u=self.u) + self.nu * torch.eye(self.sym_dim * self.manifold.nb_pts, device=self.device)
 
     def __compute_moments(self):
         self.__aqh = self.__compute_aqh(self.controls)
-        lambdas, _ = torch.solve(self.__aqh.view(-1, 1), self.__sks)
+        lambdas = torch.linalg.solve(self.__sks, self.__aqh.flatten())
         self.__lambdas = lambdas.contiguous()
-        self.moments = torch.tensordot(self.__lambdas.view(-1, self.sym_dim), torch.transpose(eta(self.manifold.dim, device=self.device), 0, 2), dims=1)
+        self.moments = torch.tensordot(self.__lambdas.view(-1, self.sym_dim),
+                                       torch.transpose(self.eta, 0, 2),
+                                       dims=1)
+
 
     def __compute_aqkiaq(self):
         lambdas = torch.zeros(self.dim_controls, self.sym_dim * self.manifold.nb_pts, device=self.device)
@@ -173,7 +207,7 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
             h[i] = 1.
             aqi = self.__compute_aqh(h).flatten()
             aq[:, i] = aqi
-            l, _ = torch.solve(aqi.view(-1, 1), self.__sks)
+            l = torch.linalg.solve(self.__sks, aqi.view(-1, 1))
             lambdas[i, :] = l.flatten()
 
         return (aq, torch.mm(lambdas, aq))
@@ -182,29 +216,13 @@ class ImplicitModule1_Torch(ImplicitModule1Base):
 class ImplicitModule1_KeOps(ImplicitModule1Base):
     def __init__(self, manifold, sigma, C, nu, coeff, label):
         super().__init__(manifold, sigma, C, nu, coeff, label)
+        self.eta = eta(self.manifold.dim, device=self.device)
+        self.u = torch.einsum("rs, nst, mru -> tumn",
+                         torch.eye(self.dim, device=self.device),
+                         self.eta,
+                         self.eta)                # Dimension: sym_dim * sym_dim * dim * dim
+        self.eps = torch.finfo(manifold.dtype).eps
 
-        self.__keops_dtype = str(manifold.gd[0].dtype).split(".")[1]
-        self.__keops_backend = 'CPU'
-        if str(self.device) != 'cpu':
-            self.__keops_backend = 'GPU'
-
-        self.__keops_invsigmasq = torch.tensor([1./sigma/sigma], dtype=manifold.dtype, device=self.device)
-        self.__keops_eye = torch.eye(self.dim, device=self.device, dtype=manifold.dtype).flatten()
-
-        self.__keops_A = A(self.dim, device=self.device, dtype=manifold.dtype).flatten()
-
-        formula_solve_sks = "TensorDot(TensorDot((-S*Exp(-S*SqNorm2(x_i - y_j)*IntInv(2))*(S*TensorDot(x_i - y_j, x_i - y_j, Ind({dim}), Ind({dim}), Ind(), Ind()) - eye)), A, Ind({dim}, {dim}), Ind({dim}, {dim}, {symdim}, {symdim}), Ind(0, 1), Ind(0, 1)), X, Ind({symdim}, {symdim}), Ind({symdim}), Ind(0), Ind(0))".format(dim=self.dim, symdim=self.sym_dim)
-
-        alias_solve_sks = ["x_i=Vi({dim})".format(dim=self.dim),
-                           "y_j=Vj({dim})".format(dim=self.dim),
-                           "X=Vj({symdim})".format(symdim=self.sym_dim),
-                           "eye=Pm({dimsq})".format(dimsq=self.dim*self.dim),
-                           "S=Pm(1)",
-                           "A=Pm({dima})".format(dima=self.__keops_A.numel())]
-
-        self.solve_sks = KernelSolve(formula_solve_sks, alias_solve_sks, "X", axis=1, dtype=self.__keops_dtype)
-
-        self.eps = 1e-6
 
     @property
     def backend(self):
@@ -212,9 +230,6 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
 
     def to_(self, *args, **kwargs):
         super().to_(*args, **kwargs)
-        self.__keops_invsigmasq = self.__keops_invsigmasq.to(*args, **kwargs)
-        self.__keops_eye = self.__keops_eye.to(*args, **kwargs)
-        self.__keops_A = self.__keops_A.to(*args, **kwargs)
 
         if 'device' in kwargs:
             if kwargs['device'].split(":")[0].lower() == "cuda":
@@ -223,36 +238,53 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
                 self.__keops_backend = 'CPU'
 
     def cost(self):
-        return 0.5 * self.coeff * torch.dot(self.__aqh.view(-1), self.__lambdas.view(-1))
+        return 0.5 * self.coeff * torch.dot(self.aqh.flatten(), self.lambdas.flatten())
 
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
-        d_vx = vs(self.manifold.gd[0].view(-1, self.manifold.dim), k=1)
+        d_vx = vs(self.manifold.gd[0], k=1)
 
         S = 0.5 * (d_vx + torch.transpose(d_vx, 1, 2))
-        S = torch.tensordot(S, eta(self.manifold.dim, device=self.device), dims=2)
+        S = torch.tensordot(S, self.eta, dims=2)
 
-        tlambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), S, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=self.eps)/self.coeff
+        self.__compute_sks()
+        tlambdas = self.__sks(S.reshape(-1, 1))
+        tlambdas = tlambdas.reshape(-1, self.sym_dim) / self.coeff
 
         (aq, aqkiaq) = self.__compute_aqkiaq()
-
-        c, _ = torch.solve(torch.mm(aq.t(), tlambdas.view(-1, 1)), aqkiaq)
-
+        c = torch.linalg.solve(aqkiaq, torch.mm(aq.t(), tlambdas.view(-1, 1)))
         self.controls = c.flatten()
-        self.__compute_moments()
+
+        # self.compute_moments()
 
     def compute_moments(self):
+        self.__compute_sks()
         self.__compute_moments()
+
+    def __compute_sks(self):
+        self.__sks = compute_sks_keops(self.manifold.gd[0], self.sigma, 1, u=self.u).solve(Vi(0, 1),
+                                                                                     var=Vj(0, 1),
+                                                                                     alpha=self.nu,
+                                                                                     eps=self.eps)
 
     def __compute_aqh(self, h):
         R = self.manifold.gd[1]
 
-        return torch.einsum('nli, nik, k, nui, niv, lvt->nt', R, self.C, h, torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1), torch.transpose(R, 1, 2), eta(self.manifold.dim, device=self.device))
+        return torch.einsum('nli, nik, k, nui, niv, lvt -> nt',
+                            R,
+                            self.C,
+                            h,
+                            torch.eye(self.manifold.dim, device=self.device).repeat(self.manifold.nb_pts, 1, 1),
+                            torch.transpose(R, 1, 2),
+                            self.eta
+                            )
 
     def __compute_moments(self):
-        self.__aqh = self.__compute_aqh(self.controls)
-        self.__lambdas = self.solve_sks(self.manifold.gd[0].reshape(-1, self.dim), self.manifold.gd[0].reshape(-1, self.dim), self.__aqh, self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu)
-        self.moments = torch.tensordot(self.__lambdas.view(-1, self.sym_dim), torch.transpose(eta(self.manifold.dim, device=self.device), 0, 2), dims=1)
+        self.aqh = self.__compute_aqh(self.controls)
+        self.lambdas = self.__sks(self.aqh.reshape(-1, 1))
+        self.moments = torch.tensordot(self.lambdas.view(-1, self.sym_dim),
+                                       torch.transpose(self.eta, 0, 2),
+                                       dims=1)
 
     def __compute_aqkiaq(self):
         lambdas = torch.zeros(self.dim_controls, self.sym_dim * self.manifold.nb_pts, device=self.device)
@@ -263,10 +295,9 @@ class ImplicitModule1_KeOps(ImplicitModule1Base):
             aqi = self.__compute_aqh(h).flatten()
             aq[:, i] = aqi
 
-            lambdas[i, :] = self.solve_sks(self.manifold.gd[0], self.manifold.gd[0], aqi.view(-1, self.sym_dim), self.__keops_eye, self.__keops_invsigmasq, self.__keops_A, backend=self.__keops_backend, alpha=self.nu, eps=self.eps).view(-1)
+            lambdas[i, :] = self.__sks(aqi.reshape(-1, 1)).view(-1)
 
         return (aq, torch.mm(lambdas, aq))
 
 
 ImplicitModule1 = create_deformation_module_with_backends(ImplicitModule1_Torch.build, ImplicitModule1_KeOps.build)
-

@@ -1,5 +1,5 @@
 import os
-from collections import Iterable
+from collections.abc import Iterable
 import pickle
 import copy
 
@@ -52,7 +52,8 @@ class Deformable:
 
 class DeformableGrid(Deformable):
     def __init__(self, extent, resolution, module_label=None):
-        self.__silent_module = DeformationGrid(extent, resolution, label=module_label)
+        self.__silent_module = DeformationGrid(
+            extent, resolution, label=module_label)
 
     @property
     def silent_module(self):
@@ -81,9 +82,11 @@ class DeformablePoints(Deformable):
     """
     Deformable object representing a collection of points in space.
     """
+
     def __init__(self, points, label=None):
         super().__init__()
-        self.__silent_module = SilentBase(Landmarks(points.shape[1], points.shape[0], gd=points), label=label)
+        self.__silent_module = SilentBase(
+            Landmarks(points.shape[1], points.shape[0], gd=points), label=label)
 
     @property
     def silent_module(self):
@@ -113,7 +116,8 @@ class DeformablePoints(Deformable):
         elif file_extension in meshio.extension_to_filetype.keys():
             return cls.load_from_mesh(filename, dtype=dtype)
         else:
-            raise RuntimeError("DeformablePoints.load_from_file(): could not load file {filename}, unrecognised file extension!".format(filename=filename))
+            raise RuntimeError(
+                "DeformablePoints.load_from_file(): could not load file {filename}, unrecognised file extension!".format(filename=filename))
 
     @classmethod
     def load_from_csv(cls, filename, dtype=None, **kwargs):
@@ -132,7 +136,8 @@ class DeformablePoints(Deformable):
             elif isinstance(data, Iterable):
                 return cls(torch.tensor(data, dtype=dtype))
             else:
-                raise RuntimeError("DeformablePoints.load_from_pickle(): could not infer point dataset from pickle {filename}".format(filename=filename))
+                raise RuntimeError(
+                    "DeformablePoints.load_from_pickle(): could not infer point dataset from pickle {filename}".format(filename=filename))
 
     @classmethod
     def load_from_mesh(cls, filename, dtype=None):
@@ -160,7 +165,8 @@ class DeformablePoints(Deformable):
         elif file_extension in meshio.extension_to_filetype.keys():
             return self.save_to_mesh(filename, **kwargs)
         else:
-            raise RuntimeError("DeformablePoints.load_from_file(): could not load file {filename}, unrecognised file extension!".format(filename=filename))
+            raise RuntimeError(
+                "DeformablePoints.load_from_file(): could not load file {filename}, unrecognised file extension!".format(filename=filename))
 
     def save_to_csv(self, filename, **kwargs):
         savetxt(filename, self.geometry[0].detach().cpu().tolist(), **kwargs)
@@ -170,14 +176,17 @@ class DeformablePoints(Deformable):
             if container == 'array':
                 pickle.dump(self.geometry[0].detach().cpu().tolist(), f)
             elif container == 'dict':
-                pickle.dump({'points': self.geometry[0].detach().cpu().tolist()}, f)
+                pickle.dump(
+                    {'points': self.geometry[0].detach().cpu().tolist()}, f)
             else:
-                raise RuntimeError("DeformablePoints.save_to_pickle(): {container} container type not recognized!")
+                raise RuntimeError(
+                    "DeformablePoints.save_to_pickle(): {container} container type not recognized!")
         pass
 
     def save_to_mesh(self, filename, **kwargs):
         points_count = self.geometry[0].shape[0]
-        meshio.write_points_cells(filename, self.geometry[0].detach().cpu().numpy(), [('polygon'+str(points_count), torch.arange(points_count).view(1, -1).numpy())], **kwargs)
+        meshio.write_points_cells(filename, self.geometry[0].detach().cpu().numpy(), [(
+            'polygon'+str(points_count), torch.arange(points_count).view(1, -1).numpy())], **kwargs)
 
     def _to_deformed(self, gd):
         return (gd,)
@@ -214,7 +223,8 @@ class DeformableMesh(DeformablePoints):
         return cls(points, triangles)
 
     def save_to_file(self, filename):
-        meshio.write_points_cells(filename, self.silent_module.manifold.gd.detach().cpu().numpy(), [('triangle', self.__triangles.cpu())])
+        meshio.write_points_cells(filename, self.silent_module.manifold.gd.detach(
+        ).cpu().numpy(), [('triangle', self.__triangles.cpu())])
 
     @property
     def triangles(self):
@@ -232,7 +242,7 @@ class DeformableMesh(DeformablePoints):
         return (gd, self.__triangles)
 
 
-def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1.):
+def deformables_compute_deformed(deformables, modules, solver, it, costs=None, intermediates=None, controls=None, t1=1., reduce='sum'):
     """
     Computes deformation of deformables by modules.
 
@@ -263,6 +273,9 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
     assert isinstance(costs, dict) or costs is None
     assert isinstance(intermediates, dict) or intermediates is None
 
+    # print(' '*10, end=' ')
+    # print('deformables_compute_deformed()')
+
     # Regroup silent modules of each deformable and build a compound module
     silent_modules = [deformable.silent_module for deformable in deformables]
     compound = CompoundModule([*silent_modules, *modules])
@@ -276,20 +289,28 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
             for i in range(len(silent_modules)):
                 silent_modules_controls.append(torch.tensor([]))
             incontrols.append([*silent_modules_controls, *control])
+            
 
     # Forward shooting
-    shoot(Hamiltonian(compound), solver, it, intermediates=intermediates, controls=incontrols, t1=t1)
+    costs__ = {}
+    if intermediates is None:
+        intermediates = {}
+    shoot(Hamiltonian(compound), solver, it, costs=costs__, intermediates=intermediates,
+          controls=incontrols, t1=t1)
 
     # Regroup silent modules of each deformable thats need to shoot backward
-    shoot_backward = any([deformable._has_backward for deformable in deformables])
+    shoot_backward = any(
+        [deformable._has_backward for deformable in deformables])
 
     forward_silent_modules = copy.deepcopy(silent_modules)
 
     if shoot_backward:
         # Backward shooting is needed
         # Build/assemble the modules that will be shot backward
-        backward_modules = [deformable._backward_module() for deformable in deformables if deformable._has_backward]
-        compound = CompoundModule([*silent_modules, *backward_modules, *modules])
+        backward_modules = [deformable._backward_module(
+        ) for deformable in deformables if deformable._has_backward]
+        compound = CompoundModule(
+            [*silent_modules, *backward_modules, *modules])
 
         # Reverse the moments for backward shooting
         compound.manifold.negate_cotan()
@@ -307,21 +328,38 @@ def deformables_compute_deformed(deformables, modules, solver, it, costs=None, i
                     backward_modules_controls.append(torch.tensor([]))
                 modules_control = [-module_control for module_control in control]
 
-                backward_controls.append([*silent_modules_controls, *backward_modules_controls, *modules_control])
+                backward_controls.append(
+                    [*silent_modules_controls, *backward_modules_controls, *modules_control])
 
-        shoot(Hamiltonian(compound), solver, it, t1=t1, controls=backward_controls)
+        shoot(Hamiltonian(compound), solver, it,
+              t1=t1, controls=backward_controls)
 
     # For now, we need to compute the deformation cost after each shooting (and not before any shooting) for computation tree reasons
     if costs is not None:
-        costs['deformation'] = compound.cost()
+        # print(len(costs__['deformation']))
+        if reduce == 'sum':
+            costs['deformation'] = sum(costs__['deformation'])
+        elif reduce == 'previous':
+            compound.compute_geodesic_control(compound.manifold)
+            costs['deformation'] = compound.cost()
+        elif reduce == 'lastcompound':
+            costs['deformation'] = compound.cost()
+        elif reduce == 'totalcompound':
+            costs_list = []
+            for i in range(it):
+                compound.manifold.fill_gd(intermediates['states'][i].gd)
+                compound.fill_controls(incontrols[i])
+                costs_list.append(compound.cost())
+            costs['deformation'] = sum(costs_list)
 
     # Ugly way to compute the list of deformed objects. Not intended to stay!
     deformed = []
     for deformable, forward_silent_module in zip(deformables, forward_silent_modules):
         if deformable._has_backward:
-            deformed.append(deformable._to_deformed(backward_modules.pop(0).manifold.gd))
+            deformed.append(deformable._to_deformed(
+                backward_modules.pop(0).manifold.gd))
         else:
-            deformed.append(deformable._to_deformed(forward_silent_module.manifold.gd))
+            deformed.append(deformable._to_deformed(
+                forward_silent_module.manifold.gd))
 
     return deformed
-

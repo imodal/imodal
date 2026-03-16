@@ -1,12 +1,16 @@
-from collections import Iterable, OrderedDict
+from collections.abc import Iterable
+from collections import OrderedDict
 
 from imodal.DeformationModules import CompoundModule
 from imodal.Manifolds import CompoundManifold
 from imodal.Models import BaseModel, deformables_compute_deformed
 
+import torch
+
 
 class RegistrationModel(BaseModel):
-    def __init__(self, deformables, deformation_modules, attachments, fit_gd=None, lam=1., precompute_callback=None, other_parameters=None):
+    def __init__(self, deformables, deformation_modules, attachments, fit_controls=False, init_controls_ones=False, fit_gd=None, lam=1., precompute_callback=None, other_parameters=None, reduce='sum',
+                 it=None, solver=None):
         if not isinstance(deformables, Iterable):
             deformables = [deformables]
 
@@ -23,21 +27,66 @@ class RegistrationModel(BaseModel):
         self.__deformation_modules = deformation_modules
         self.__precompute_callback = precompute_callback
         self.__fit_gd = fit_gd
+        self.__fit_controls = fit_controls
         self.__lam = lam
+        self.learnable_controls = []
+
+        self.__reduce = reduce
+
+        self.__solver = 'euler' if solver is None else solver
 
         if other_parameters is None:
             other_parameters = []
 
-        deformable_manifolds = [deformable.silent_module.manifold.clone(False) for deformable in self.__deformables]
-        deformation_modules_manifolds = CompoundModule(deformation_modules).manifold.clone(False)
+        if fit_controls:
+            self.__it = it
+            # then learnable controls for deformation modules
 
-        self.__init_manifold = CompoundManifold([*deformable_manifolds, *deformation_modules_manifolds])
+            # SOLVER - IT - CTRL
+
+            # euler    - 1  - 1
+            # midpoint - 1  - 2
+            # rkX      - 1  - X
+
+            cont_per_it = {
+                'euler': 1,
+                'midpoint': 2,  
+                'rk4': 4
+            }[self.__solver]
+
+            self.learnable_controls = []
+
+            initializer = torch.ones_like if init_controls_ones else torch.zeros_like
+
+            for i in range(it):
+                for j in range(cont_per_it):
+                    self.learnable_controls.append(
+                        [initializer(m.controls, requires_grad=True) for m in deformation_modules])
+
+            # if init_controls_ones:
+            #     for i in range(it):
+            #         self.learnable_controls.append(
+            #             [torch.ones_like(m.controls, requires_grad=True) for m in deformation_modules])
+            # else:
+            #     for i in range(it):
+            #         self.learnable_controls.append(
+            #             [torch.zeros_like(m.controls, requires_grad=True) for m in deformation_modules])
+            # self.learnable_controls = [ [torch.ones_like(m.controls, requires_grad=True) for m in deformation_modules]]*it
+
+        deformable_manifolds = [deformable.silent_module.manifold.clone(
+            False) for deformable in self.__deformables]
+        deformation_modules_manifolds = CompoundModule(
+            deformation_modules).manifold.clone(False)
+
+        self.__init_manifold = CompoundManifold(
+            [*deformable_manifolds, *deformation_modules_manifolds])
 
         [manifold.cotan_requires_grad_() for manifold in self.__init_manifold]
 
         self.__init_other_parameters = other_parameters
 
-        self.__modules = [deformable.silent_module for deformable in self.__deformables]
+        self.__modules = [
+            deformable.silent_module for deformable in self.__deformables]
         self.__modules.extend(deformation_modules)
 
         # Update the parameter dict
@@ -98,7 +147,8 @@ class RegistrationModel(BaseModel):
         self._compute_parameters()
 
     def to_device(self, device):
-        [deformation_module.to_(device=device) for deformation_module in self.__deformation_modules]
+        [deformation_module.to_(device=device)
+         for deformation_module in self.__deformation_modules]
         [deformable.to_device(device) for deformable in self.__deformables]
         [manifold.to_(device=device) for manifold in self.__init_manifold]
 
@@ -129,7 +179,8 @@ class RegistrationModel(BaseModel):
         self.__parameters = OrderedDict()
 
         # Initial moments
-        self.__parameters['cotan'] = {'params': self.__init_manifold.unroll_cotan()}
+        self.__parameters['cotan'] = {
+            'params': self.__init_manifold.unroll_cotan()}
 
         # Geometrical descriptors if specified
         if self.__fit_gd:
@@ -138,12 +189,22 @@ class RegistrationModel(BaseModel):
             for fit_gd, init_manifold in zip(self.__fit_gd, self.__init_manifold[len(self.__deformables):]):
                 if isinstance(fit_gd, bool) and fit_gd:
                     init_manifold.gd_requires_grad_()
-                    self.__parameters['gd']['params'].extend(init_manifold.unroll_gd())
+                    self.__parameters['gd']['params'].extend(
+                        init_manifold.unroll_gd())
                 # Geometrical descriptor is multidimensional
                 elif isinstance(fit_gd, Iterable):
                     for fit_gdi, init_manifold_gdi in zip(fit_gd, init_manifold.unroll_gd()):
                         if fit_gdi:
-                            self.__parameters['gd']['params'].append(init_manifold_gdi)
+                            self.__parameters['gd']['params'].append(
+                                init_manifold_gdi)
+
+        # Add learnable control tensors to parameters considered for optimization
+        if self.__fit_controls:
+            self.__parameters['controls'] = {'params': []}
+            for cont in self.learnable_controls:
+                self.__parameters['controls']['params'].extend(cont)
+            # self.__parameters['controls'] = {
+            #    'params': self.learnable_controls}
 
         # Other parameters
         self.__parameters.update(self.__init_other_parameters)
@@ -176,13 +237,15 @@ class RegistrationModel(BaseModel):
         # Call precompute callback if available
         precompute_cost = None
         if self.precompute_callback is not None:
-            precompute_cost = self.precompute_callback(self.init_manifold, self.modules, self.parameters, self.deformables)
+            precompute_cost = self.precompute_callback(
+                self.init_manifold, self.modules, self.parameters, self.deformables)
 
             if precompute_cost is not None:
                 costs['precompute'] = precompute_cost
 
         deformed_sources = self.compute_deformed(solver, it, costs=costs)
-        costs['attach'] = self.__lam * self._compute_attachment_cost(deformed_sources, target)
+        costs['attach'] = self.__lam * \
+            self._compute_attachment_cost(deformed_sources, target)
 
         # if torch.any(torch.isnan(torch.tensor(list(costs.values())))):
         #     print("Registration model has been evaluated to NaN!")
@@ -219,11 +282,18 @@ class RegistrationModel(BaseModel):
         """
 
         compound_module = CompoundModule(self.__deformation_modules)
-        compound_module.manifold.fill_gd([manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
-        compound_module.manifold.fill_cotan([manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
+        compound_module.manifold.fill_gd(
+            [manifold.gd for manifold in self.__init_manifold[len(self.__deformables):]])
+        compound_module.manifold.fill_cotan(
+            [manifold.cotan for manifold in self.__init_manifold[len(self.__deformables):]])
 
         for deformable, deformable_manifold in zip(self.__deformables, self.__init_manifold):
             deformable.silent_module.manifold.fill(deformable_manifold)
 
-        return deformables_compute_deformed(self.__deformables, compound_module, solver, it, t1=t1, costs=costs, intermediates=intermediates)
-
+        if not self.__fit_controls:
+            return deformables_compute_deformed(self.__deformables, compound_module, solver, it, t1=t1, costs=costs, intermediates=intermediates, reduce=self.__reduce)
+        else:
+            # if self.__fit_controls:
+            # compute deformable with learnable controls rather than geodesic controls
+            # the number of iterations matches the number of learnable controls
+            return deformables_compute_deformed(self.__deformables, compound_module, solver, self.__it, t1=t1, costs=costs, intermediates=intermediates, controls=self.learnable_controls, reduce=self.__reduce)

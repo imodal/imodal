@@ -101,7 +101,7 @@ class OrientedTranslations_Torch(OrientedTranslationsBase):
     def compute_geodesic_control(self, man):
         vs = self.adjoint(man)
         Z = K_xx(self.manifold.gd[0], self.sigma) * torch.mm(self.manifold.gd[1], self.manifold.gd[1].T)
-        controls, _ = torch.solve(torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1), Z)
+        controls = torch.linalg.solve(Z, torch.einsum('ni, ni->n', vs(self.manifold.gd[0]), self.manifold.gd[1]).unsqueeze(1))
 
         self.controls = controls.flatten().contiguous()/self.coeff
 

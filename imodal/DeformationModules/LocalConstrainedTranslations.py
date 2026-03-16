@@ -1,8 +1,6 @@
 import torch
 import math
 
-from pykeops.torch import Genred, KernelSolve
-
 from imodal.DeformationModules.Abstract import DeformationModule, create_deformation_module_with_backends
 from imodal.Kernels.kernels import K_xy, K_xx
 from imodal.Manifolds import Landmarks

@@ -34,15 +34,14 @@ def K_xy(x, y, sigma):
 def gauss_kernel(x, k, sigma):
     device = x.device
     dim = x.shape[1]
+
+    sigma2 = sigma * sigma
+    k_0 = (-torch.sum(x ** 2, dim=1) / 2 / sigma2).exp()
     if k == 0:
-        return (-torch.sum((x/sigma)**2/2, dim=1)).exp()
+        return k_0
     if k == 1:
-        k_0 = gauss_kernel(x, 0, sigma)
-        sigma2 = sigma * sigma
         return -k_0.view(-1, 1).repeat(1, dim) * x / sigma2
     if k == 2:
-        sigma2 = sigma * sigma
-        k_0 = gauss_kernel(x, 0, sigma)
         return (k_0.view(-1, 1, 1).repeat(1, dim, dim) * (-torch.eye(dim, device=device).repeat(x.shape[0], 1, 1) + torch.einsum('ki, kj->kij', x, x) / sigma2)) / sigma2
     if k == 3:
         raise NotImplementedError("gauss_kernel(): k >= 3 not supported!")

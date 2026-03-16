@@ -63,6 +63,12 @@ class CompoundManifold(BaseManifold):
         for man in self.__manifolds:
             l.extend(man.unroll_cotan())
         return l
+    
+    def unroll_tan(self):
+        l = []
+        for man in self.__manifolds:
+            l.extend(man.unroll_tan())
+        return l
 
     def roll_gd(self, l):
         """ Unflattens the list into one suitable for fill_gd() or all \*_gd() numerical operations. """

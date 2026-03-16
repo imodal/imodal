@@ -5,4 +5,5 @@ from imodal.StructuredFields.StructuredField_pm import StructuredField_m, Struct
 from imodal.StructuredFields.ConstantField import ConstantField
 from imodal.StructuredFields.StructuredField_0_u import StructuredField_0_u
 from imodal.StructuredFields.StructuredField_Affine import StructuredField_Affine
+from imodal.StructuredFields.StructuredField_1 import StructuredField_1
 

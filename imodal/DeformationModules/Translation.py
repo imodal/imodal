@@ -94,7 +94,7 @@ class Translations_Torch(TranslationsBase):
         vs = self.adjoint(man)
         K_q = K_xx(self.manifold.gd, self.sigma)
 
-        controls, _ = torch.solve(vs(self.manifold.gd), K_q)
+        controls = torch.linalg.solve(K_q, vs(self.manifold.gd))
         self.controls = controls.contiguous()
 
 
@@ -111,11 +111,11 @@ class Translations_KeOps(TranslationsBase):
 
         formula_cost = "(Exp(-S*SqNorm2(x - y)/IntCst(2))*px | py)/IntCst(2)"
         alias_cost = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "px=Vi(" + str(self.dim)+")", "py=Vj("+str(self.dim)+")", "S=Pm(1)"]
-        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0, dtype=self.__keops_dtype)
+        self.reduction_cost = Genred(formula_cost, alias_cost, reduction_op='Sum', axis=0)
 
         formula_cgc = "Exp(-S*SqNorm2(x - y)/IntCst(2))*X"
         alias_cgc = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "X=Vj("+str(self.dim) + ")", "S=Pm(1)"]
-        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype=self.__keops_dtype)
+        self.solve_cgc = KernelSolve(formula_cgc, alias_cgc, "X", axis=1, dtype_acc="float64")
 
     @property
     def backend(self):

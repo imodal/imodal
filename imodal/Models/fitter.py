@@ -28,12 +28,18 @@ class Fitter:
         self.__it = 0
         self.__optimizer.reset()
 
-    def fit(self, target, max_iter, options={}, costs=None, disp=True):
+    def fit(self, target, max_iter, options={}, costs=None, disp=True, miniter=0):
         assert isinstance(costs, dict) or costs is None
 
         shoot_solver = 'euler'
         shoot_it = 10
         tol = None
+
+        lamc_costs = {
+            'c1': [],
+            'c2': [],
+            'c3': []
+        }
 
         if 'shoot_solver' in options:
             shoot_solver = options['shoot_solver']
@@ -68,13 +74,22 @@ class Fitter:
                 print("Iteration: {it}".format(it=self.__it))
                 self.__print_costs(last_costs)
 
+                module = model.deformation_modules[0]
+                # check if the module is an implicit module
+                if hasattr(module, 'last_cost'):
+                    c1, c2, c3 = module.last_cost()
+                    lamc_costs['c1'].append(c1)
+                    lamc_costs['c2'].append(c2)
+                    lamc_costs['c3'].append(c3)
+
+
             self.__it = self.__it + 1
 
             if costs:
                 append_in_dict_of_list(costs, last_costs)
 
         start_time = time.perf_counter()
-        res = self.__optimizer.optimize(target, max_iter, _post_iteration_callback, costs, shoot_solver, shoot_it, tol, options=options)
+        res = self.__optimizer.optimize(target, max_iter, _post_iteration_callback, costs, shoot_solver, shoot_it, tol, miniter=miniter, options=options)
 
         if disp:
             print("="*80)
@@ -84,6 +99,8 @@ class Fitter:
             if 'neval_grad' in res:
                 print("Model gradient evaluation count={neval_grad}".format(neval_grad=res['neval_grad']))
             print("Time elapsed =", time.perf_counter() - start_time)
+
+        return lamc_costs
 
     def __print_costs(self, costs):
         print("Costs")

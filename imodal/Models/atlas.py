@@ -1,5 +1,6 @@
 import copy
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 
 import torch
 

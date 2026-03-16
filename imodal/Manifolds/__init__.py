@@ -3,4 +3,5 @@ from .Landmark import Landmarks
 from .NormalFrame import NormalFrame
 from .Empty import EmptyManifold
 from .LandmarkDirection import LandmarksDirection
+from .CompoundLandmarks import CompoundLandmarks
 

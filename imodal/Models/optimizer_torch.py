@@ -27,7 +27,7 @@ class OptimizerTorch(BaseOptimizer):
     def reset(self):
         self.__optimizer = None
 
-    def optimize(self, target, max_iter, post_iteration_callback, costs, shoot_solver, shoot_it, tol, options=None):
+    def optimize(self, target, max_iter, post_iteration_callback, costs, shoot_solver, shoot_it, tol, options=None, miniter=0):
         if options is None:
             options = {}
 
@@ -53,7 +53,7 @@ class OptimizerTorch(BaseOptimizer):
             self.__eval_count = self.__eval_count + 1
 
             gc.collect()
-
+            
             sum_costs = sum(costs.values())
 
             if self.__verbose:
@@ -73,7 +73,7 @@ class OptimizerTorch(BaseOptimizer):
             if math.isnan(total_cost):
                 return {'success': False, 'final': float('nan'), 'message': "Evaluated function gave NaN.", 'neval': total_cost}
 
-            if (last_total_cost - total_cost)/max(total_cost, last_total_cost, 1) <= tol:
+            if (last_total_cost - total_cost)/max(total_cost, last_total_cost, 1) <= tol and i >= miniter:
                 return {'success': True, 'final': total_cost, 'message': "Convergence achieved.", 'neval': self.__eval_count}
 
             last_total_cost = total_cost

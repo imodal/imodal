@@ -25,17 +25,24 @@ class StructuredField_pm(KernelSupportStructuredField):
     def _compute_reduction_keops(self, points, P, k):
         if k == 0:
             kernel_formula = "S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(x - y)"
-            formula = "TensorDot({kernel_formula}, p, Ind({dim}), Ind({dim}, {dim}), Ind(0), Ind(1))".format(kernel_formula=kernel_formula, dim=self.dim)
+            formula = f"TensorDot({kernel_formula}, p, [{self.dim}], [{self.dim}, {self.dim}], [0], [1])"
             alias = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "p=Vj("+str(self.dim*self.dim)+")", "S=Pm(1)"]
-            reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(points.dtype).split(".")[1])
+            reduction = Genred(formula, alias, reduction_op='Sum', axis=1)
             return reduction(points, self.support, P.reshape(-1, self.dim*self.dim), self._keops_sigma, backend=self._keops_backend).reshape(-1, self.dim)
 
         if k == 1:
-            kernel_formula = "-S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(S*TensorDot(x-y, x-y, Ind({dim}), Ind({dim}), Ind(), Ind())-eye)".format(dim=self.dim)
-            formula = "TensorDot({kernel_formula}, p, Ind({dim}, {dim}), Ind({dim}, {dim}), Ind(1),Ind(1))".format(kernel_formula=kernel_formula, dim=self.dim)
+            kernel_formula = f"-S*Exp(-S*SqNorm2(x - y)/IntCst(2))*(S*TensorDot(x-y, x-y, [{self.dim}], [{self.dim}], [], [])-eye)"
+            formula = f"TensorDot({kernel_formula}, p, [{self.dim}, {self.dim}], [{self.dim}, {self.dim}], [1], [1])"
             alias = ["x=Vi("+str(self.dim)+")", "y=Vj("+str(self.dim)+")", "p=Vj("+str(self.dim*self.dim)+")", "eye=Pm("+str(self.dim*self.dim)+")", "S=Pm(1)"]
-            reduction = Genred(formula, alias, reduction_op='Sum', axis=1, dtype=str(points.dtype).split(".")[1])
-            return reduction(points, self.support, P.reshape(-1, self.dim*self.dim), torch.eye(self.dim, dtype=self.support.dtype, device=self.device).flatten(), self._keops_sigma, backend=self._keops_backend).reshape(-1, self.dim, self.dim).transpose(1, 2).contiguous()
+            reduction = Genred(formula,
+                               alias,
+                               reduction_op='Sum',
+                               axis=1)
+            return reduction(points,
+                             self.support,
+                             P.reshape(-1, self.dim*self.dim),
+                             torch.eye(self.dim, dtype=self.support.dtype, device=self.device).flatten(),
+                             self._keops_sigma, backend=self._keops_backend).reshape(-1, self.dim, self.dim).transpose(1, 2).contiguous()
 
         else:
             raise RuntimeError("StructuredField_pm.__call__(): keops computation not supported for order k =", k)

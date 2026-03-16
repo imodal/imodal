@@ -6,7 +6,7 @@ from imodal.DeformationModules.Abstract import DeformationModule
 
 
 class LinearDeformation(DeformationModule):
-    """Global translation module."""
+    """Module generating a linear vector field."""
     def __init__(self, manifold, A, coeff=1., label=None):
         super().__init__(label)
         self.__controls = torch.tensor(0., dtype=A.dtype)
@@ -72,7 +72,6 @@ class LinearDeformation(DeformationModule):
         return 0.5*self.__coeff*self.__controls**2
 
     def compute_geodesic_control(self, man):
-        """Computes geodesic control from StructuredField vs."""
         vs = StructuredField_Affine(self.__A, self.__manifold.gd.flatten(), torch.zeros_like(self.__manifold.gd.flatten()))
         self.__controls = man.inner_prod_field(vs)/self.__coeff
 
