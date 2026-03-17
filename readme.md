@@ -17,6 +17,7 @@ IMODAL is a python library allowing to register shapes (curves, meshes, images) 
 * Benjamin Charlier
 * Barbara Gris
 * Leander Lacroix
+* Adel Redjimi
 * Alain Trouvé
 
 ## Related publications
